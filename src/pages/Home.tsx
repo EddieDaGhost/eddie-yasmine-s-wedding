@@ -1,10 +1,34 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { MapPin, Calendar, Heart } from 'lucide-react';
+import { MapPin, Calendar, Heart, ArrowRight } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
+import { Section, Container } from '@/components/shared/Section';
+import { WeddingCard, WeddingCardHeader, WeddingCardTitle, WeddingCardDescription } from '@/components/shared/WeddingCard';
+import { FadeIn, StaggerContainer, StaggerItem } from '@/components/animation';
 import { Button } from '@/components/ui/button';
 import { CountdownTimer } from '@/components/shared/CountdownTimer';
 import heroImage from '@/assets/hero-wedding.jpg';
+
+const quickLinks = [
+  { 
+    title: 'Event Details', 
+    desc: 'Schedule & venue information', 
+    link: '/event-details',
+    icon: Calendar,
+  },
+  { 
+    title: 'Travel & Stay', 
+    desc: 'Hotels and transportation', 
+    link: '/travel',
+    icon: MapPin,
+  },
+  { 
+    title: 'Registry', 
+    desc: 'Gift registry links', 
+    link: '/registry',
+    icon: Heart,
+  },
+];
 
 const Home = () => {
   return (
@@ -13,93 +37,74 @@ const Home = () => {
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Background Image */}
         <div className="absolute inset-0">
-          <img
+          <motion.img
+            initial={{ scale: 1.1 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
             src={heroImage}
             alt="Eddie and Yasmine Wedding"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/50 to-background" />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/40 to-background" />
         </div>
 
         {/* Content */}
         <div className="relative z-10 container mx-auto px-4 text-center py-20">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="max-w-4xl mx-auto"
-          >
+          <div className="max-w-4xl mx-auto">
             {/* Announcement */}
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="text-primary font-medium tracking-[0.3em] uppercase text-sm mb-6"
-            >
-              We're Getting Married
-            </motion.p>
+            <FadeIn delay={0.1}>
+              <p className="text-primary font-medium tracking-[0.3em] uppercase text-sm mb-6">
+                We're Getting Married
+              </p>
+            </FadeIn>
 
             {/* Names */}
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.8 }}
-              className="font-display text-5xl md:text-7xl lg:text-8xl text-foreground mb-6"
-            >
-              Eddie <span className="text-primary">&</span> Yasmine
-            </motion.h1>
+            <FadeIn delay={0.2}>
+              <h1 className="font-display text-5xl md:text-7xl lg:text-8xl text-foreground mb-6 tracking-tight">
+                Eddie <span className="text-primary">&</span> Yasmine
+              </h1>
+            </FadeIn>
 
             {/* Date */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.5 }}
-              className="flex items-center justify-center gap-4 text-muted-foreground mb-4"
-            >
-              <Calendar className="w-5 h-5 text-primary" />
-              <span className="font-serif text-xl md:text-2xl">July 2nd, 2027</span>
-            </motion.div>
+            <FadeIn delay={0.3}>
+              <div className="flex items-center justify-center gap-4 text-muted-foreground mb-4">
+                <Calendar className="w-5 h-5 text-primary" />
+                <span className="font-serif text-xl md:text-2xl">July 2nd, 2027</span>
+              </div>
+            </FadeIn>
 
             {/* Location */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.6 }}
-              className="flex items-center justify-center gap-4 text-muted-foreground mb-12"
-            >
-              <MapPin className="w-5 h-5 text-primary" />
-              <span className="font-serif text-lg">The Grand Estate, California</span>
-            </motion.div>
+            <FadeIn delay={0.4}>
+              <div className="flex items-center justify-center gap-4 text-muted-foreground mb-12">
+                <MapPin className="w-5 h-5 text-primary" />
+                <span className="font-serif text-lg">The Grand Estate, California</span>
+              </div>
+            </FadeIn>
 
             {/* Countdown */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7 }}
-              className="mb-12"
-            >
-              <CountdownTimer />
-            </motion.div>
+            <FadeIn delay={0.5}>
+              <div className="mb-12">
+                <CountdownTimer />
+              </div>
+            </FadeIn>
 
             {/* CTA Buttons */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.9 }}
-              className="flex flex-col sm:flex-row items-center justify-center gap-4"
-            >
-              <Link to="/rsvp">
-                <Button variant="hero" size="xl">
-                  RSVP Now
-                </Button>
-              </Link>
-              <Link to="/our-story">
-                <Button variant="hero-outline" size="xl">
-                  Our Story
-                </Button>
-              </Link>
-            </motion.div>
-          </motion.div>
+            <FadeIn delay={0.6}>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link to="/rsvp">
+                  <Button variant="hero" size="xl" className="min-w-[180px]">
+                    RSVP Now
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
+                <Link to="/our-story">
+                  <Button variant="hero-outline" size="xl" className="min-w-[180px]">
+                    Our Story
+                  </Button>
+                </Link>
+              </div>
+            </FadeIn>
+          </div>
         </div>
 
         {/* Scroll Indicator */}
@@ -121,57 +126,47 @@ const Home = () => {
       </section>
 
       {/* Quick Info Section */}
-      <section className="py-20 md:py-32 romantic-gradient">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="max-w-3xl mx-auto text-center"
-          >
-            <Heart className="w-8 h-8 text-primary mx-auto mb-6" />
-            <h2 className="font-display text-3xl md:text-4xl text-foreground mb-6">
-              Join Us for Our Celebration
-            </h2>
-            <p className="text-muted-foreground text-lg leading-relaxed mb-8">
-              We are delighted to invite you to share in our joy as we celebrate our love 
-              and commitment to each other. Your presence on our special day would mean 
-              the world to us.
-            </p>
-            <div className="decorative-line" />
-          </motion.div>
+      <Section variant="gradient" spacing="lg">
+        <Container size="md">
+          <FadeIn>
+            <div className="text-center mb-16">
+              <Heart className="w-8 h-8 text-primary mx-auto mb-6" />
+              <h2 className="font-display text-3xl md:text-4xl text-foreground mb-6">
+                Join Us for Our Celebration
+              </h2>
+              <p className="text-muted-foreground text-lg leading-relaxed max-w-xl mx-auto">
+                We are delighted to invite you to share in our joy as we celebrate our love 
+                and commitment to each other.
+              </p>
+            </div>
+          </FadeIn>
+        </Container>
 
-          {/* Quick Links Grid */}
-          <div className="grid md:grid-cols-3 gap-6 mt-16 max-w-4xl mx-auto">
-            {[
-              { title: 'Event Details', desc: 'Schedule & venue information', link: '/event-details' },
-              { title: 'Travel & Stay', desc: 'Hotels and transportation', link: '/travel' },
-              { title: 'Registry', desc: 'Gift registry links', link: '/registry' },
-            ].map((item, i) => (
-              <motion.div
-                key={item.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-              >
-                <Link
-                  to={item.link}
-                  className="block glass-card rounded-2xl p-6 text-center hover:shadow-elegant transition-all duration-300 group"
-                >
-                  <h3 className="font-serif text-xl text-foreground mb-2 group-hover:text-primary transition-colors">
-                    {item.title}
-                  </h3>
-                  <p className="text-muted-foreground text-sm">
-                    {item.desc}
-                  </p>
+        {/* Quick Links Grid */}
+        <Container size="lg">
+          <StaggerContainer className="grid md:grid-cols-3 gap-6">
+            {quickLinks.map((item) => (
+              <StaggerItem key={item.title}>
+                <Link to={item.link} className="block group">
+                  <WeddingCard variant="glass" hoverable className="text-center h-full">
+                    <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                      <item.icon className="w-5 h-5 text-primary" />
+                    </div>
+                    <WeddingCardHeader>
+                      <WeddingCardTitle className="text-lg group-hover:text-primary transition-colors">
+                        {item.title}
+                      </WeddingCardTitle>
+                      <WeddingCardDescription>
+                        {item.desc}
+                      </WeddingCardDescription>
+                    </WeddingCardHeader>
+                  </WeddingCard>
                 </Link>
-              </motion.div>
+              </StaggerItem>
             ))}
-          </div>
-        </div>
-      </section>
+          </StaggerContainer>
+        </Container>
+      </Section>
     </Layout>
   );
 };
