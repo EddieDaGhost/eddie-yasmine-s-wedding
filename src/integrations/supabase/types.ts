@@ -14,7 +14,165 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      events: {
+        Row: {
+          description: string | null
+          end_time: string | null
+          id: number
+          location: string | null
+          name: string | null
+          start_time: string | null
+        }
+        Insert: {
+          description?: string | null
+          end_time?: string | null
+          id?: number
+          location?: string | null
+          name?: string | null
+          start_time?: string | null
+        }
+        Update: {
+          description?: string | null
+          end_time?: string | null
+          id?: number
+          location?: string | null
+          name?: string | null
+          start_time?: string | null
+        }
+        Relationships: []
+      }
+      guests: {
+        Row: {
+          attending: boolean | null
+          created_at: string | null
+          dietary_needs: string | null
+          email: string
+          id: string
+          invite_code: string | null
+          name: string | null
+          plus_ones: number | null
+        }
+        Insert: {
+          attending?: boolean | null
+          created_at?: string | null
+          dietary_needs?: string | null
+          email: string
+          id?: string
+          invite_code?: string | null
+          name?: string | null
+          plus_ones?: number | null
+        }
+        Update: {
+          attending?: boolean | null
+          created_at?: string | null
+          dietary_needs?: string | null
+          email?: string
+          id?: string
+          invite_code?: string | null
+          name?: string | null
+          plus_ones?: number | null
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          approved: boolean | null
+          content: string | null
+          created_at: string
+          guest_id: string | null
+          id: string
+        }
+        Insert: {
+          approved?: boolean | null
+          content?: string | null
+          created_at?: string
+          guest_id?: string | null
+          id?: string
+        }
+        Update: {
+          approved?: boolean | null
+          content?: string | null
+          created_at?: string
+          guest_id?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      photos: {
+        Row: {
+          approved: boolean | null
+          caption: string | null
+          created_at: string
+          file_url: string | null
+          guest_id: string
+          id: string
+        }
+        Insert: {
+          approved?: boolean | null
+          caption?: string | null
+          created_at?: string
+          file_url?: string | null
+          guest_id?: string
+          id?: string
+        }
+        Update: {
+          approved?: boolean | null
+          caption?: string | null
+          created_at?: string
+          file_url?: string | null
+          guest_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "song_requests_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      song_requests: {
+        Row: {
+          artist: string | null
+          created_at: string
+          guest_id: string | null
+          id: number
+          title: string | null
+        }
+        Insert: {
+          artist?: string | null
+          created_at?: string
+          guest_id?: string | null
+          id?: number
+          title?: string | null
+        }
+        Update: {
+          artist?: string | null
+          created_at?: string
+          guest_id?: string | null
+          id?: number
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "song_requests_guest_id_fkey1"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
