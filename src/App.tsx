@@ -17,6 +17,7 @@ import MessageWall from "./pages/locked/MessageWall";
 import PhotoUpload from "./pages/locked/PhotoUpload";
 import LiveUpdates from "./pages/locked/LiveUpdates";
 import Gallery from "./pages/locked/Gallery";
+import SecretPage from "./pages/locked/SecretPage";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import NotFound from "./pages/NotFound";
@@ -45,6 +46,7 @@ const App = () => (
           <Route path="/photos" element={<PhotoUpload />} />
           <Route path="/updates" element={<LiveUpdates />} />
           <Route path="/gallery" element={<Gallery />} />
+          <Route path="/secret" element={<SecretPage />} />
           {/* Admin */}
           <Route path="/admin" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
