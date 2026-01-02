@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      content: {
+        Row: {
+          created_at: string
+          id: number
+          key: string | null
+          value: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          key?: string | null
+          value?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          key?: string | null
+          value?: string | null
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           description: string | null
@@ -140,6 +161,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      rsvps: {
+        Row: {
+          attending: boolean | null
+          created_at: string
+          email: string | null
+          guests: number | null
+          id: string
+          message: string | null
+          name: string | null
+        }
+        Insert: {
+          attending?: boolean | null
+          created_at?: string
+          email?: string | null
+          guests?: number | null
+          id?: string
+          message?: string | null
+          name?: string | null
+        }
+        Update: {
+          attending?: boolean | null
+          created_at?: string
+          email?: string | null
+          guests?: number | null
+          id?: string
+          message?: string | null
+          name?: string | null
+        }
+        Relationships: []
       }
       song_requests: {
         Row: {

@@ -20,6 +20,11 @@ import Gallery from "./pages/locked/Gallery";
 import SecretPage from "./pages/locked/SecretPage";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminContent from "./pages/admin/AdminContent";
+import AdminGuestbook from "./pages/admin/AdminGuestbook";
+import AdminPhotos from "./pages/admin/AdminPhotos";
+import AdminRSVPs from "./pages/admin/AdminRSVPs";
+import AdminSongRequests from "./pages/admin/AdminSongRequests";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,9 +52,15 @@ const App = () => (
           <Route path="/updates" element={<LiveUpdates />} />
           <Route path="/gallery" element={<Gallery />} />
           <Route path="/secret" element={<SecretPage />} />
-          {/* Admin */}
+          {/* Admin Routes */}
           <Route path="/admin" element={<AdminLogin />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/content" element={<AdminContent />} />
+          <Route path="/admin/guestbook" element={<AdminGuestbook />} />
+          <Route path="/admin/photos" element={<AdminPhotos />} />
+          <Route path="/admin/rsvps" element={<AdminRSVPs />} />
+          <Route path="/admin/song-requests" element={<AdminSongRequests />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
