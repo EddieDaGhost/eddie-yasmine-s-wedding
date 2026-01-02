@@ -8,6 +8,7 @@ import { FadeIn, StaggerContainer, StaggerItem } from '@/components/animation';
 import { Button } from '@/components/ui/button';
 import { CountdownTimer } from '@/components/shared/CountdownTimer';
 import heroImage from '@/assets/hero-wedding.jpg';
+import { useContent } from "@/lib/content/useContent";
 
 const quickLinks = [
   { 
@@ -31,6 +32,29 @@ const quickLinks = [
 ];
 
 const Home = () => {
+  const { data, isLoading } = useContent();
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <Section>
+          <Container>
+            <p>Loading content...</p>
+          </Container>
+        </Section>
+      </Layout>
+    );
+  }
+
+  // Pull CMS content
+  const announcement = data?.find((c) => c.key === "home_announcement")?.value || "We're Getting Married";
+  const names = data?.find((c) => c.key === "home_names")?.value || "Eddie & Yasmine";
+  const date = data?.find((c) => c.key === "home_date")?.value || "July 2nd, 2027";
+  const location = data?.find((c) => c.key === "home_location")?.value || "The Grand Estate, California";
+  const quickTitle = data?.find((c) => c.key === "home_quick_title")?.value || "Join Us for Our Celebration";
+  const quickSubtitle = data?.find((c) => c.key === "home_quick_subtitle")?.value ||
+    "We are delighted to invite you to share in our joy as we celebrate our love and commitment to each other.";
+
   return (
     <Layout>
       {/* Hero Section */}
@@ -54,14 +78,14 @@ const Home = () => {
             {/* Announcement */}
             <FadeIn delay={0.1}>
               <p className="text-primary font-medium tracking-[0.3em] uppercase text-sm mb-6">
-                We're Getting Married
+                {announcement}
               </p>
             </FadeIn>
 
             {/* Names */}
             <FadeIn delay={0.2}>
               <h1 className="font-display text-5xl md:text-7xl lg:text-8xl text-foreground mb-6 tracking-tight">
-                Eddie <span className="text-primary">&</span> Yasmine
+                {names.split("&")[0].trim()} <span className="text-primary">&</span> {names.split("&")[1]?.trim()}
               </h1>
             </FadeIn>
 
@@ -69,7 +93,7 @@ const Home = () => {
             <FadeIn delay={0.3}>
               <div className="flex items-center justify-center gap-4 text-muted-foreground mb-4">
                 <Calendar className="w-5 h-5 text-primary" />
-                <span className="font-serif text-xl md:text-2xl">July 2nd, 2027</span>
+                <span className="font-serif text-xl md:text-2xl">{date}</span>
               </div>
             </FadeIn>
 
@@ -77,7 +101,7 @@ const Home = () => {
             <FadeIn delay={0.4}>
               <div className="flex items-center justify-center gap-4 text-muted-foreground mb-12">
                 <MapPin className="w-5 h-5 text-primary" />
-                <span className="font-serif text-lg">The Grand Estate, California</span>
+                <span className="font-serif text-lg">{location}</span>
               </div>
             </FadeIn>
 
@@ -132,11 +156,10 @@ const Home = () => {
             <div className="text-center mb-16">
               <Heart className="w-8 h-8 text-primary mx-auto mb-6" />
               <h2 className="font-display text-3xl md:text-4xl text-foreground mb-6">
-                Join Us for Our Celebration
+                {quickTitle}
               </h2>
-              <p className="text-muted-foreground text-lg leading-relaxed max-w-xl mx-auto">
-                We are delighted to invite you to share in our joy as we celebrate our love 
-                and commitment to each other.
+              <p className="text-muted-foreground text-lg leading-relaxed max-w-xl mx-auto whitespace-pre-line">
+                {quickSubtitle}
               </p>
             </div>
           </FadeIn>

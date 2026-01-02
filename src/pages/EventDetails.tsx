@@ -3,27 +3,70 @@ import { MapPin, Clock, Shirt, Utensils, Music, Camera } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { Button } from '@/components/ui/button';
+import { useContent } from "@/lib/content/useContent";
 
-const scheduleEvents = [
-  { time: '3:00 PM', event: 'Guest Arrival', description: 'Welcome drinks and seating' },
-  { time: '4:00 PM', event: 'Ceremony', description: 'Exchange of vows in the garden' },
-  { time: '5:00 PM', event: 'Cocktail Hour', description: 'Hors d\'oeuvres and mingling' },
-  { time: '6:30 PM', event: 'Reception', description: 'Dinner, toasts, and celebration' },
-  { time: '8:00 PM', event: 'First Dance', description: 'Eddie & Yasmine take the floor' },
-  { time: '8:30 PM', event: 'Dancing & Party', description: 'Let\'s celebrate together!' },
-  { time: '11:00 PM', event: 'Sparkler Send-Off', description: 'A magical farewell' },
-];
+// Map icon names from CMS to actual Lucide icons
+const iconMap: Record<string, any> = {
+  Shirt,
+  Utensils,
+  Music,
+  Camera,
+};
 
 const EventDetails = () => {
+  const { data, isLoading } = useContent();
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <section className="py-20">
+          <div className="container mx-auto px-4">
+            <p>Loading content...</p>
+          </div>
+        </section>
+      </Layout>
+    );
+  }
+
+  // Hero
+  const title = data?.find((c) => c.key === "eventdetails_title")?.value || "Event Details";
+  const subtitle =
+    data?.find((c) => c.key === "eventdetails_subtitle")?.value ||
+    "Everything you need to know about our wedding day celebration.";
+
+  // Venue
+  const venueName =
+    data?.find((c) => c.key === "eventdetails_venue_name")?.value || "The Grand Estate";
+  const venueAddress =
+    data?.find((c) => c.key === "eventdetails_venue_address")?.value ||
+    "1234 Vineyard Lane<br />Napa Valley, California 94558";
+  const venueMap =
+    data?.find((c) => c.key === "eventdetails_venue_map_embed")?.value ||
+    "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3127.9558155896756!2d-122.28686722424619!3d38.29764397178591!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzjCsDE3JzUxLjUiTiAxMjLCsDE3JzAzLjkiVw!5e0!3m2!1sen!2sus!4v1234567890!5m2!1sen!2sus";
+  const venueDirections =
+    data?.find((c) => c.key === "eventdetails_venue_directions_link")?.value ||
+    "https://maps.google.com/?q=Napa+Valley+California";
+
+  // Schedule
+  const scheduleJson = data?.find((c) => c.key === "eventdetails_schedule")?.value;
+  let scheduleEvents: { time: string; event: string; description: string }[] = [];
+  try {
+    scheduleEvents = scheduleJson ? JSON.parse(scheduleJson) : [];
+  } catch {}
+
+  // Info Cards
+  const infoJson = data?.find((c) => c.key === "eventdetails_info")?.value;
+  let infoCards: { icon: string; title: string; description: string }[] = [];
+  try {
+    infoCards = infoJson ? JSON.parse(infoJson) : [];
+  } catch {}
+
   return (
     <Layout>
       {/* Hero Section */}
       <section className="py-20 md:py-32 romantic-gradient">
         <div className="container mx-auto px-4">
-          <SectionHeader
-            title="Event Details"
-            subtitle="Everything you need to know about our wedding day celebration."
-          />
+          <SectionHeader title={title} subtitle={subtitle} />
         </div>
       </section>
 
@@ -43,32 +86,28 @@ const EventDetails = () => {
                 </div>
                 <div>
                   <h3 className="font-serif text-2xl text-foreground mb-2">
-                    The Grand Estate
+                    {venueName}
                   </h3>
-                  <p className="text-muted-foreground">
-                    1234 Vineyard Lane<br />
-                    Napa Valley, California 94558
-                  </p>
+                  <p
+                    className="text-muted-foreground"
+                    dangerouslySetInnerHTML={{ __html: venueAddress }}
+                  />
                 </div>
               </div>
-              
-              {/* Map Placeholder */}
+
+              {/* Map */}
               <div className="aspect-video rounded-2xl bg-muted mb-6 overflow-hidden">
                 <iframe
                   title="Wedding Venue Location"
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3127.9558155896756!2d-122.28686722424619!3d38.29764397178591!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzjCsDE3JzUxLjUiTiAxMjLCsDE3JzAzLjkiVw!5e0!3m2!1sen!2sus!4v1234567890!5m2!1sen!2sus"
+                  src={venueMap}
                   className="w-full h-full border-0"
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
                 />
               </div>
-              
+
               <Button variant="outline" className="w-full md:w-auto" asChild>
-                <a
-                  href="https://maps.google.com/?q=Napa+Valley+California"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <a href={venueDirections} target="_blank" rel="noopener noreferrer">
                   Get Directions
                 </a>
               </Button>
@@ -120,27 +159,25 @@ const EventDetails = () => {
       <section className="py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
-            {[
-              { icon: Shirt, title: 'Dress Code', description: 'Formal / Black Tie Optional' },
-              { icon: Utensils, title: 'Dining', description: 'Plated dinner with vegetarian options' },
-              { icon: Music, title: 'Entertainment', description: 'Live band and DJ' },
-              { icon: Camera, title: 'Photography', description: 'Unplugged ceremony, please' },
-            ].map((item, index) => (
-              <motion.div
-                key={item.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="glass-card rounded-2xl p-6 text-center"
-              >
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 mb-4">
-                  <item.icon className="w-6 h-6 text-primary" />
-                </div>
-                <h4 className="font-serif text-lg text-foreground mb-2">{item.title}</h4>
-                <p className="text-muted-foreground text-sm">{item.description}</p>
-              </motion.div>
-            ))}
+            {infoCards.map((item, index) => {
+              const Icon = iconMap[item.icon] || Shirt;
+              return (
+                <motion.div
+                  key={item.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className="glass-card rounded-2xl p-6 text-center"
+                >
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 mb-4">
+                    <Icon className="w-6 h-6 text-primary" />
+                  </div>
+                  <h4 className="font-serif text-lg text-foreground mb-2">{item.title}</h4>
+                  <p className="text-muted-foreground text-sm">{item.description}</p>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>

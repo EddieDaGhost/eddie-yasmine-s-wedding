@@ -3,20 +3,7 @@ import { Section, Container } from '@/components/shared/Section';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { WeddingCard, WeddingCardHeader, WeddingCardTitle, WeddingCardDescription } from '@/components/shared/WeddingCard';
 import { FadeIn, StaggerContainer, StaggerItem } from '@/components/animation';
-
-const bridesmaids = [
-  { name: 'Sarah Chen', role: 'Maid of Honor', description: 'Yasmine\'s best friend since childhood' },
-  { name: 'Emma Rodriguez', role: 'Bridesmaid', description: 'College roommate and forever friend' },
-  { name: 'Lily Thompson', role: 'Bridesmaid', description: 'Cousin and adventure buddy' },
-  { name: 'Maya Patel', role: 'Bridesmaid', description: 'Coworker turned sister' },
-];
-
-const groomsmen = [
-  { name: 'Marcus Johnson', role: 'Best Man', description: 'Eddie\'s brother and lifelong confidant' },
-  { name: 'David Kim', role: 'Groomsman', description: 'High school best friend' },
-  { name: 'James Wilson', role: 'Groomsman', description: 'Basketball teammate and brother' },
-  { name: 'Alex Rivera', role: 'Groomsman', description: 'College roommate and business partner' },
-];
+import { useContent } from "@/lib/content/useContent";
 
 interface PartyMemberCardProps {
   name: string;
@@ -32,12 +19,12 @@ const PartyMemberCard = ({ name, role, description }: PartyMemberCardProps) => (
         {name.split(' ').map(n => n[0]).join('')}
       </span>
     </div>
-    
+
     {/* Role Badge */}
     <span className="inline-block px-3 py-1 bg-blush text-blush-foreground text-xs font-medium rounded-full mb-3">
       {role}
     </span>
-    
+
     <WeddingCardHeader>
       <WeddingCardTitle className="text-lg md:text-xl">
         {name}
@@ -50,14 +37,52 @@ const PartyMemberCard = ({ name, role, description }: PartyMemberCardProps) => (
 );
 
 const WeddingParty = () => {
+  const { data, isLoading } = useContent();
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <Section>
+          <Container>
+            <p>Loading content...</p>
+          </Container>
+        </Section>
+      </Layout>
+    );
+  }
+
+  // Hero
+  const title = data?.find((c) => c.key === "weddingparty_title")?.value || "The Wedding Party";
+  const subtitle =
+    data?.find((c) => c.key === "weddingparty_subtitle")?.value ||
+    "The wonderful people standing by our side on our special day.";
+
+  // Bridesmaids
+  const bridesmaidsJson = data?.find((c) => c.key === "weddingparty_bridesmaids")?.value;
+  let bridesmaids: PartyMemberCardProps[] = [];
+  try {
+    bridesmaids = bridesmaidsJson ? JSON.parse(bridesmaidsJson) : [];
+  } catch {}
+
+  // Groomsmen
+  const groomsmenJson = data?.find((c) => c.key === "weddingparty_groomsmen")?.value;
+  let groomsmen: PartyMemberCardProps[] = [];
+  try {
+    groomsmen = groomsmenJson ? JSON.parse(groomsmenJson) : [];
+  } catch {}
+
+  // Thank You
+  const thankYouTitle =
+    data?.find((c) => c.key === "weddingparty_thankyou_title")?.value || "Thank You";
+  const thankYouMessage =
+    data?.find((c) => c.key === "weddingparty_thankyou_message")?.value ||
+    "To our amazing wedding party: thank you for your love, support, and for standing by us as we begin this new chapter.";
+
   return (
     <Layout>
       {/* Hero Section */}
       <Section variant="gradient" spacing="lg">
-        <SectionHeader
-          title="The Wedding Party"
-          subtitle="The wonderful people standing by our side on our special day."
-        />
+        <SectionHeader title={title} subtitle={subtitle} />
       </Section>
 
       {/* Bridesmaids Section */}
@@ -67,9 +92,9 @@ const WeddingParty = () => {
             The Bride's Side
           </h3>
         </FadeIn>
-        
+
         <Container size="lg">
-          <StaggerContainer className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+          <StaggerContainer className="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-6 justify-center">
             {bridesmaids.map((member) => (
               <StaggerItem key={member.name}>
                 <PartyMemberCard {...member} />
@@ -91,9 +116,9 @@ const WeddingParty = () => {
             The Groom's Side
           </h3>
         </FadeIn>
-        
+
         <Container size="lg">
-          <StaggerContainer className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+          <StaggerContainer className="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-6 justify-center">
             {groomsmen.map((member) => (
               <StaggerItem key={member.name}>
                 <PartyMemberCard {...member} />
@@ -109,11 +134,10 @@ const WeddingParty = () => {
           <FadeIn>
             <div className="text-center">
               <p className="font-display text-2xl text-foreground mb-4">
-                Thank You
+                {thankYouTitle}
               </p>
-              <p className="text-muted-foreground leading-relaxed">
-                To our amazing wedding party: thank you for your love, support, and for standing 
-                by us as we begin this new chapter.
+              <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
+                {thankYouMessage}
               </p>
             </div>
           </FadeIn>
