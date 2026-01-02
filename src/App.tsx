@@ -31,7 +31,13 @@ import PhotoUpload from "./pages/locked/PhotoUpload";
 import LiveUpdates from "./pages/locked/LiveUpdates";
 import Gallery from "./pages/locked/Gallery";
 import SecretPage from "./pages/locked/SecretPage";
-
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminContent from "./pages/admin/AdminContent";
+import AdminGuestbook from "./pages/admin/AdminGuestbook";
+import AdminPhotos from "./pages/admin/AdminPhotos";
+import AdminRSVPs from "./pages/admin/AdminRSVPs";
+import AdminSongRequests from "./pages/admin/AdminSongRequests";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,94 +47,36 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <AdminAuthProvider>
-        <BrowserRouter>
-          <Routes>
-
-            {/* Admin Login */}
-            <Route path="/admin/login" element={<AdminLogin />} />
-
-            {/* Public Pages */}
-            <Route path="/" element={<Home />} />
-            <Route path="/our-story" element={<OurStory />} />
-            <Route path="/wedding-party" element={<WeddingParty />} />
-            <Route path="/event-details" element={<EventDetails />} />
-            <Route path="/travel" element={<Travel />} />
-            <Route path="/faq" element={<FAQ />} />
-            <Route path="/registry" element={<Registry />} />
-            <Route path="/rsvp" element={<RSVP />} />
-
-            {/* Locked Pages */}
-            <Route path="/timeline" element={<InteractiveTimeline />} />
-            <Route path="/quiz" element={<GuestQuiz />} />
-            <Route path="/guestbook" element={<MessageWall />} />
-            <Route path="/photos" element={<PhotoUpload />} />
-            <Route path="/updates" element={<LiveUpdates />} />
-            <Route path="/gallery" element={<Gallery />} />
-            <Route path="/secret" element={<SecretPage />} />
-
-            {/* Admin Dashboard (Protected) */}
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute>
-                  <AdminLayout>
-                    <AdminHome />
-                  </AdminLayout>
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/admin/rsvps"
-              element={
-                <ProtectedRoute>
-                  <AdminLayout>
-                    <AdminRsvps />
-                  </AdminLayout>
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/admin/guestbook"
-              element={
-                <ProtectedRoute>
-                  <AdminLayout>
-                    <AdminGuestbook />
-                  </AdminLayout>
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/admin/photos"
-              element={
-                <ProtectedRoute>
-                  <AdminLayout>
-                    <AdminPhotos />
-                  </AdminLayout>
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/admin/content"
-              element={
-                <ProtectedRoute>
-                  <AdminLayout>
-                    <AdminContent />
-                  </AdminLayout>
-                </ProtectedRoute>
-              }
-            />
-
-            {/* 404 */}
-            <Route path="*" element={<NotFound />} />
-
-          </Routes>
-        </BrowserRouter>
-      </AdminAuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/our-story" element={<OurStory />} />
+          <Route path="/wedding-party" element={<WeddingParty />} />
+          <Route path="/event-details" element={<EventDetails />} />
+          <Route path="/travel" element={<Travel />} />
+          <Route path="/faq" element={<FAQ />} />
+          <Route path="/registry" element={<Registry />} />
+          <Route path="/rsvp" element={<RSVP />} />
+          {/* Locked Pages */}
+          <Route path="/timeline" element={<InteractiveTimeline />} />
+          <Route path="/quiz" element={<GuestQuiz />} />
+          <Route path="/guestbook" element={<MessageWall />} />
+          <Route path="/photos" element={<PhotoUpload />} />
+          <Route path="/updates" element={<LiveUpdates />} />
+          <Route path="/gallery" element={<Gallery />} />
+          <Route path="/secret" element={<SecretPage />} />
+          {/* Admin Routes */}
+          <Route path="/admin" element={<AdminLogin />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/content" element={<AdminContent />} />
+          <Route path="/admin/guestbook" element={<AdminGuestbook />} />
+          <Route path="/admin/photos" element={<AdminPhotos />} />
+          <Route path="/admin/rsvps" element={<AdminRSVPs />} />
+          <Route path="/admin/song-requests" element={<AdminSongRequests />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );
