@@ -53,11 +53,13 @@ export const RSVPFormCard = ({ onSubmit, onSuccess }: RSVPFormCardProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('RSVPFormCard: submit clicked', formData);
     
     // Validate all fields
     const result = rsvpFormSchema.safeParse(formData);
     
     if (!result.success) {
+      console.warn('RSVPFormCard: validation failed', result.error.errors);
       const fieldErrors: Partial<Record<keyof RSVPFormData, string>> = {};
       result.error.errors.forEach((error) => {
         const field = error.path[0] as keyof RSVPFormData;
@@ -80,7 +82,9 @@ export const RSVPFormCard = ({ onSubmit, onSuccess }: RSVPFormCardProps) => {
 
     setIsLoading(true);
     try {
+      console.log('RSVPFormCard: validation passed, calling onSubmit');
       await onSubmit(result.data);
+      console.log('RSVPFormCard: onSubmit resolved, calling onSuccess');
       onSuccess(result.data.fullName);
     } catch (error) {
       // Handle error - could show a toast here
