@@ -3,6 +3,7 @@ import { CheckCircle2, Heart, Calendar, MapPin, ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useContent } from '@/lib/content/useContent';
 
 interface RSVPSuccessViewProps {
   guestName: string;
@@ -10,6 +11,13 @@ interface RSVPSuccessViewProps {
 }
 
 export const RSVPSuccessView = ({ guestName, onSubmitAnother }: RSVPSuccessViewProps) => {
+  const { data } = useContent();
+
+  const venueName =
+    data?.find((c) => c.key === 'eventdetails_venue_name')?.value || 'The Grand Estate';
+  const venueAddress =
+    data?.find((c) => c.key === 'eventdetails_venue_address')?.value || 'Napa Valley, California';
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -98,9 +106,9 @@ export const RSVPSuccessView = ({ guestName, onSubmitAnother }: RSVPSuccessViewP
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
               <MapPin className="w-5 h-5 text-primary" />
             </div>
-            <div className="text-left">
-              <p className="font-medium">The Grand Estate</p>
-              <p className="text-sm text-muted-foreground">Napa Valley, California</p>
+              <div className="text-left">
+              <p className="font-medium">{venueName}</p>
+              <p className="text-sm text-muted-foreground" dangerouslySetInnerHTML={{ __html: venueAddress }} />
             </div>
           </div>
         </div>

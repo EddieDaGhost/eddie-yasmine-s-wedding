@@ -15,6 +15,7 @@ export default function RsvpTable() {
             <th className="p-3">Email</th>
             <th className="p-3">Attending</th>
             <th className="p-3">Guests</th>
+             <th className="p-3">Meal</th>
             <th className="p-3">Message</th>
             <th className="p-3">Submitted</th>
           </tr>
@@ -29,6 +30,7 @@ export default function RsvpTable() {
                 {rsvp.attending ? "Yes" : "No"}
               </td>
               <td className="p-3">{rsvp.guests}</td>
+               <td className="p-3">{rsvp.meal_preference || "—"}</td>
               <td className="p-3">{rsvp.message || "—"}</td>
               <td className="p-3">
                 {new Date(rsvp.created_at).toLocaleString()}

@@ -13,29 +13,29 @@ export async function getRsvpStats() {
   const { count: attending } = await supabase
     .from("rsvps")
     .select("*", { count: "exact", head: true })
-    .eq("status", "attending");
+    .eq("attending", true);
 
   // Not attending
   const { count: notAttending } = await supabase
     .from("rsvps")
     .select("*", { count: "exact", head: true })
-    .eq("status", "not_attending");
+    .eq("attending", false);
 
   // No response
   const { count: noResponse } = await supabase
     .from("rsvps")
     .select("*", { count: "exact", head: true })
-    .is("status", null);
+    .is("attending", null);
 
   // Meal choices breakdown
   const { data: mealRows } = await supabase
     .from("rsvps")
-    .select("meal_choice");
+    .select("meal_preference");
 
   const mealChoices: Record<string, number> = {};
   mealRows?.forEach((row) => {
-    if (!row.meal_choice) return;
-    mealChoices[row.meal_choice] = (mealChoices[row.meal_choice] || 0) + 1;
+    if (!row.meal_preference) return;
+    mealChoices[row.meal_preference] = (mealChoices[row.meal_preference] || 0) + 1;
   });
 
   // Allergies count

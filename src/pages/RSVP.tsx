@@ -15,22 +15,34 @@ const RSVP = () => {
   const [submittedName, setSubmittedName] = useState('');
 
   /**
-   * Submit RSVP to Supabase
+   * Submit RSVP to Supabase - mapped to existing table columns
    */
   const handleSubmit = useCallback(async (data: RSVPFormData): Promise<void> => {
     try {
-      // Insert RSVP into Supabase
-      const { error } = await supabase.from('rsvps').insert({
-        full_name: data.fullName,
+      // Map form data to your existing table columns
+      const rsvpData: any = {
+        name: data.fullName,
         email: data.email,
-        phone: data.phone,
-        number_of_guests: parseInt(data.numberOfGuests),
-        attending: data.attending,
-        dietary_restrictions: data.dietaryRestrictions || null,
-        song_request: data.songRequest || null,
-        notes: data.notes || null,
-        created_at: new Date().toISOString(),
-      });
+        // This form is an affirmative RSVP — set attending to true
+        attending: true,
+        guests: parseInt(data.numberOfGuests, 10),
+        // DB column is `meal_preference`; map from the form's `mealChoice`
+        meal_preference: data.mealChoice || null,
+      };
+
+      // Add optional message field (combines dietary, song, and notes)
+      const messageParts = [];
+      if (data.dietaryRestrictions) messageParts.push(`Dietary: ${data.dietaryRestrictions}`);
+      if (data.songRequest) messageParts.push(`Song Request: ${data.songRequest}`);
+      if (data.notes) messageParts.push(`Notes: ${data.notes}`);
+      if (data.phone) messageParts.push(`Phone: ${data.phone}`);
+      
+      if (messageParts.length > 0) {
+        rsvpData.message = messageParts.join(' | ');
+      }
+
+      // Insert RSVP into Supabase
+      const { error } = await supabase.from('rsvps').insert(rsvpData);
 
       if (error) {
         console.error('Supabase error:', error);
