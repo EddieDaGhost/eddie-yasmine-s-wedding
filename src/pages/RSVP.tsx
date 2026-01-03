@@ -6,8 +6,8 @@ import { Section, Container } from '@/components/shared/Section';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { FadeIn } from '@/components/animation';
 import { RSVPFormCard, RSVPSuccessView, RSVPFormData } from '@/components/features/rsvp';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const RSVP = () => {
   const { toast } = useToast();
@@ -15,52 +15,39 @@ const RSVP = () => {
   const [submittedName, setSubmittedName] = useState('');
 
   /**
-   * Placeholder submit handler - replace with Supabase logic
+   * Submit RSVP to Supabase
    */
-  const handleSubmit = useCallback(async (formData: RSVPFormData): Promise<void> => {
-    // Map form values to DB columns
-    const payload = {
-      name: formData.fullName,
-      email: formData.email,
-      guests: parseInt(formData.numberOfGuests, 10) || 1,
-      meal_choice: formData.mealChoice || null,
-      message: formData.notes || null,
-      status: 'attending',
-    } as const;
+  const handleSubmit = useCallback(async (data: RSVPFormData): Promise<void> => {
+    try {
+      // Insert RSVP into Supabase
+      const { error } = await supabase.from('rsvps').insert({
+        full_name: data.fullName,
+        email: data.email,
+        phone: data.phone,
+        number_of_guests: parseInt(data.numberOfGuests),
+        attending: data.attending,
+        dietary_restrictions: data.dietaryRestrictions || null,
+        song_request: data.songRequest || null,
+        notes: data.notes || null,
+        created_at: new Date().toISOString(),
+      });
 
-    // Insert RSVP row
-    const { data: insertData, error: insertError } = await supabase
-      .from('rsvps')
-      .insert([payload])
-      .select('id')
-      .limit(1);
-
-    if (insertError) {
-      console.error('Failed to insert RSVP:', insertError);
-      throw insertError;
-    }
-
-    const insertedId = Array.isArray(insertData) && insertData[0]?.id ? insertData[0].id : null;
-
-    // If user provided a song request, attempt to save to `song_requests` table
-    if (formData.songRequest?.trim()) {
-      // Expecting format "Artist - Song Title" but tolerate freeform input
-      const parts = formData.songRequest.split('-').map((s) => s.trim()).filter(Boolean);
-      let title = formData.songRequest;
-      let artist = null;
-      if (parts.length >= 2) {
-        artist = parts[0];
-        title = parts.slice(1).join(' - ');
+      if (error) {
+        console.error('Supabase error:', error);
+        throw new Error(error.message);
       }
 
-      try {
-        await supabase.from('song_requests').insert([{ title, artist, guest_id: insertedId }]);
-      } catch (err) {
-        // Non-fatal: log and continue
-        console.warn('Failed to save song request:', err);
-      }
+      console.log('RSVP successfully saved to Supabase!', data);
+    } catch (error) {
+      console.error('Error submitting RSVP:', error);
+      toast({
+        title: "Submission Failed",
+        description: "There was an error saving your RSVP. Please try again.",
+        variant: "destructive",
+      });
+      throw error; // Re-throw so the form knows it failed
     }
-  }, []);
+  }, [toast]);
 
   const handleSuccess = useCallback((name: string) => {
     setSubmittedName(name);
@@ -101,13 +88,13 @@ const RSVP = () => {
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 0.5 }}
+            animate={{ opacity: 1 }}
             transition={{ duration: 1 }}
             className="absolute top-20 left-10 w-32 h-32 bg-primary/5 rounded-full blur-3xl"
           />
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 0.5 }}
+            animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 0.2 }}
             className="absolute bottom-20 right-10 w-40 h-40 bg-accent/5 rounded-full blur-3xl"
           />
