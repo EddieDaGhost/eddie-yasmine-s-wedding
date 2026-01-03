@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Lock, Heart } from 'lucide-react';
@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -14,25 +15,44 @@ const AdminLogin = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // Check if already logged in
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigate('/admin/dashboard');
+      }
+    };
+    checkSession();
+  }, [navigate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate login - will be replaced with Supabase Auth
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // For demo purposes, accept any credentials
-    if (email && password) {
-      localStorage.setItem('admin_authenticated', 'true');
-      toast({
-        title: "Welcome!",
-        description: "You've been logged in successfully.",
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
-      navigate('/admin/dashboard');
-    } else {
+
+      if (error) {
+        toast({
+          title: "Login Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else if (data.session) {
+        toast({
+          title: "Welcome!",
+          description: "You've been logged in successfully.",
+        });
+        navigate('/admin/dashboard');
+      }
+    } catch (error) {
       toast({
         title: "Error",
-        description: "Please enter valid credentials.",
+        description: "An unexpected error occurred.",
         variant: "destructive",
       });
     }
