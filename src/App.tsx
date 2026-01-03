@@ -23,6 +23,11 @@ import SecretPage from "./pages/locked/SecretPage";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminSongRequests from "./pages/admin/AdminSongRequests";
+// Add these missing imports:
+import AdminContent from "./pages/admin/AdminContent";
+import AdminGuestbook from "./pages/admin/AdminGuestbook";
+import AdminPhotos from "./pages/admin/AdminPhotos";
+import AdminRsvps from "./pages/admin/AdminRsvps";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
