@@ -22,6 +22,10 @@ import Gallery from "./pages/locked/Gallery";
 import SecretPage from "./pages/locked/SecretPage";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminContent from "./pages/admin/AdminContent";
+import AdminGuestbook from "./pages/admin/AdminGuestbook";
+import AdminPhotos from "./pages/admin/AdminPhotos";
+import AdminRsvps from "./pages/admin/AdminRSVPs";
 import AdminSongRequests from "./pages/admin/AdminSongRequests";
 import NotFound from "./pages/NotFound";
 
