@@ -6,6 +6,7 @@ import { Section, Container } from '@/components/shared/Section';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { FadeIn } from '@/components/animation';
 import { RSVPFormCard, RSVPSuccessView, RSVPFormData } from '@/components/features/rsvp';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const RSVP = () => {
@@ -16,24 +17,49 @@ const RSVP = () => {
   /**
    * Placeholder submit handler - replace with Supabase logic
    */
-  const handleSubmit = useCallback(async (data: RSVPFormData): Promise<void> => {
-    // TODO: Replace with actual Supabase insert
-    // Example:
-    // const { error } = await supabase.from('guests').insert({
-    //   name: data.fullName,
-    //   email: data.email,
-    //   plus_ones: parseInt(data.numberOfGuests) - 1,
-    //   dietary_needs: data.notes,
-    //   attending: true,
-    // });
-    
-    console.log('RSVP Form Data:', data);
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // You can throw an error here to test error handling
-    // throw new Error('Submission failed');
+  const handleSubmit = useCallback(async (formData: RSVPFormData): Promise<void> => {
+    // Map form values to DB columns
+    const payload = {
+      name: formData.fullName,
+      email: formData.email,
+      guests: parseInt(formData.numberOfGuests, 10) || 1,
+      meal_choice: formData.mealChoice || null,
+      message: formData.notes || null,
+      status: 'attending',
+    } as const;
+
+    // Insert RSVP row
+    const { data: insertData, error: insertError } = await supabase
+      .from('rsvps')
+      .insert([payload])
+      .select('id')
+      .limit(1);
+
+    if (insertError) {
+      console.error('Failed to insert RSVP:', insertError);
+      throw insertError;
+    }
+
+    const insertedId = Array.isArray(insertData) && insertData[0]?.id ? insertData[0].id : null;
+
+    // If user provided a song request, attempt to save to `song_requests` table
+    if (formData.songRequest?.trim()) {
+      // Expecting format "Artist - Song Title" but tolerate freeform input
+      const parts = formData.songRequest.split('-').map((s) => s.trim()).filter(Boolean);
+      let title = formData.songRequest;
+      let artist = null;
+      if (parts.length >= 2) {
+        artist = parts[0];
+        title = parts.slice(1).join(' - ');
+      }
+
+      try {
+        await supabase.from('song_requests').insert([{ title, artist, guest_id: insertedId }]);
+      } catch (err) {
+        // Non-fatal: log and continue
+        console.warn('Failed to save song request:', err);
+      }
+    }
   }, []);
 
   const handleSuccess = useCallback((name: string) => {
