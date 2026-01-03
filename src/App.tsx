@@ -8,6 +8,7 @@ import AdminRsvps from "./pages/admin/rsvps";
 import AdminGuestbook from "./pages/admin/guestbook";
 import AdminPhotos from "./pages/admin/photos";
 import AdminContent from "./pages/admin/content";
+import AdminSongRequests from "./pages/admin/AdminSongRequests";
 
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -31,12 +32,7 @@ import PhotoUpload from "./pages/locked/PhotoUpload";
 import LiveUpdates from "./pages/locked/LiveUpdates";
 import Gallery from "./pages/locked/Gallery";
 import SecretPage from "./pages/locked/SecretPage";
-import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminContent from "./pages/admin/AdminContent";
-import AdminGuestbook from "./pages/admin/AdminGuestbook";
-import AdminPhotos from "./pages/admin/AdminPhotos";
-import AdminRSVPs from "./pages/admin/AdminRSVPs";
 import AdminSongRequests from "./pages/admin/AdminSongRequests";
 import NotFound from "./pages/NotFound";
 
@@ -72,7 +68,7 @@ const App = () => (
           <Route path="/admin/content" element={<AdminContent />} />
           <Route path="/admin/guestbook" element={<AdminGuestbook />} />
           <Route path="/admin/photos" element={<AdminPhotos />} />
-          <Route path="/admin/rsvps" element={<AdminRSVPs />} />
+          <Route path="/admin/rsvps" element={<AdminRsvps />} />
           <Route path="/admin/song-requests" element={<AdminSongRequests />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
