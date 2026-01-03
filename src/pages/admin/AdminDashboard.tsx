@@ -100,6 +100,26 @@ const AdminDashboard = () => {
             <Eye className="w-5 h-5" />
             View Site
           </Link>
+          <Link to="/admin/rsvps" className="flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+            <Users className="w-5 h-5" />
+            RSVPs
+          </Link>
+          <Link to="/admin/content" className="flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+            <Settings className="w-5 h-5" />
+            Edit Content
+          </Link>
+          <Link to="/admin/guestbook" className="flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+            <MessageSquare className="w-5 h-5" />
+            Guestbook
+          </Link>
+          <Link to="/admin/photos" className="flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+            <Image className="w-5 h-5" />
+            Photos
+          </Link>
+          <Link to="/admin/song-requests" className="flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+            <Bell className="w-5 h-5" />
+            Song Requests
+          </Link>
         </nav>
 
         <div className="absolute bottom-6 left-6 right-6">
