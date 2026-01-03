@@ -1,4 +1,4 @@
-import RsvpTable from "../../components/admin/RsvpTable";
+import RsvpTable from "../../components/admin/Rsvptable";
 
 export default function AdminRsvps() {
   return (

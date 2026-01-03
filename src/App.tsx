@@ -1,14 +1,3 @@
-import { AdminAuthProvider } from "./contexts/AdminAuthContext";
-import ProtectedRoute from "./components/admin/ProtectedRoute";
-import AdminLogin from "./pages/admin/AdminLogin";
-
-import AdminLayout from "./layouts/AdminLayout";
-import AdminHome from "./pages/admin";
-import AdminRsvps from "./pages/admin/rsvps";
-import AdminGuestbook from "./pages/admin/guestbook";
-import AdminPhotos from "./pages/admin/photos";
-import AdminContent from "./pages/admin/content";
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -31,6 +20,7 @@ import PhotoUpload from "./pages/locked/PhotoUpload";
 import LiveUpdates from "./pages/locked/LiveUpdates";
 import Gallery from "./pages/locked/Gallery";
 import SecretPage from "./pages/locked/SecretPage";
+
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminContent from "./pages/admin/AdminContent";
