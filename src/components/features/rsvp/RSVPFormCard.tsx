@@ -9,7 +9,7 @@ import { RSVPTextarea } from './RSVPTextarea';
 import { RSVPLoadingSpinner } from './RSVPLoadingSpinner';
 import { rsvpFormSchema, RSVPFormData, mealOptions as defaultMealOptions, guestOptions } from './types';
 import { cn } from '@/lib/utils';
-import { useContent } from '@/lib/content/useContent';
+import { useAllContent } from '@/hooks/useContent';
 
 interface RSVPFormCardProps {
   onSubmit: (data: RSVPFormData, attending?: boolean) => Promise<void>;
@@ -27,7 +27,7 @@ const initialFormData = {
 };
 
 export const RSVPFormCard = ({ onSubmit, onSuccess }: RSVPFormCardProps) => {
-  const { data: contentData } = useContent();
+  const { data: contentData } = useAllContent();
 
   // Resolve meal options from content editor. Support JSON array or newline-separated list.
   const mealOptionsFromContent = (() => {

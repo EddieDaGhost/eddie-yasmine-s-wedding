@@ -8,7 +8,7 @@ import { FadeIn, StaggerContainer, StaggerItem } from '@/components/animation';
 import { Button } from '@/components/ui/button';
 import { CountdownTimer } from '@/components/shared/CountdownTimer';
 import heroImage from '@/assets/hero-wedding.jpg';
-import { useContent } from "@/lib/content/useContent";
+import { useAllContent } from "@/hooks/useContent";
 
 const quickLinks = [
   { 
@@ -32,7 +32,7 @@ const quickLinks = [
 ];
 
 const Home = () => {
-  const { data, isLoading } = useContent();
+  const { data, isLoading } = useAllContent();
 
   if (isLoading) {
     return (

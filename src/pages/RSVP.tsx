@@ -32,14 +32,9 @@ const RSVP = () => {
         song_requests: data.songRequest || null,
       };
 
-      // Add optional message field (dietary and notes only)
-      const messageParts = [];
-      if (data.dietaryRestrictions) messageParts.push(`Dietary: ${data.dietaryRestrictions}`);
-      if (data.notes) messageParts.push(`Notes: ${data.notes}`);
-      if (data.phone) messageParts.push(`Phone: ${data.phone}`);
-      
-      if (messageParts.length > 0) {
-        rsvpData.message = messageParts.join(' | ');
+      // Add optional notes to message field
+      if (data.notes) {
+        rsvpData.message = data.notes;
       }
 
       // Insert RSVP into Supabase

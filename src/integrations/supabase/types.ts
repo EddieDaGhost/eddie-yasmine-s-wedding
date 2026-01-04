@@ -169,8 +169,10 @@ export type Database = {
           email: string | null
           guests: number | null
           id: string
+          meal_preference: string | null
           message: string | null
           name: string | null
+          song_requests: string | null
         }
         Insert: {
           attending?: boolean | null
@@ -178,8 +180,10 @@ export type Database = {
           email?: string | null
           guests?: number | null
           id?: string
+          meal_preference?: string | null
           message?: string | null
           name?: string | null
+          song_requests?: string | null
         }
         Update: {
           attending?: boolean | null
@@ -187,8 +191,10 @@ export type Database = {
           email?: string | null
           guests?: number | null
           id?: string
+          meal_preference?: string | null
           message?: string | null
           name?: string | null
+          song_requests?: string | null
         }
         Relationships: []
       }

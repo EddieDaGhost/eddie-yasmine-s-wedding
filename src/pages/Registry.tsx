@@ -3,10 +3,10 @@ import { Gift, ExternalLink, Heart } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { Button } from '@/components/ui/button';
-import { useContent } from "@/lib/content/useContent";
+import { useAllContent } from "@/hooks/useContent";
 
 const Registry = () => {
-  const { data, isLoading } = useContent();
+  const { data, isLoading } = useAllContent();
 
   if (isLoading) {
     return (

@@ -3,7 +3,7 @@ import { MapPin, Clock, Shirt, Utensils, Music, Camera } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { Button } from '@/components/ui/button';
-import { useContent } from "@/lib/content/useContent";
+import { useAllContent } from "@/hooks/useContent";
 
 // Map icon names from CMS to actual Lucide icons
 const iconMap: Record<string, any> = {
@@ -14,7 +14,7 @@ const iconMap: Record<string, any> = {
 };
 
 const EventDetails = () => {
-  const { data, isLoading } = useContent();
+  const { data, isLoading } = useAllContent();
 
   if (isLoading) {
     return (
