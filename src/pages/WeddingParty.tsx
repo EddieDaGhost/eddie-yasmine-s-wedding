@@ -3,7 +3,7 @@ import { Section, Container } from '@/components/shared/Section';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { WeddingCard, WeddingCardHeader, WeddingCardTitle, WeddingCardDescription } from '@/components/shared/WeddingCard';
 import { FadeIn, StaggerContainer, StaggerItem } from '@/components/animation';
-import { useContent } from "@/lib/content/useContent";
+import { useAllContent } from "@/hooks/useContent";
 
 interface PartyMemberCardProps {
   name: string;
@@ -37,7 +37,7 @@ const PartyMemberCard = ({ name, role, description }: PartyMemberCardProps) => (
 );
 
 const WeddingParty = () => {
-  const { data, isLoading } = useContent();
+  const { data, isLoading } = useAllContent();
 
   if (isLoading) {
     return (

@@ -3,7 +3,7 @@ import { CheckCircle2, Heart, Calendar, MapPin, ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { useContent } from '@/lib/content/useContent';
+import { useAllContent } from '@/hooks/useContent';
 
 interface RSVPSuccessViewProps {
   guestName: string;
@@ -11,7 +11,7 @@ interface RSVPSuccessViewProps {
 }
 
 export const RSVPSuccessView = ({ guestName, onSubmitAnother }: RSVPSuccessViewProps) => {
-  const { data } = useContent();
+  const { data } = useAllContent();
 
   const venueName =
     data?.find((c) => c.key === 'eventdetails_venue_name')?.value || 'The Grand Estate';

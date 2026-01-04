@@ -11,7 +11,7 @@ import { formatDistanceToNow } from 'date-fns';
 interface SongRequest {
   id: string;
   name: string | null;
-  song_requests: string | null;
+  message: string | null;
   created_at: string;
 }
 
@@ -25,8 +25,8 @@ const AdminSongRequests = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('rsvps')
-        .select('id, name, song_requests, created_at')
-        .not('song_requests', 'is', null)
+        .select('id, name, message, created_at')
+        .not('message', 'is', null)
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data as SongRequest[];
@@ -35,7 +35,7 @@ const AdminSongRequests = () => {
 
   const deleteSong = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('rsvps').update({ song_requests: null }).eq('id', id);
+      const { error } = await supabase.from('rsvps').update({ message: null }).eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -77,7 +77,7 @@ const AdminSongRequests = () => {
                 </div>
                 <div>
                   <h4 className="font-serif text-lg text-foreground">
-                    {song.song_requests || 'No song specified'}
+                    {song.message || 'No song specified'}
                   </h4>
                   <p className="text-muted-foreground text-sm">
                     Requested by {song.name || 'Guest'}

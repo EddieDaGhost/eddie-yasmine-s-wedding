@@ -7,10 +7,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { useContent } from "@/lib/content/useContent";
+import { useAllContent } from "@/hooks/useContent";
 
 const FAQ = () => {
-  const { data, isLoading } = useContent();
+  const { data, isLoading } = useAllContent();
 
   if (isLoading) {
     return (

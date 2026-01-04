@@ -4,7 +4,7 @@ import { Section, Container } from '@/components/shared/Section';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { FadeIn } from '@/components/animation';
 import coupleImage from '@/assets/couple-story.jpg';
-import { useContent } from "@/lib/content/useContent";
+import { useAllContent } from "@/hooks/useContent";
 
 const timelineEvents = [
   {
@@ -46,7 +46,7 @@ const timelineEvents = [
 ];
 
 const OurStory = () => {
-  const { data, isLoading } = useContent();
+  const { data, isLoading } = useAllContent();
 
   if (isLoading) {
     return (
