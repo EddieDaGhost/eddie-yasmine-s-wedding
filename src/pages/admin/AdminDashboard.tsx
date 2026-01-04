@@ -4,14 +4,23 @@ import { motion } from 'framer-motion';
 import { 
   Users, MessageSquare, Image, Bell, Settings, LogOut, 
   Heart, CheckCircle, XCircle, Eye, Trash2, Plus,
-  BarChart3, Calendar, Mail
+  BarChart3, Calendar, Mail, Camera, Edit2, Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { formatDistanceToNow } from 'date-fns';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface Guest {
   id: string;
@@ -32,6 +41,15 @@ interface Message {
   createdAt: string;
 }
 
+interface Photo {
+  id: string;
+  file_url: string | null;
+  caption: string | null;
+  guest_id: string;
+  approved: boolean | null;
+  created_at: string;
+}
+
 const mockMessages: Message[] = [
   { id: '1', name: 'Sarah & Tom', content: 'Wishing you both a lifetime of love!', approved: true, createdAt: '2027-07-02T16:30:00' },
   { id: '2', name: 'The Chen Family', content: 'Congratulations! So happy for you both.', approved: false, createdAt: '2027-07-02T17:00:00' },
@@ -40,10 +58,14 @@ const mockMessages: Message[] = [
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [guests, setGuests] = useState<Guest[]>([]);
   const [messages, setMessages] = useState<Message[]>(mockMessages);
   const [newUpdate, setNewUpdate] = useState({ title: '', content: '' });
   const [isLoadingGuests, setIsLoadingGuests] = useState(true);
+  const [photoFilter, setPhotoFilter] = useState<'all' | 'pending' | 'approved'>('all');
+  const [editingPhoto, setEditingPhoto] = useState<Photo | null>(null);
+  const [editCaption, setEditCaption] = useState('');
 
   useEffect(() => {
     // Check if admin is authenticated
@@ -88,6 +110,66 @@ const AdminDashboard = () => {
     fetchGuests();
   }, [toast]);
 
+  // Fetch photos
+  const { data: photos, isLoading: photosLoading } = useQuery({
+    queryKey: ['admin-dashboard-photos'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('photos')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data as Photo[];
+    },
+  });
+
+  // Photo mutations
+  const updatePhoto = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Photo> }) => {
+      const { error } = await supabase
+        .from('photos')
+        .update(updates)
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-dashboard-photos'] });
+      toast({ title: 'Photo updated!' });
+      setEditingPhoto(null);
+    },
+    onError: (error) => {
+      toast({ title: 'Error updating photo', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const deletePhoto = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('photos').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-dashboard-photos'] });
+      toast({ title: 'Photo deleted!' });
+    },
+    onError: (error) => {
+      toast({ title: 'Error deleting photo', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const handleEditPhoto = (photo: Photo) => {
+    setEditingPhoto(photo);
+    setEditCaption(photo.caption || '');
+  };
+
+  const handleSavePhotoEdit = () => {
+    if (editingPhoto) {
+      updatePhoto.mutate({
+        id: editingPhoto.id,
+        updates: { caption: editCaption },
+      });
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('admin_authenticated');
     navigate('/admin');
@@ -116,6 +198,15 @@ const AdminDashboard = () => {
     toast({ title: "Update posted!", description: "All guests will see this update." });
     setNewUpdate({ title: '', content: '' });
   };
+
+  // Filter photos
+  const filteredPhotos = photos?.filter((p) => {
+    if (photoFilter === 'pending') return !p.approved;
+    if (photoFilter === 'approved') return p.approved;
+    return true;
+  });
+
+  const pendingPhotosCount = photos?.filter((p) => !p.approved).length || 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -175,12 +266,13 @@ const AdminDashboard = () => {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           {[
             { label: 'Total Invited', value: stats.total, icon: Users, color: 'text-primary' },
             { label: 'Attending', value: stats.attending, icon: CheckCircle, color: 'text-sage' },
             { label: 'Declined', value: stats.declined, icon: XCircle, color: 'text-destructive' },
             { label: 'Total Guests', value: stats.totalGuests, icon: BarChart3, color: 'text-gold' },
+            { label: 'Pending Photos', value: pendingPhotosCount, icon: Camera, color: 'text-amber-500' },
           ].map((stat, i) => (
             <motion.div
               key={stat.label}
@@ -201,6 +293,9 @@ const AdminDashboard = () => {
           <TabsList className="bg-muted/50">
             <TabsTrigger value="guests" className="gap-2">
               <Users className="w-4 h-4" /> Guests
+            </TabsTrigger>
+            <TabsTrigger value="photos" className="gap-2">
+              <Camera className="w-4 h-4" /> Photos {pendingPhotosCount > 0 && `(${pendingPhotosCount})`}
             </TabsTrigger>
             <TabsTrigger value="messages" className="gap-2">
               <MessageSquare className="w-4 h-4" /> Messages
@@ -253,6 +348,129 @@ const AdminDashboard = () => {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* Photos Tab */}
+          <TabsContent value="photos">
+            <div className="space-y-4">
+              {/* Filter Buttons */}
+              <div className="flex gap-2 flex-wrap">
+                {[
+                  { key: 'all', label: `All (${photos?.length || 0})` },
+                  { key: 'pending', label: `Pending (${pendingPhotosCount})` },
+                  { key: 'approved', label: `Approved (${photos?.filter(p => p.approved).length || 0})` },
+                ].map((tab) => (
+                  <Button
+                    key={tab.key}
+                    variant={photoFilter === tab.key ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setPhotoFilter(tab.key as typeof photoFilter)}
+                  >
+                    {tab.label}
+                  </Button>
+                ))}
+              </div>
+
+              {/* Photos Grid */}
+              {photosLoading ? (
+                <div className="flex justify-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : filteredPhotos && filteredPhotos.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                  {filteredPhotos.map((photo) => (
+                    <motion.div
+                      key={photo.id}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="glass-card rounded-xl overflow-hidden group"
+                    >
+                      <div className="aspect-square bg-muted relative">
+                        {photo.file_url ? (
+                          <img
+                            src={photo.file_url}
+                            alt={photo.caption || 'Guest photo'}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Image className="w-8 h-8 text-muted-foreground" />
+                          </div>
+                        )}
+
+                        {/* Status Badge */}
+                        <div className="absolute top-2 left-2">
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                            photo.approved
+                              ? 'bg-green-500/90 text-white'
+                              : 'bg-amber-500/90 text-white'
+                          }`}>
+                            {photo.approved ? 'Approved' : 'Pending'}
+                          </span>
+                        </div>
+
+                        {/* Hover Actions */}
+                        <div className="absolute inset-0 bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                          {!photo.approved ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-9 w-9 p-0"
+                              onClick={() => updatePhoto.mutate({ id: photo.id, updates: { approved: true } })}
+                              title="Approve"
+                            >
+                              <CheckCircle className="w-4 h-4 text-green-500" />
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-9 w-9 p-0"
+                              onClick={() => updatePhoto.mutate({ id: photo.id, updates: { approved: false } })}
+                              title="Unapprove"
+                            >
+                              <XCircle className="w-4 h-4 text-amber-500" />
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-9 w-9 p-0"
+                            onClick={() => handleEditPhoto(photo)}
+                            title="Edit Caption"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-9 w-9 p-0"
+                            onClick={() => deletePhoto.mutate(photo.id)}
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="p-3">
+                        {photo.caption && (
+                          <p className="text-sm text-foreground truncate mb-1">{photo.caption}</p>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(photo.created_at), { addSuffix: true })}
+                        </p>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Camera className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                  <p>No photos found.</p>
                 </div>
               )}
             </div>
@@ -321,6 +539,45 @@ const AdminDashboard = () => {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Edit Photo Dialog */}
+      <Dialog open={!!editingPhoto} onOpenChange={(open) => !open && setEditingPhoto(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Photo</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {editingPhoto?.file_url && (
+              <div className="aspect-video rounded-lg overflow-hidden bg-muted">
+                <img
+                  src={editingPhoto.file_url}
+                  alt="Photo preview"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="edit-caption">Caption</Label>
+              <Textarea
+                id="edit-caption"
+                value={editCaption}
+                onChange={(e) => setEditCaption(e.target.value)}
+                placeholder="Enter a caption for this photo..."
+                rows={3}
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setEditingPhoto(null)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSavePhotoEdit} disabled={updatePhoto.isPending}>
+                {updatePhoto.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
