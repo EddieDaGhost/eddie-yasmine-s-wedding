@@ -17,23 +17,24 @@ const RSVP = () => {
   /**
    * Submit RSVP to Supabase - mapped to existing table columns
    */
-  const handleSubmit = useCallback(async (data: RSVPFormData): Promise<void> => {
+  const handleSubmit = useCallback(async (data: RSVPFormData, attending?: boolean): Promise<void> => {
     try {
       // Map form data to your existing table columns
       const rsvpData: any = {
         name: data.fullName,
         email: data.email,
-        // This form is an affirmative RSVP — set attending to true
-        attending: true,
+        // Set attending based on flag (defaults to true)
+        attending: typeof attending === 'boolean' ? attending : true,
         guests: parseInt(data.numberOfGuests, 10),
         // DB column is `meal_preference`; map from the form's `mealChoice`
         meal_preference: data.mealChoice || null,
+        // Store song request in dedicated column
+        song_requests: data.songRequest || null,
       };
 
-      // Add optional message field (combines dietary, song, and notes)
+      // Add optional message field (dietary and notes only)
       const messageParts = [];
       if (data.dietaryRestrictions) messageParts.push(`Dietary: ${data.dietaryRestrictions}`);
-      if (data.songRequest) messageParts.push(`Song Request: ${data.songRequest}`);
       if (data.notes) messageParts.push(`Notes: ${data.notes}`);
       if (data.phone) messageParts.push(`Phone: ${data.phone}`);
       

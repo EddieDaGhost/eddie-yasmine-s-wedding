@@ -96,14 +96,33 @@ const EventDetails = () => {
               </div>
               
               {/* Map */}
-              <div className="aspect-video rounded-2xl bg-muted mb-6 overflow-hidden">
+              <style>{`
+                .embed-map-container {
+                  position: relative;
+                  width: 100%;
+                  max-width: 600px;
+                  height: 400px;
+                  border-radius: 1rem;
+                  overflow: hidden;
+                  background: #f3f4f6;
+                }
+                .embed-map-frame {
+                  width: 100% !important;
+                  height: 100% !important;
+                  border: none !important;
+                }
+              `}</style>
+              <div className="embed-map-container mb-6">
                 <iframe
                   title="Blue Dress Barn - Wedding Venue Location"
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2967.8544433850236!2d-86.44476492359373!3d42.07844497122837!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8810430a6f2f9f5f%3A0x5a6e5b9c6b3b8b8b!2sBlue%20Dress%20Barn!5e0!3m2!1sen!2sus!4v1704123456789!5m2!1sen!2sus"
-                  className="w-full h-full border-0"
+                  className="embed-map-frame"
+                  frameBorder="0"
+                  scrolling="no"
+                  marginHeight={0}
+                  marginWidth={0}
+                  src="https://maps.google.com/maps?width=600&height=400&hl=en&q=blue%20dress%20barn&t=&z=11&ie=UTF8&iwloc=B&output=embed"
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
-                  allowFullScreen
                 />
               </div>
 

@@ -4,7 +4,8 @@ export const rsvpFormSchema = z.object({
   fullName: z.string().min(2, 'Please enter your full name').max(100, 'Name is too long'),
   email: z.string().email('Please enter a valid email address'),
   numberOfGuests: z.string().min(1, 'Please select number of guests'),
-  mealChoice: z.string().min(1, 'Please select a meal preference'),
+  mealChoice: z.string().min(1, 'Please select a meal preference').optional(),
+  attending: z.boolean().optional(),
   songRequest: z.string().max(200, 'Song request is too long').optional(),
   notes: z.string().max(500, 'Notes are too long').optional(),
 });

@@ -9,10 +9,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 
 interface SongRequest {
-  id: number;
-  title: string | null;
-  artist: string | null;
-  guest_id: string | null;
+  id: string;
+  name: string | null;
+  song_requests: string | null;
   created_at: string;
 }
 
@@ -25,8 +24,9 @@ const AdminSongRequests = () => {
     queryKey: ['admin-songs'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('song_requests')
-        .select('*')
+        .from('rsvps')
+        .select('id, name, song_requests, created_at')
+        .not('song_requests', 'is', null)
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data as SongRequest[];
@@ -34,13 +34,13 @@ const AdminSongRequests = () => {
   });
 
   const deleteSong = useMutation({
-    mutationFn: async (id: number) => {
-      const { error } = await supabase.from('song_requests').delete().eq('id', id);
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('rsvps').update({ song_requests: null }).eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-songs'] });
-      toast({ title: 'Song request deleted!' });
+      toast({ title: 'Song request cleared!' });
     },
   });
 
@@ -77,10 +77,10 @@ const AdminSongRequests = () => {
                 </div>
                 <div>
                   <h4 className="font-serif text-lg text-foreground">
-                    {song.title || 'Unknown Title'}
+                    {song.song_requests || 'No song specified'}
                   </h4>
                   <p className="text-muted-foreground text-sm">
-                    {song.artist || 'Unknown Artist'}
+                    Requested by {song.name || 'Guest'}
                   </p>
                   <p className="text-xs text-muted-foreground mt-2">
                     {formatDistanceToNow(new Date(song.created_at), { addSuffix: true })}

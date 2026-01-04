@@ -7,11 +7,12 @@ import { RSVPInput } from './RSVPInput';
 import { RSVPSelect } from './RSVPSelect';
 import { RSVPTextarea } from './RSVPTextarea';
 import { RSVPLoadingSpinner } from './RSVPLoadingSpinner';
-import { rsvpFormSchema, RSVPFormData, mealOptions, guestOptions } from './types';
+import { rsvpFormSchema, RSVPFormData, mealOptions as defaultMealOptions, guestOptions } from './types';
 import { cn } from '@/lib/utils';
+import { useContent } from '@/lib/content/useContent';
 
 interface RSVPFormCardProps {
-  onSubmit: (data: RSVPFormData) => Promise<void>;
+  onSubmit: (data: RSVPFormData, attending?: boolean) => Promise<void>;
   onSuccess: (name: string) => void;
 }
 
@@ -20,11 +21,43 @@ const initialFormData = {
   email: '',
   numberOfGuests: '',
   mealChoice: '',
+  attending: false,
   songRequest: '',
   notes: '',
 };
 
 export const RSVPFormCard = ({ onSubmit, onSuccess }: RSVPFormCardProps) => {
+  const { data: contentData } = useContent();
+
+  // Resolve meal options from content editor. Support JSON array or newline-separated list.
+  const mealOptionsFromContent = (() => {
+    try {
+      const raw = contentData?.find((c) => c.key === 'rsvp_meal_options')?.value;
+      if (!raw) return defaultMealOptions;
+
+      // Try parse JSON
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        // If array of strings
+        if (parsed.every((p) => typeof p === 'string')) {
+          return [{ value: '', label: 'Select your meal preference' }, ...parsed.map((s) => ({ value: s.toLowerCase().replace(/\s+/g, '_'), label: s }))];
+        }
+        // If array of objects with value/label
+        if (parsed.every((p) => p && (p.value || p.label))) {
+          return [{ value: '', label: 'Select your meal preference' }, ...parsed.map((p) => ({ value: p.value || p.label, label: p.label || p.value }))];
+        }
+      }
+
+      // Fallback: treat raw as newline-separated list
+      const lines = raw.split(/\r?\n/).map((l: string) => l.trim()).filter(Boolean);
+      if (lines.length > 0) {
+        return [{ value: '', label: 'Select your meal preference' }, ...lines.map((s: string) => ({ value: s.toLowerCase().replace(/\s+/g, '_'), label: s }))];
+      }
+    } catch (e) {
+      // ignore parse errors
+    }
+    return defaultMealOptions;
+  })();
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState<Partial<Record<keyof RSVPFormData, string>>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -83,12 +116,35 @@ export const RSVPFormCard = ({ onSubmit, onSuccess }: RSVPFormCardProps) => {
     setIsLoading(true);
     try {
       console.log('RSVPFormCard: validation passed, calling onSubmit');
-      await onSubmit(result.data);
+      await onSubmit(result.data, true);
       console.log('RSVPFormCard: onSubmit resolved, calling onSuccess');
       onSuccess(result.data.fullName);
     } catch (error) {
       // Handle error - could show a toast here
       console.error('RSVP submission failed:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDecline = async () => {
+    // Submit a decline without requiring meal selection
+    const declineData: RSVPFormData = {
+      fullName: formData.fullName,
+      email: formData.email,
+      numberOfGuests: formData.numberOfGuests,
+      mealChoice: formData.mealChoice,
+      songRequest: formData.songRequest,
+      notes: formData.notes,
+      attending: false,
+    } as RSVPFormData;
+
+    setIsLoading(true);
+    try {
+      await onSubmit(declineData, false);
+      onSuccess(declineData.fullName);
+    } catch (error) {
+      console.error('RSVP decline failed:', error);
     } finally {
       setIsLoading(false);
     }
@@ -187,7 +243,7 @@ export const RSVPFormCard = ({ onSubmit, onSuccess }: RSVPFormCardProps) => {
               value={formData.mealChoice}
               onChange={(e) => updateField('mealChoice', e.target.value)}
               onBlur={() => handleBlur('mealChoice')}
-              options={mealOptions}
+              options={mealOptionsFromContent}
               hasError={touched.mealChoice && !!errors.mealChoice}
               className="pl-12"
               disabled={isLoading}
@@ -231,22 +287,35 @@ export const RSVPFormCard = ({ onSubmit, onSuccess }: RSVPFormCardProps) => {
 
         {/* Submit Button */}
         <div className="pt-6">
-          <Button
-            type="submit"
-            variant="romantic"
-            size="xl"
-            className="w-full h-16 text-lg"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <RSVPLoadingSpinner />
-            ) : (
-              <>
-                <Send className="w-5 h-5 mr-2" />
-                Confirm Your Attendance
-              </>
-            )}
-          </Button>
+          <div className="flex flex-col gap-3">
+            <Button
+              type="submit"
+              variant="romantic"
+              size="xl"
+              className="w-full h-16 text-lg"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <RSVPLoadingSpinner />
+              ) : (
+                <>
+                  <Send className="w-5 h-5 mr-2" />
+                  Confirm Your Attendance
+                </>
+              )}
+            </Button>
+
+            <Button
+              type="button"
+              variant="ghost"
+              size="lg"
+              className="w-full h-10 font-serif tracking-wide text-sm"
+              onClick={handleDecline}
+              disabled={isLoading}
+            >
+              Respectfully Decline
+            </Button>
+          </div>
         </div>
       </form>
     </motion.div>

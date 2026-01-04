@@ -11,15 +11,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase';
 
 interface Guest {
   id: string;
   name: string;
   email: string;
   attending: boolean | null;
-  plusOnes: number;
-  dietaryNeeds: string;
-  songRequest: string;
+  guests: number;
+  meal_preference?: string | null;
+  song_requests?: string | null;
+  message: string | null;
 }
 
 interface Message {
@@ -30,13 +32,6 @@ interface Message {
   createdAt: string;
 }
 
-const mockGuests: Guest[] = [
-  { id: '1', name: 'Sarah Chen', email: 'sarah@email.com', attending: true, plusOnes: 1, dietaryNeeds: 'Vegetarian', songRequest: 'At Last by Etta James' },
-  { id: '2', name: 'Marcus Johnson', email: 'marcus@email.com', attending: true, plusOnes: 0, dietaryNeeds: '', songRequest: '' },
-  { id: '3', name: 'Emma Rodriguez', email: 'emma@email.com', attending: null, plusOnes: 0, dietaryNeeds: '', songRequest: '' },
-  { id: '4', name: 'David Kim', email: 'david@email.com', attending: false, plusOnes: 0, dietaryNeeds: '', songRequest: '' },
-];
-
 const mockMessages: Message[] = [
   { id: '1', name: 'Sarah & Tom', content: 'Wishing you both a lifetime of love!', approved: true, createdAt: '2027-07-02T16:30:00' },
   { id: '2', name: 'The Chen Family', content: 'Congratulations! So happy for you both.', approved: false, createdAt: '2027-07-02T17:00:00' },
@@ -45,9 +40,10 @@ const mockMessages: Message[] = [
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [guests, setGuests] = useState<Guest[]>(mockGuests);
+  const [guests, setGuests] = useState<Guest[]>([]);
   const [messages, setMessages] = useState<Message[]>(mockMessages);
   const [newUpdate, setNewUpdate] = useState({ title: '', content: '' });
+  const [isLoadingGuests, setIsLoadingGuests] = useState(true);
 
   useEffect(() => {
     // Check if admin is authenticated
@@ -56,6 +52,41 @@ const AdminDashboard = () => {
       navigate('/admin');
     }
   }, [navigate]);
+
+  useEffect(() => {
+    // Fetch RSVPs from Supabase
+    const fetchGuests = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('rsvps')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        // Transform rsvps to Guest interface
+        const transformedGuests = (data || []).map((rsvp) => ({
+          id: rsvp.id,
+          name: rsvp.name || '',
+          email: rsvp.email || '',
+          attending: rsvp.attending,
+          guests: rsvp.guests || 0,
+          meal_preference: rsvp.meal_preference || null,
+          song_requests: rsvp.song_requests || null,
+          message: rsvp.message || null,
+        }));
+
+        setGuests(transformedGuests);
+      } catch (error) {
+        console.error('Error fetching RSVPs:', error);
+        toast({ title: "Error", description: "Failed to load RSVPs", variant: "destructive" });
+      } finally {
+        setIsLoadingGuests(false);
+      }
+    };
+
+    fetchGuests();
+  }, [toast]);
 
   const handleLogout = () => {
     localStorage.removeItem('admin_authenticated');
@@ -67,7 +98,7 @@ const AdminDashboard = () => {
     attending: guests.filter(g => g.attending === true).length,
     declined: guests.filter(g => g.attending === false).length,
     pending: guests.filter(g => g.attending === null).length,
-    totalGuests: guests.filter(g => g.attending === true).reduce((acc, g) => acc + 1 + g.plusOnes, 0),
+    totalGuests: guests.filter(g => g.attending === true).reduce((acc, g) => acc + 1 + g.guests, 0),
   };
 
   const approveMessage = (id: string) => {
@@ -182,38 +213,48 @@ const AdminDashboard = () => {
           {/* Guests Tab */}
           <TabsContent value="guests">
             <div className="glass-card rounded-xl overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-muted/50 border-b border-border">
-                    <tr>
-                      <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Name</th>
-                      <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Email</th>
-                      <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Status</th>
-                      <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Plus Ones</th>
-                      <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Dietary</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {guests.map((guest) => (
-                      <tr key={guest.id} className="hover:bg-muted/30 transition-colors">
-                        <td className="px-6 py-4 font-medium">{guest.name}</td>
-                        <td className="px-6 py-4 text-muted-foreground">{guest.email}</td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                            guest.attending === true ? 'bg-sage/20 text-sage-foreground' :
-                            guest.attending === false ? 'bg-destructive/20 text-destructive' :
-                            'bg-muted text-muted-foreground'
-                          }`}>
-                            {guest.attending === true ? 'Attending' : guest.attending === false ? 'Declined' : 'Pending'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">{guest.plusOnes}</td>
-                        <td className="px-6 py-4 text-muted-foreground">{guest.dietaryNeeds || '-'}</td>
+              {isLoadingGuests ? (
+                <div className="p-8 text-center text-muted-foreground">Loading RSVPs...</div>
+              ) : guests.length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground">No RSVPs yet</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-muted/50 border-b border-border">
+                      <tr>
+                        <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Name</th>
+                        <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Email</th>
+                        <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Status</th>
+                        <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Guests</th>
+                        <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Meal</th>
+                        <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Song</th>
+                        <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Message</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {guests.map((guest) => (
+                        <tr key={guest.id} className="hover:bg-muted/30 transition-colors">
+                          <td className="px-6 py-4 font-medium">{guest.name}</td>
+                          <td className="px-6 py-4 text-muted-foreground">{guest.email}</td>
+                          <td className="px-6 py-4">
+                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                              guest.attending === true ? 'bg-sage/20 text-sage-foreground' :
+                              guest.attending === false ? 'bg-destructive/20 text-destructive' :
+                              'bg-muted text-muted-foreground'
+                            }`}>
+                              {guest.attending === true ? 'Attending' : guest.attending === false ? 'Declined' : 'Pending'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">{guest.guests}</td>
+                          <td className="px-6 py-4 text-muted-foreground">{guest.meal_preference || '—'}</td>
+                          <td className="px-6 py-4 text-muted-foreground">{guest.song_requests || '—'}</td>
+                          <td className="px-6 py-4 text-muted-foreground text-sm">{guest.message ? guest.message.substring(0, 50) + '...' : '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </TabsContent>
 
