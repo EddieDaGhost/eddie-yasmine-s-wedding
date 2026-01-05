@@ -48,14 +48,35 @@ export default function InviteRSVP() {
   const [submitted, setSubmitted] = useState(false);
 
   const [formData, setFormData] = useState({
-    name: '',
     email: '',
     attending: true,
     guests: 1,
+    guestNames: [''] as string[],
     mealPreference: '',
     songRequests: '',
     message: '',
   });
+
+  // Update guest names array when guest count changes
+  const updateGuestCount = (count: number) => {
+    const newGuestNames = [...formData.guestNames];
+    if (count > newGuestNames.length) {
+      // Add empty strings for new guests
+      while (newGuestNames.length < count) {
+        newGuestNames.push('');
+      }
+    } else {
+      // Trim array to new count
+      newGuestNames.length = count;
+    }
+    setFormData({ ...formData, guests: count, guestNames: newGuestNames });
+  };
+
+  const updateGuestName = (index: number, name: string) => {
+    const newGuestNames = [...formData.guestNames];
+    newGuestNames[index] = name;
+    setFormData({ ...formData, guestNames: newGuestNames });
+  };
 
   useEffect(() => {
     async function validateInvite() {
@@ -131,11 +152,25 @@ export default function InviteRSVP() {
     setSubmitting(true);
 
     try {
-      // Create the RSVP
+      // Validate all guest names are filled
+      const filledNames = formData.guestNames.slice(0, formData.guests).filter(n => n.trim());
+      if (formData.attending && filledNames.length !== formData.guests) {
+        toast({
+          title: 'Missing guest names',
+          description: 'Please enter names for all attending guests.',
+          variant: 'destructive',
+        });
+        setSubmitting(false);
+        return;
+      }
+
+      // Create the RSVP with all guest names (stored as comma-separated in name field)
+      const allNames = formData.guestNames.slice(0, formData.guests).map(n => n.trim()).join(', ');
+      
       const { data: rsvpData, error: rsvpError } = await supabase
         .from('rsvps')
         .insert({
-          name: formData.name,
+          name: allNames,
           email: formData.email,
           attending: formData.attending,
           guests: formData.guests,
@@ -345,15 +380,49 @@ export default function InviteRSVP() {
 
           {/* RSVP Form */}
           <form onSubmit={handleSubmit} className="glass-card rounded-2xl p-8 space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="name">Your Name *</Label>
-              <Input
-                id="name"
-                required
-                placeholder="Enter your full name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              />
+            {/* Guest Names Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label>Guest Names *</Label>
+                <span className="text-xs text-muted-foreground">
+                  {formData.guests} of {invite?.max_guests} guests
+                </span>
+              </div>
+              
+              {/* Number of guests selector first */}
+              <Select
+                value={formData.guests.toString()}
+                onValueChange={(value) => updateGuestCount(parseInt(value))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: invite?.max_guests || 1 }, (_, i) => i + 1).map((num) => (
+                    <SelectItem key={num} value={num.toString()}>
+                      {num} {num === 1 ? 'guest' : 'guests'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Name inputs for each guest */}
+              <div className="space-y-3">
+                {Array.from({ length: formData.guests }, (_, index) => (
+                  <div key={index} className="space-y-1">
+                    <Label htmlFor={`guest-${index}`} className="text-sm text-muted-foreground">
+                      {index === 0 ? 'Primary Guest (You)' : `Guest ${index + 1}`}
+                    </Label>
+                    <Input
+                      id={`guest-${index}`}
+                      required
+                      placeholder={index === 0 ? 'Enter your full name' : `Enter guest ${index + 1}'s full name`}
+                      value={formData.guestNames[index] || ''}
+                      onChange={(e) => updateGuestName(index, e.target.value)}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -393,28 +462,6 @@ export default function InviteRSVP() {
 
             {formData.attending && (
               <>
-                <div className="space-y-2">
-                  <Label htmlFor="guests">Number of Guests *</Label>
-                  <Select
-                    value={formData.guests.toString()}
-                    onValueChange={(value) => setFormData({ ...formData, guests: parseInt(value) })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: invite?.max_guests || 1 }, (_, i) => i + 1).map((num) => (
-                        <SelectItem key={num} value={num.toString()}>
-                          {num} {num === 1 ? 'guest' : 'guests'}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    Including yourself. Maximum {invite?.max_guests} allowed.
-                  </p>
-                </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="meal">Meal Preference</Label>
                   <Select
