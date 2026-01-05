@@ -95,6 +95,41 @@ export type Database = {
         }
         Relationships: []
       }
+      invites: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          label: string | null
+          max_guests: number
+          used_by: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          max_guests?: number
+          used_by?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          max_guests?: number
+          used_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invites_used_by_fkey"
+            columns: ["used_by"]
+            isOneToOne: false
+            referencedRelation: "rsvps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           approved: boolean | null
@@ -169,6 +204,7 @@ export type Database = {
           email: string | null
           guests: number | null
           id: string
+          invite_code: string | null
           meal_preference: string | null
           message: string | null
           name: string | null
@@ -180,6 +216,7 @@ export type Database = {
           email?: string | null
           guests?: number | null
           id?: string
+          invite_code?: string | null
           meal_preference?: string | null
           message?: string | null
           name?: string | null
@@ -191,6 +228,7 @@ export type Database = {
           email?: string | null
           guests?: number | null
           id?: string
+          invite_code?: string | null
           meal_preference?: string | null
           message?: string | null
           name?: string | null
