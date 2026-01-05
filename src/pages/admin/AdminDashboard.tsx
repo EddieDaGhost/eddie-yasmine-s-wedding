@@ -222,6 +222,10 @@ const AdminDashboard = () => {
             <Eye className="w-5 h-5" />
             View Site
           </Link>
+          <Link to="/admin/invites" className="flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+            <Plus className="w-5 h-5" />
+            Invite Links
+          </Link>
           <Link to="/admin/rsvps" className="flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
             <Users className="w-5 h-5" />
             RSVPs
