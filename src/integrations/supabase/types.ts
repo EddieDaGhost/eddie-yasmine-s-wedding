@@ -103,6 +103,8 @@ export type Database = {
           label: string | null
           max_guests: number
           used_by: string | null
+          venue_address: string | null
+          venue_name: string | null
         }
         Insert: {
           code: string
@@ -111,6 +113,8 @@ export type Database = {
           label?: string | null
           max_guests?: number
           used_by?: string | null
+          venue_address?: string | null
+          venue_name?: string | null
         }
         Update: {
           code?: string
@@ -119,6 +123,8 @@ export type Database = {
           label?: string | null
           max_guests?: number
           used_by?: string | null
+          venue_address?: string | null
+          venue_name?: string | null
         }
         Relationships: [
           {
