@@ -95,6 +95,38 @@ export type Database = {
         }
         Relationships: []
       }
+      invite_analytics: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          invite_id: string
+          metadata: Json | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          invite_id: string
+          metadata?: Json | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          invite_id?: string
+          metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invite_analytics_invite_id_fkey"
+            columns: ["invite_id"]
+            isOneToOne: false
+            referencedRelation: "invites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invites: {
         Row: {
           code: string
@@ -103,6 +135,8 @@ export type Database = {
           label: string | null
           max_guests: number
           used_by: string | null
+          venue_address: string | null
+          venue_name: string | null
         }
         Insert: {
           code: string
@@ -111,6 +145,8 @@ export type Database = {
           label?: string | null
           max_guests?: number
           used_by?: string | null
+          venue_address?: string | null
+          venue_name?: string | null
         }
         Update: {
           code?: string
@@ -119,6 +155,8 @@ export type Database = {
           label?: string | null
           max_guests?: number
           used_by?: string | null
+          venue_address?: string | null
+          venue_name?: string | null
         }
         Relationships: [
           {
