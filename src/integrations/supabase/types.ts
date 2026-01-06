@@ -208,6 +208,7 @@ export type Database = {
           file_url: string | null
           guest_id: string
           id: string
+          tags: string[] | null
         }
         Insert: {
           approved?: boolean | null
@@ -216,6 +217,7 @@ export type Database = {
           file_url?: string | null
           guest_id?: string
           id?: string
+          tags?: string[] | null
         }
         Update: {
           approved?: boolean | null
@@ -224,6 +226,7 @@ export type Database = {
           file_url?: string | null
           guest_id?: string
           id?: string
+          tags?: string[] | null
         }
         Relationships: [
           {
