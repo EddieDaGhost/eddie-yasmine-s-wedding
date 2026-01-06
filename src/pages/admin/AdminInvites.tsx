@@ -80,6 +80,10 @@ export default function AdminInvites() {
   const [newInvite, setNewInvite] = useState({ label: '', maxGuests: 2 });
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  const isValidInvite = () => {
+    return newInvite.maxGuests >= 1 && newInvite.maxGuests <= 20;
+  };
+
   // Fetch invites with linked RSVP data and analytics
   const { data: invites, isLoading } = useQuery({
     queryKey: ['admin-invites'],

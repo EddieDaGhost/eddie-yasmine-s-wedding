@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Image, CheckCircle, XCircle, Trash2, Loader2 } from 'lucide-react';
+import { Image, CheckCircle, XCircle, Trash2, Loader2, Tag, X, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { AdminLayout } from '@/components/features/admin/AdminLayout';
@@ -16,6 +18,7 @@ interface Photo {
   guest_id: string;
   approved: boolean | null;
   created_at: string;
+  tags: string[] | null;
 }
 
 const AdminPhotos = () => {
@@ -23,6 +26,9 @@ const AdminPhotos = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved'>('all');
+  const [tagFilter, setTagFilter] = useState<string>('');
+  const [editingPhotoId, setEditingPhotoId] = useState<string | null>(null);
+  const [newTag, setNewTag] = useState('');
 
   const { data: photos, isLoading } = useQuery({
     queryKey: ['admin-photos'],
@@ -61,6 +67,42 @@ const AdminPhotos = () => {
     },
   });
 
+  const updateTags = useMutation({
+    mutationFn: async ({ id, tags }: { id: string; tags: string[] }) => {
+      const { error } = await supabase
+        .from('photos')
+        .update({ tags })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-photos'] });
+      toast({ title: 'Tags updated!' });
+    },
+  });
+
+  // Get all unique tags from photos
+  const allTags = Array.from(
+    new Set(photos?.flatMap((p) => p.tags || []) || [])
+  ).sort();
+
+  const addTagToPhoto = (photoId: string, tag: string) => {
+    const photo = photos?.find((p) => p.id === photoId);
+    if (!photo || !tag.trim()) return;
+    const currentTags = photo.tags || [];
+    if (!currentTags.includes(tag.trim())) {
+      updateTags.mutate({ id: photoId, tags: [...currentTags, tag.trim()] });
+    }
+    setNewTag('');
+  };
+
+  const removeTagFromPhoto = (photoId: string, tag: string) => {
+    const photo = photos?.find((p) => p.id === photoId);
+    if (!photo) return;
+    const currentTags = photo.tags || [];
+    updateTags.mutate({ id: photoId, tags: currentTags.filter((t) => t !== tag) });
+  };
+
   if (isAuthenticated === null || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -70,8 +112,11 @@ const AdminPhotos = () => {
   }
 
   const filteredPhotos = photos?.filter((p) => {
-    if (filter === 'pending') return !p.approved;
-    if (filter === 'approved') return p.approved;
+    // Status filter
+    if (filter === 'pending' && p.approved) return false;
+    if (filter === 'approved' && !p.approved) return false;
+    // Tag filter
+    if (tagFilter && !(p.tags || []).includes(tagFilter)) return false;
     return true;
   });
 
@@ -85,7 +130,7 @@ const AdminPhotos = () => {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex gap-2 mb-6">
+      <div className="flex flex-wrap gap-2 mb-4">
         {[
           { key: 'all', label: 'All' },
           { key: 'pending', label: `Pending (${pendingCount})` },
@@ -101,6 +146,30 @@ const AdminPhotos = () => {
           </Button>
         ))}
       </div>
+
+      {/* Tag Filter */}
+      {allTags.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 mb-6">
+          <Tag className="w-4 h-4 text-muted-foreground" />
+          <Button
+            variant={tagFilter === '' ? 'romantic' : 'outline'}
+            size="sm"
+            onClick={() => setTagFilter('')}
+          >
+            All Tags
+          </Button>
+          {allTags.map((tag) => (
+            <Button
+              key={tag}
+              variant={tagFilter === tag ? 'romantic' : 'outline'}
+              size="sm"
+              onClick={() => setTagFilter(tag)}
+            >
+              {tag}
+            </Button>
+          ))}
+        </div>
+      )}
 
       {/* Photos Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -134,6 +203,61 @@ const AdminPhotos = () => {
                 }`}>
                   {photo.approved ? 'Approved' : 'Pending'}
                 </span>
+              </div>
+
+              {/* Tags Section */}
+              <div className="mb-2">
+                <div className="flex flex-wrap gap-1 mb-1">
+                  {(photo.tags || []).map((tag) => (
+                    <Badge
+                      key={tag}
+                      variant="secondary"
+                      className="text-xs cursor-pointer hover:bg-destructive/20"
+                      onClick={() => removeTagFromPhoto(photo.id, tag)}
+                    >
+                      {tag}
+                      <X className="w-3 h-3 ml-1" />
+                    </Badge>
+                  ))}
+                </div>
+                {editingPhotoId === photo.id ? (
+                  <div className="flex gap-1">
+                    <Input
+                      value={newTag}
+                      onChange={(e) => setNewTag(e.target.value)}
+                      placeholder="Add tag..."
+                      className="h-7 text-xs"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          addTagToPhoto(photo.id, newTag);
+                        } else if (e.key === 'Escape') {
+                          setEditingPhotoId(null);
+                          setNewTag('');
+                        }
+                      }}
+                    />
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-2"
+                      onClick={() => {
+                        addTagToPhoto(photo.id, newTag);
+                      }}
+                    >
+                      <Plus className="w-3 h-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-xs text-muted-foreground"
+                    onClick={() => setEditingPhotoId(photo.id)}
+                  >
+                    <Tag className="w-3 h-3 mr-1" />
+                    Add tag
+                  </Button>
+                )}
               </div>
 
               {photo.caption && (
