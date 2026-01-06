@@ -3,7 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   Heart, Link2, Copy, Check, Trash2, Users, Plus, Eye, 
-  LogOut, Settings, MessageSquare, Image, Bell, Loader2
+  LogOut, Settings, MessageSquare, Image, Bell, Loader2,
+  BarChart3, MousePointer, UserCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, format } from 'date-fns';
 import {
   Dialog,
   DialogContent,
@@ -30,6 +31,19 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+
+interface InviteAnalytics {
+  views: number;
+  rsvps: number;
+  checkins: number;
+  lastView: string | null;
+  lastRsvp: string | null;
+}
 
 interface Invite {
   id: string;
@@ -44,6 +58,7 @@ interface Invite {
     guests: number;
     attending: boolean;
   } | null;
+  analytics?: InviteAnalytics;
 }
 
 function generateSecureCode(): string {
@@ -65,7 +80,7 @@ export default function AdminInvites() {
   const [newInvite, setNewInvite] = useState({ label: '', maxGuests: 2 });
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // Fetch invites with linked RSVP data
+  // Fetch invites with linked RSVP data and analytics
   const { data: invites, isLoading } = useQuery({
     queryKey: ['admin-invites'],
     queryFn: async () => {
@@ -76,22 +91,44 @@ export default function AdminInvites() {
       
       if (error) throw error;
 
-      // Fetch linked RSVPs for used invites
-      const invitesWithRsvps = await Promise.all(
+      // Fetch linked RSVPs and analytics for all invites
+      const invitesWithData = await Promise.all(
         (data || []).map(async (invite) => {
+          // Fetch RSVP if used
+          let rsvp = null;
           if (invite.used_by) {
-            const { data: rsvp } = await supabase
+            const { data: rsvpData } = await supabase
               .from('rsvps')
               .select('id, name, guests, attending')
               .eq('id', invite.used_by)
               .single();
-            return { ...invite, rsvp };
+            rsvp = rsvpData;
           }
-          return { ...invite, rsvp: null };
+
+          // Fetch analytics for this invite
+          const { data: analyticsData } = await supabase
+            .from('invite_analytics')
+            .select('event_type, created_at')
+            .eq('invite_id', invite.id)
+            .order('created_at', { ascending: false });
+
+          const views = analyticsData?.filter(a => a.event_type === 'view') || [];
+          const rsvps = analyticsData?.filter(a => a.event_type === 'rsvp') || [];
+          const checkins = analyticsData?.filter(a => a.event_type === 'checkin') || [];
+
+          const analytics: InviteAnalytics = {
+            views: views.length,
+            rsvps: rsvps.length,
+            checkins: checkins.length,
+            lastView: views[0]?.created_at || null,
+            lastRsvp: rsvps[0]?.created_at || null,
+          };
+
+          return { ...invite, rsvp, analytics };
         })
       );
 
-      return invitesWithRsvps as Invite[];
+      return invitesWithData as Invite[];
     },
   });
 
@@ -316,72 +353,129 @@ export default function AdminInvites() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {invites.map((invite) => (
-                    <tr key={invite.id} className="hover:bg-muted/30 transition-colors">
-                      <td className="px-6 py-4 font-medium">{invite.label || '—'}</td>
-                      <td className="px-6 py-4">
-                        <code className="text-sm bg-muted px-2 py-1 rounded">{invite.code}</code>
-                      </td>
-                      <td className="px-6 py-4">{invite.max_guests}</td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                          invite.used_by 
-                            ? 'bg-sage/20 text-sage-foreground' 
-                            : 'bg-gold/20 text-gold-foreground'
-                        }`}>
-                          {invite.used_by ? 'Used' : 'Pending'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-muted-foreground">
-                        {invite.rsvp ? (
-                          <span>
-                            {invite.rsvp.name} ({invite.rsvp.guests} guest{invite.rsvp.guests !== 1 ? 's' : ''})
-                          </span>
-                        ) : '—'}
-                      </td>
-                      <td className="px-6 py-4 text-muted-foreground text-sm">
-                        {formatDistanceToNow(new Date(invite.created_at), { addSuffix: true })}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => copyInviteUrl(invite.code, invite.id)}
-                            title="Copy invite link"
-                          >
-                            {copiedId === invite.id ? (
-                              <Check className="w-4 h-4 text-sage" />
-                            ) : (
-                              <Copy className="w-4 h-4" />
-                            )}
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="sm" title="Delete invite">
-                                <Trash2 className="w-4 h-4 text-destructive" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete this invite?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This action cannot be undone. The invite link will no longer work.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => deleteInvite.mutate(invite.id)}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    <Collapsible key={invite.id} asChild>
+                      <>
+                        <CollapsibleTrigger asChild>
+                          <tr className="hover:bg-muted/30 transition-colors cursor-pointer">
+                            <td className="px-6 py-4 font-medium">{invite.label || '—'}</td>
+                            <td className="px-6 py-4">
+                              <code className="text-sm bg-muted px-2 py-1 rounded">{invite.code}</code>
+                            </td>
+                            <td className="px-6 py-4">{invite.max_guests}</td>
+                            <td className="px-6 py-4">
+                              <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                                invite.used_by 
+                                  ? 'bg-sage/20 text-sage-foreground' 
+                                  : 'bg-gold/20 text-gold-foreground'
+                              }`}>
+                                {invite.used_by ? 'Used' : 'Pending'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-muted-foreground">
+                              {invite.rsvp ? (
+                                <span>
+                                  {invite.rsvp.name} ({invite.rsvp.guests} guest{invite.rsvp.guests !== 1 ? 's' : ''})
+                                </span>
+                              ) : '—'}
+                            </td>
+                            <td className="px-6 py-4 text-muted-foreground text-sm">
+                              {formatDistanceToNow(new Date(invite.created_at), { addSuffix: true })}
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center justify-end gap-2">
+                                <span className="text-xs text-muted-foreground mr-2 flex items-center gap-1">
+                                  <MousePointer className="w-3 h-3" />
+                                  {invite.analytics?.views || 0}
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    copyInviteUrl(invite.code, invite.id);
+                                  }}
+                                  title="Copy invite link"
                                 >
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </td>
-                    </tr>
+                                  {copiedId === invite.id ? (
+                                    <Check className="w-4 h-4 text-sage" />
+                                  ) : (
+                                    <Copy className="w-4 h-4" />
+                                  )}
+                                </Button>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      title="Delete invite"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <Trash2 className="w-4 h-4 text-destructive" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Delete this invite?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        This action cannot be undone. The invite link will no longer work.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => deleteInvite.mutate(invite.id)}
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                      >
+                                        Delete
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
+                            </td>
+                          </tr>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent asChild>
+                          <tr className="bg-muted/20">
+                            <td colSpan={7} className="px-6 py-4">
+                              <div className="flex items-center gap-8">
+                                <div className="flex items-center gap-2">
+                                  <BarChart3 className="w-4 h-4 text-muted-foreground" />
+                                  <span className="text-sm font-medium">Analytics</span>
+                                </div>
+                                <div className="flex items-center gap-6 text-sm">
+                                  <div className="flex items-center gap-2">
+                                    <MousePointer className="w-4 h-4 text-primary" />
+                                    <span className="text-muted-foreground">Views:</span>
+                                    <span className="font-medium">{invite.analytics?.views || 0}</span>
+                                    {invite.analytics?.lastView && (
+                                      <span className="text-xs text-muted-foreground">
+                                        (last: {format(new Date(invite.analytics.lastView), 'MMM d, h:mm a')})
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <UserCheck className="w-4 h-4 text-sage" />
+                                    <span className="text-muted-foreground">RSVPs:</span>
+                                    <span className="font-medium">{invite.analytics?.rsvps || 0}</span>
+                                    {invite.analytics?.lastRsvp && (
+                                      <span className="text-xs text-muted-foreground">
+                                        (last: {format(new Date(invite.analytics.lastRsvp), 'MMM d, h:mm a')})
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Check className="w-4 h-4 text-gold" />
+                                    <span className="text-muted-foreground">Check-ins:</span>
+                                    <span className="font-medium">{invite.analytics?.checkins || 0}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        </CollapsibleContent>
+                      </>
+                    </Collapsible>
                   ))}
                 </tbody>
               </table>

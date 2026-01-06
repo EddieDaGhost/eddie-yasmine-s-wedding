@@ -102,6 +102,12 @@ export default function InviteRSVP() {
 
         setInvite(inviteData);
 
+        // Track the view event
+        await supabase.from('invite_analytics').insert({
+          invite_id: inviteData.id,
+          event_type: 'view',
+        });
+
         // If invite is used, fetch the existing RSVP
         if (inviteData.used_by) {
           const { data: rsvpData } = await supabase
@@ -191,6 +197,13 @@ export default function InviteRSVP() {
         .eq('id', invite.id);
 
       if (updateError) throw updateError;
+
+      // Track the RSVP submission event
+      await supabase.from('invite_analytics').insert({
+        invite_id: invite.id,
+        event_type: 'rsvp',
+        metadata: { attending: formData.attending, guests: formData.guests },
+      });
 
       setSubmitted(true);
       toast({
