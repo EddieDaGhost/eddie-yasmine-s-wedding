@@ -65,6 +65,11 @@ export default function AdminInvites() {
   const [newInvite, setNewInvite] = useState({ label: '', maxGuests: 2 });
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  // Validate invite creation - guest names are now mandatory
+  const isValidInvite = () => {
+    return newInvite.label.trim().length > 0 && newInvite.maxGuests >= 1;
+  };
+
   // Fetch invites with linked RSVP data
   const { data: invites, isLoading } = useQuery({
     queryKey: ['admin-invites'],
@@ -231,14 +236,14 @@ export default function AdminInvites() {
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
-                    <Label htmlFor="label">Label (optional)</Label>
-                    <Input
-                      id="label"
-                      placeholder="e.g., Smith Family"
-                      value={newInvite.label}
-                      onChange={(e) => setNewInvite({ ...newInvite, label: e.target.value })}
-                    />
-                    <p className="text-xs text-muted-foreground">For your reference only</p>
+                  <Label htmlFor="label">Guest Names *</Label>
+                  <Input
+                    id="label"
+                    placeholder="e.g., Smith Family"
+                    value={newInvite.label}
+                    onChange={(e) => setNewInvite({ ...newInvite, label: e.target.value })}
+                  />
+                  <p className="text-xs text-muted-foreground">(required)</p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="maxGuests">Maximum Guests</Label>
@@ -255,7 +260,7 @@ export default function AdminInvites() {
                   <Button
                     className="w-full"
                     onClick={() => createInvite.mutate({ label: newInvite.label, maxGuests: newInvite.maxGuests })}
-                    disabled={createInvite.isPending}
+                    disabled={createInvite.isPending || !isValidInvite()}
                   >
                     {createInvite.isPending ? (
                       <>
