@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { AdminLayout } from '@/components/features/admin';
-import { useAdminAuth } from '@/contexts/AdminAuthContext';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { isAfterWeddingDate, formatWeddingDate, getTimeUntilWedding } from '@/lib/wedding-utils';
 
 interface LockedPageInfo {
