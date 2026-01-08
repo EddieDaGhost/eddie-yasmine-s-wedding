@@ -1,11 +1,14 @@
-import { isAfterWeddingDate } from '@/lib/wedding-utils';
+import { useIsUnlocked } from '@/hooks/useAdminPreview';
 import { LockedPage } from '@/components/shared/LockedPage';
+import { AdminPreviewBanner } from '@/components/shared/AdminPreviewBanner';
 import { Layout } from '@/components/layout/Layout';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { motion } from 'framer-motion';
 
 const InteractiveTimeline = () => {
-  if (!isAfterWeddingDate()) {
+  const { isUnlocked, isAdminPreview } = useIsUnlocked();
+
+  if (!isUnlocked) {
     return (
       <LockedPage
         title="Interactive Timeline"
@@ -16,7 +19,9 @@ const InteractiveTimeline = () => {
 
   return (
     <Layout>
-      <section className="py-20 md:py-32 romantic-gradient">
+      {isAdminPreview && <AdminPreviewBanner pageName="Interactive Timeline" />}
+      
+      <section className={`py-20 md:py-32 romantic-gradient ${isAdminPreview ? 'mt-12' : ''}`}>
         <div className="container mx-auto px-4">
           <SectionHeader
             title="Our Journey Together"

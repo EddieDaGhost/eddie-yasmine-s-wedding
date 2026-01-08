@@ -28,6 +28,7 @@ import AdminPhotos from "./pages/admin/AdminPhotos";
 import AdminRsvps from "./pages/admin/AdminRSVPs";
 import AdminSongRequests from "./pages/admin/AdminSongRequests";
 import AdminInvites from "./pages/admin/AdminInvites";
+import AdminLockedPages from "./pages/admin/AdminLockedPages";
 import InviteRSVP from "./pages/InviteRSVP";
 import NotFound from "./pages/NotFound";
 
@@ -66,6 +67,7 @@ const App = () => (
           <Route path="/admin/rsvps" element={<AdminRsvps />} />
           <Route path="/admin/song-requests" element={<AdminSongRequests />} />
           <Route path="/admin/invites" element={<AdminInvites />} />
+          <Route path="/admin/locked-pages" element={<AdminLockedPages />} />
           {/* Invite RSVP */}
           <Route path="/invite/:code" element={<InviteRSVP />} />
           <Route path="*" element={<NotFound />} />

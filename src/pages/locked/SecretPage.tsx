@@ -1,12 +1,15 @@
 import { LockedPage } from '@/components/shared/LockedPage';
-import { isAfterWeddingDate } from '@/lib/wedding-utils';
+import { AdminPreviewBanner } from '@/components/shared/AdminPreviewBanner';
+import { useIsUnlocked } from '@/hooks/useAdminPreview';
 import { Layout } from '@/components/layout/Layout';
 import { FadeIn } from '@/components/animation';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { Heart, Sparkles } from 'lucide-react';
 
 const SecretPage = () => {
-  if (!isAfterWeddingDate()) {
+  const { isUnlocked, isAdminPreview } = useIsUnlocked();
+
+  if (!isUnlocked) {
     return (
       <LockedPage
         title="Secret Page"
@@ -17,7 +20,9 @@ const SecretPage = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-16">
+      {isAdminPreview && <AdminPreviewBanner pageName="Secret Page" />}
+      
+      <div className={`container mx-auto px-4 py-16 ${isAdminPreview ? 'mt-12' : ''}`}>
         <FadeIn>
           <SectionHeader
             title="You Found It!"

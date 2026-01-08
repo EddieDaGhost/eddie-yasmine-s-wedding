@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { isAfterWeddingDate } from '@/lib/wedding-utils';
+import { useIsUnlocked } from '@/hooks/useAdminPreview';
 import { LockedPage } from '@/components/shared/LockedPage';
+import { AdminPreviewBanner } from '@/components/shared/AdminPreviewBanner';
 import { Layout } from '@/components/layout/Layout';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,7 @@ interface Photo {
 
 const Gallery = () => {
   const [tagFilter, setTagFilter] = useState<string>('');
+  const { isUnlocked, isAdminPreview } = useIsUnlocked();
 
   const { data: photos, isLoading } = useQuery({
     queryKey: ['gallery-photos'],
@@ -31,10 +33,10 @@ const Gallery = () => {
       if (error) throw error;
       return data as Photo[];
     },
-    enabled: isAfterWeddingDate(),
+    enabled: isUnlocked,
   });
 
-  if (!isAfterWeddingDate()) {
+  if (!isUnlocked) {
     return (
       <LockedPage
         title="Photo Gallery"
@@ -54,7 +56,9 @@ const Gallery = () => {
 
   return (
     <Layout>
-      <section className="py-20 md:py-32 romantic-gradient">
+      {isAdminPreview && <AdminPreviewBanner pageName="Photo Gallery" />}
+      
+      <section className={`py-20 md:py-32 romantic-gradient ${isAdminPreview ? 'mt-12' : ''}`}>
         <div className="container mx-auto px-4">
           <SectionHeader
             title="Wedding Gallery"
