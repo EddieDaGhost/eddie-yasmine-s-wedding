@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { isAfterWeddingDate } from '@/lib/wedding-utils';
+import { useIsUnlocked } from '@/hooks/useAdminPreview';
 import { LockedPage } from '@/components/shared/LockedPage';
+import { AdminPreviewBanner } from '@/components/shared/AdminPreviewBanner';
 import { Layout } from '@/components/layout/Layout';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { Button } from '@/components/ui/button';
@@ -34,12 +35,13 @@ const mockMessages: GuestMessage[] = [
 
 const MessageWall = () => {
   const { toast } = useToast();
+  const { isUnlocked, isAdminPreview } = useIsUnlocked();
   const [messages, setMessages] = useState<GuestMessage[]>(mockMessages);
   const [name, setName] = useState('');
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (!isAfterWeddingDate()) {
+  if (!isUnlocked) {
     return (
       <LockedPage
         title="Message Wall"
@@ -77,7 +79,9 @@ const MessageWall = () => {
 
   return (
     <Layout>
-      <section className="py-20 md:py-32 romantic-gradient">
+      {isAdminPreview && <AdminPreviewBanner pageName="Message Wall" />}
+      
+      <section className={`py-20 md:py-32 romantic-gradient ${isAdminPreview ? 'mt-12' : ''}`}>
         <div className="container mx-auto px-4">
           <SectionHeader
             title="Guestbook"

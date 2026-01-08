@@ -11,6 +11,8 @@ import {
   FileText,
   Eye,
   LogOut,
+  Lock,
+  Mail,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -23,9 +25,11 @@ interface AdminLayoutProps {
 const navItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/rsvps', label: 'RSVPs', icon: Users },
+  { href: '/admin/invites', label: 'Invites', icon: Mail },
   { href: '/admin/guestbook', label: 'Guestbook', icon: MessageSquare },
   { href: '/admin/photos', label: 'Photos', icon: Image },
   { href: '/admin/song-requests', label: 'Songs', icon: Music },
+  { href: '/admin/locked-pages', label: 'Locked Pages', icon: Lock },
   { href: '/admin/content', label: 'Content', icon: FileText },
 ];
 
