@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { isAfterWeddingDate } from '@/lib/wedding-utils';
+import { useIsUnlocked } from '@/hooks/useAdminPreview';
 import { LockedPage } from '@/components/shared/LockedPage';
+import { AdminPreviewBanner } from '@/components/shared/AdminPreviewBanner';
 import { Layout } from '@/components/layout/Layout';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { Button } from '@/components/ui/button';
@@ -36,11 +37,12 @@ const quizQuestions = [
 ];
 
 const GuestQuiz = () => {
+  const { isUnlocked, isAdminPreview } = useIsUnlocked();
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
   const [showResults, setShowResults] = useState(false);
 
-  if (!isAfterWeddingDate()) {
+  if (!isUnlocked) {
     return (
       <LockedPage
         title="Guest Quiz"
@@ -70,7 +72,9 @@ const GuestQuiz = () => {
 
   return (
     <Layout>
-      <section className="py-20 md:py-32 romantic-gradient">
+      {isAdminPreview && <AdminPreviewBanner pageName="Guest Quiz" />}
+      
+      <section className={`py-20 md:py-32 romantic-gradient ${isAdminPreview ? 'mt-12' : ''}`}>
         <div className="container mx-auto px-4">
           <SectionHeader
             title="How Well Do You Know Us?"

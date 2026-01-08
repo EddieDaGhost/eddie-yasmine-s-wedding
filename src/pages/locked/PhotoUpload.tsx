@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
-import { isAfterWeddingDate } from '@/lib/wedding-utils';
+import { useIsUnlocked } from '@/hooks/useAdminPreview';
 import { LockedPage } from '@/components/shared/LockedPage';
+import { AdminPreviewBanner } from '@/components/shared/AdminPreviewBanner';
 import { Layout } from '@/components/layout/Layout';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { Button } from '@/components/ui/button';
@@ -18,11 +19,12 @@ interface UploadedPhoto {
 
 const PhotoUpload = () => {
   const { toast } = useToast();
+  const { isUnlocked, isAdminPreview } = useIsUnlocked();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [photos, setPhotos] = useState<UploadedPhoto[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
-  if (!isAfterWeddingDate()) {
+  if (!isUnlocked) {
     return (
       <LockedPage
         title="Photo Upload"
@@ -70,7 +72,9 @@ const PhotoUpload = () => {
 
   return (
     <Layout>
-      <section className="py-20 md:py-32 romantic-gradient">
+      {isAdminPreview && <AdminPreviewBanner pageName="Photo Upload" />}
+      
+      <section className={`py-20 md:py-32 romantic-gradient ${isAdminPreview ? 'mt-12' : ''}`}>
         <div className="container mx-auto px-4">
           <SectionHeader
             title="Share Your Photos"
