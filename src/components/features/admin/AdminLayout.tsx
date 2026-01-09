@@ -13,6 +13,7 @@ import {
   LogOut,
   Lock,
   Mail,
+  Palette,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -24,6 +25,7 @@ interface AdminLayoutProps {
 
 const navItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/admin/visual-editor', label: 'Visual Editor', icon: Palette },
   { href: '/admin/rsvps', label: 'RSVPs', icon: Users },
   { href: '/admin/invites', label: 'Invites', icon: Mail },
   { href: '/admin/guestbook', label: 'Guestbook', icon: MessageSquare },
