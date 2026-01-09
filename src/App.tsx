@@ -23,6 +23,7 @@ import SecretPage from "./pages/locked/SecretPage";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminContent from "./pages/admin/AdminContent";
+import AdminVisualEditor from "./pages/admin/AdminVisualEditor";
 import AdminGuestbook from "./pages/admin/AdminGuestbook";
 import AdminPhotos from "./pages/admin/AdminPhotos";
 import AdminRsvps from "./pages/admin/AdminRSVPs";
@@ -62,6 +63,7 @@ const App = () => (
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/content" element={<AdminContent />} />
+          <Route path="/admin/visual-editor" element={<AdminVisualEditor />} />
           <Route path="/admin/guestbook" element={<AdminGuestbook />} />
           <Route path="/admin/photos" element={<AdminPhotos />} />
           <Route path="/admin/rsvps" element={<AdminRsvps />} />

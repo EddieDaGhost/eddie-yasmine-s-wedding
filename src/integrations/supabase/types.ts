@@ -200,6 +200,42 @@ export type Database = {
           },
         ]
       }
+      page_drafts: {
+        Row: {
+          content: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          is_published: boolean
+          notes: string | null
+          page_key: string
+          published_at: string | null
+          version: number
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_published?: boolean
+          notes?: string | null
+          page_key: string
+          published_at?: string | null
+          version?: number
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_published?: boolean
+          notes?: string | null
+          page_key?: string
+          published_at?: string | null
+          version?: number
+        }
+        Relationships: []
+      }
       photos: {
         Row: {
           approved: boolean | null
