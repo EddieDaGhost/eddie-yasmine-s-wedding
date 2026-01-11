@@ -6,5 +6,6 @@ export { GuestModerationPanel } from './GuestModerationPanel';
 export { MessageModerationPanel } from './MessageModerationPanel';
 export { PhotoModerationPanel } from './PhotoModerationPanel';
 export { AdminLayout } from './AdminLayout';
-export { PageStructureMap } from './PageStructureMap';
+export { PageStructureMap, type PageSection } from './PageStructureMap';
 export { ImagePicker } from './ImagePicker';
+export { SectionEditor } from './SectionEditor';
