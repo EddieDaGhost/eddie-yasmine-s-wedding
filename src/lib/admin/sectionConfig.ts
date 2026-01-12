@@ -10,6 +10,10 @@ export interface SectionConfig {
   contentKeys: string[];
   fields: FieldConfig[];
   defaultContent?: Record<string, unknown>;
+  /** If section contains repeating items, specify the config key from repeatableItems.ts */
+  repeatableKey?: string;
+  /** CSS selector for individual repeating items within the section */
+  itemSelector?: string;
 }
 
 export interface FieldConfig {
@@ -18,6 +22,8 @@ export interface FieldConfig {
   type: 'text' | 'textarea' | 'json' | 'image' | 'array';
   path: string; // dot-notation path within content
   placeholder?: string;
+  /** For array type, link to repeatable config */
+  repeatableKey?: string;
 }
 
 export interface PageConfig {
@@ -93,8 +99,10 @@ const weddingPartySections: SectionConfig[] = [
     label: 'Bridesmaids',
     selector: '[data-section="bridesmaids"]',
     contentKeys: ['bridesmaids_data'],
+    repeatableKey: 'bridesmaids_data',
+    itemSelector: '[data-bridesmaid], .bridesmaid-card',
     fields: [
-      { key: 'bridesmaids_data', label: 'Bridesmaids Data', type: 'json', path: 'bridesmaids_data' },
+      { key: 'bridesmaids_data', label: 'Bridesmaids', type: 'array', path: 'bridesmaids_data', repeatableKey: 'bridesmaids_data' },
     ],
   },
   {
@@ -102,8 +110,10 @@ const weddingPartySections: SectionConfig[] = [
     label: 'Groomsmen',
     selector: '[data-section="groomsmen"]',
     contentKeys: ['groomsmen_data'],
+    repeatableKey: 'groomsmen_data',
+    itemSelector: '[data-groomsman], .groomsman-card',
     fields: [
-      { key: 'groomsmen_data', label: 'Groomsmen Data', type: 'json', path: 'groomsmen_data' },
+      { key: 'groomsmen_data', label: 'Groomsmen', type: 'array', path: 'groomsmen_data', repeatableKey: 'groomsmen_data' },
     ],
   },
 ];
@@ -125,8 +135,10 @@ const faqSections: SectionConfig[] = [
     label: 'FAQ Items',
     selector: '[data-section="faq-items"]',
     contentKeys: ['faq_items'],
+    repeatableKey: 'faq_items',
+    itemSelector: '[data-faq-item], .faq-item, .accordion-item',
     fields: [
-      { key: 'faq_items', label: 'FAQ Items', type: 'json', path: 'faq_items' },
+      { key: 'faq_items', label: 'FAQ Items', type: 'array', path: 'faq_items', repeatableKey: 'faq_items' },
     ],
   },
 ];
@@ -149,8 +161,10 @@ const registrySections: SectionConfig[] = [
     label: 'Registry Items',
     selector: '[data-section="registry-items"]',
     contentKeys: ['registry_items'],
+    repeatableKey: 'registry_items',
+    itemSelector: '[data-registry-item], .registry-item',
     fields: [
-      { key: 'registry_items', label: 'Registry Items', type: 'json', path: 'registry_items' },
+      { key: 'registry_items', label: 'Registry Items', type: 'array', path: 'registry_items', repeatableKey: 'registry_items' },
     ],
   },
 ];
@@ -172,8 +186,10 @@ const travelSections: SectionConfig[] = [
     label: 'Hotels',
     selector: '[data-section="travel-hotels"]',
     contentKeys: ['travel_hotels'],
+    repeatableKey: 'travel_hotels',
+    itemSelector: '[data-hotel], .hotel-card',
     fields: [
-      { key: 'travel_hotels', label: 'Hotels Data', type: 'json', path: 'travel_hotels' },
+      { key: 'travel_hotels', label: 'Hotels', type: 'array', path: 'travel_hotels', repeatableKey: 'travel_hotels' },
     ],
   },
   {
@@ -181,8 +197,10 @@ const travelSections: SectionConfig[] = [
     label: 'Travel Tips',
     selector: '[data-section="travel-tips"]',
     contentKeys: ['travel_tips'],
+    repeatableKey: 'travel_tips',
+    itemSelector: '[data-travel-tip], .travel-tip',
     fields: [
-      { key: 'travel_tips', label: 'Tips Data', type: 'json', path: 'travel_tips' },
+      { key: 'travel_tips', label: 'Tips', type: 'array', path: 'travel_tips', repeatableKey: 'travel_tips' },
     ],
   },
 ];

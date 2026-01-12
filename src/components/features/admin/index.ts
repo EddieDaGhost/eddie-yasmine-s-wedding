@@ -9,3 +9,4 @@ export { AdminLayout } from './AdminLayout';
 export { PageStructureMap, type PageSection } from './PageStructureMap';
 export { ImagePicker } from './ImagePicker';
 export { SectionEditor } from './SectionEditor';
+export { ItemEditor } from './ItemEditor';
