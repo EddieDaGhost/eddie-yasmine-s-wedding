@@ -1,8 +1,7 @@
 import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { GripVertical, Eye, EyeOff, ChevronRight } from 'lucide-react';
+import { GripVertical, Eye, EyeOff, ChevronRight, List } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 
 export interface PageSection {
@@ -11,6 +10,8 @@ export interface PageSection {
   contentKeys: string[];
   visible: boolean;
   selector?: string;
+  hasRepeatableItems?: boolean;
+  repeatableKey?: string;
 }
 
 interface PageStructureMapProps {
@@ -136,6 +137,11 @@ export const PageStructureMap = ({
                   <Badge variant="outline" className="text-[10px] px-1 py-0 h-4">
                     Hidden
                   </Badge>
+                )}
+                {section.hasRepeatableItems && (
+                  <span title="Contains repeating items">
+                    <List className="w-3 h-3 text-muted-foreground" />
+                  </span>
                 )}
               </div>
               <div className="text-[10px] text-muted-foreground truncate">

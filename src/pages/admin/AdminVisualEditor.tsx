@@ -17,13 +17,13 @@ import {
   RefreshCw,
   PanelLeftOpen,
   PanelLeftClose,
-  Copy,
   RotateCcw,
   Image as ImageIcon,
+  List,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
@@ -40,13 +40,14 @@ import {
 import { PageStructureMap, type PageSection } from '@/components/features/admin/PageStructureMap';
 import { SectionEditor } from '@/components/features/admin/SectionEditor';
 import { ImagePicker } from '@/components/features/admin/ImagePicker';
+import { ItemEditor } from '@/components/features/admin/ItemEditor';
 import { 
   EDITABLE_PAGES, 
   getPageConfig, 
   getPageContentKeys,
-  type SectionConfig 
 } from '@/lib/admin/sectionConfig';
 import { getIframeOverlayScript } from '@/lib/admin/iframeOverlayScript';
+import { getRepeatableConfig } from '@/lib/admin/repeatableItems';
 
 type DeviceView = 'desktop' | 'tablet' | 'mobile';
 
@@ -70,13 +71,17 @@ interface ContentEdit {
 }
 
 interface SelectedElement {
-  type: 'section' | 'text' | 'image';
+  type: 'section' | 'text' | 'image' | 'item';
   sectionId?: string;
+  itemIndex?: number;
+  repeatableKey?: string;
   text?: string;
   src?: string;
   alt?: string;
   path?: string;
 }
+
+type EditorMode = 'section' | 'item' | 'none';
 
 const validateJson = (value: string): { isValid: boolean; errorMessage?: string } => {
   const trimmed = value.trim();
@@ -109,9 +114,12 @@ const AdminVisualEditor = () => {
   
   // Selection state
   const [selectedSection, setSelectedSection] = useState<string | undefined>();
+  const [selectedItemIndex, setSelectedItemIndex] = useState<number | undefined>();
   const [hoveredSection, setHoveredSection] = useState<string | null>(null);
+  const [hoveredItemIndex, setHoveredItemIndex] = useState<number | undefined>();
   const [selectedElement, setSelectedElement] = useState<SelectedElement | null>(null);
   const [highlightedField, setHighlightedField] = useState<string | undefined>();
+  const [editorMode, setEditorMode] = useState<EditorMode>('none');
   
   // Section visibility state
   const [sectionVisibility, setSectionVisibility] = useState<Record<string, boolean>>({});
@@ -135,6 +143,8 @@ const AdminVisualEditor = () => {
     contentKeys: s.contentKeys,
     visible: sectionVisibility[s.id] !== false,
     selector: s.selector,
+    hasRepeatableItems: !!s.repeatableKey,
+    repeatableKey: s.repeatableKey,
   })) || [];
 
   // Initialize local edits from content
@@ -166,9 +176,19 @@ const AdminVisualEditor = () => {
   useEffect(() => {
     setSearchParams({ page: selectedPage });
     setSelectedSection(undefined);
+    setSelectedItemIndex(undefined);
     setSelectedElement(null);
+    setEditorMode('none');
     setIframeReady(false);
   }, [selectedPage, setSearchParams]);
+
+  // Send messages to iframe
+  const sendToIframe = useCallback((message: Record<string, unknown>) => {
+    const iframe = iframeRef.current;
+    if (iframe?.contentWindow) {
+      iframe.contentWindow.postMessage(message, '*');
+    }
+  }, []);
 
   // Listen for messages from iframe
   useEffect(() => {
@@ -182,7 +202,34 @@ const AdminVisualEditor = () => {
           
         case 'section-selected':
           setSelectedSection(e.data.sectionId);
-          setSelectedElement({ type: 'section', sectionId: e.data.sectionId });
+          // Check if there's also an item selected
+          if (e.data.itemIndex !== undefined && e.data.itemIndex !== null) {
+            setSelectedItemIndex(e.data.itemIndex);
+            setEditorMode('item');
+            setSelectedElement({ 
+              type: 'item', 
+              sectionId: e.data.sectionId, 
+              itemIndex: e.data.itemIndex 
+            });
+          } else {
+            setSelectedItemIndex(undefined);
+            setEditorMode('section');
+            setSelectedElement({ type: 'section', sectionId: e.data.sectionId });
+          }
+          setActiveTab('content');
+          break;
+          
+        case 'item-selected':
+          // Handle explicit item selection
+          setSelectedSection(e.data.sectionId);
+          setSelectedItemIndex(e.data.itemIndex);
+          setEditorMode('item');
+          setSelectedElement({
+            type: 'item',
+            sectionId: e.data.sectionId,
+            itemIndex: e.data.itemIndex,
+            repeatableKey: e.data.repeatableKey,
+          });
           setActiveTab('content');
           break;
           
@@ -190,11 +237,18 @@ const AdminVisualEditor = () => {
           setSelectedElement({
             type: 'text',
             sectionId: e.data.sectionId,
+            itemIndex: e.data.itemIndex,
             text: e.data.text,
             path: e.data.path,
           });
           if (e.data.sectionId) {
             setSelectedSection(e.data.sectionId);
+          }
+          if (e.data.itemIndex !== undefined && e.data.itemIndex !== null) {
+            setSelectedItemIndex(e.data.itemIndex);
+            setEditorMode('item');
+          } else {
+            setEditorMode('section');
           }
           setActiveTab('content');
           break;
@@ -203,12 +257,19 @@ const AdminVisualEditor = () => {
           setSelectedElement({
             type: 'image',
             sectionId: e.data.sectionId,
+            itemIndex: e.data.itemIndex,
             src: e.data.src,
             alt: e.data.alt,
             path: e.data.path,
           });
           if (e.data.sectionId) {
             setSelectedSection(e.data.sectionId);
+          }
+          if (e.data.itemIndex !== undefined && e.data.itemIndex !== null) {
+            setSelectedItemIndex(e.data.itemIndex);
+            setEditorMode('item');
+          } else {
+            setEditorMode('section');
           }
           setActiveTab('image');
           break;
@@ -223,6 +284,17 @@ const AdminVisualEditor = () => {
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
+  // Sync item selection to iframe
+  useEffect(() => {
+    if (selectedSection && selectedItemIndex !== undefined) {
+      sendToIframe({ 
+        type: 'select-item', 
+        sectionId: selectedSection, 
+        itemIndex: selectedItemIndex 
+      });
+    }
+  }, [selectedSection, selectedItemIndex, sendToIframe]);
+
   // Inject overlay script into iframe
   useEffect(() => {
     const iframe = iframeRef.current;
@@ -233,12 +305,14 @@ const AdminVisualEditor = () => {
         const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
         if (!iframeDoc) return;
 
-        // Inject overlay script
+        // Inject overlay script with item selectors for repeatable sections
         const script = iframeDoc.createElement('script');
         const sectionData = currentPageConfig.sections.map(s => ({
           id: s.id,
           selector: s.selector,
           label: s.label,
+          itemSelector: s.itemSelector,
+          repeatableKey: s.repeatableKey,
         }));
         script.textContent = getIframeOverlayScript(sectionData);
         iframeDoc.body.appendChild(script);
@@ -251,27 +325,27 @@ const AdminVisualEditor = () => {
     return () => iframe.removeEventListener('load', handleLoad);
   }, [currentPageConfig, selectedPage]);
 
-  // Send messages to iframe
-  const sendToIframe = useCallback((message: Record<string, unknown>) => {
-    const iframe = iframeRef.current;
-    if (iframe?.contentWindow) {
-      iframe.contentWindow.postMessage(message, '*');
-    }
-  }, []);
-
   // Sync hover state to iframe
   useEffect(() => {
     if (hoveredSection) {
-      sendToIframe({ type: 'highlight-section', sectionId: hoveredSection });
+      if (hoveredItemIndex !== undefined) {
+        sendToIframe({ type: 'highlight-item', sectionId: hoveredSection, itemIndex: hoveredItemIndex });
+      } else {
+        sendToIframe({ type: 'highlight-section', sectionId: hoveredSection });
+      }
     }
-  }, [hoveredSection, sendToIframe]);
+  }, [hoveredSection, hoveredItemIndex, sendToIframe]);
 
   // Sync selection state to iframe
   useEffect(() => {
     if (selectedSection) {
-      sendToIframe({ type: 'select-section', sectionId: selectedSection });
+      if (selectedItemIndex !== undefined) {
+        sendToIframe({ type: 'select-item', sectionId: selectedSection, itemIndex: selectedItemIndex });
+      } else {
+        sendToIframe({ type: 'select-section', sectionId: selectedSection });
+      }
     }
-  }, [selectedSection, sendToIframe]);
+  }, [selectedSection, selectedItemIndex, sendToIframe]);
 
   // Handle local edit change
   const handleEditChange = (key: string, value: string) => {
@@ -478,6 +552,15 @@ const AdminVisualEditor = () => {
     ? currentPageConfig?.sections.find(s => s.id === selectedSection)
     : undefined;
 
+  // Get repeatable config for item editing
+  const currentRepeatableConfig = currentSectionConfig?.repeatableKey
+    ? getRepeatableConfig(currentSectionConfig.repeatableKey)
+    : undefined;
+
+  // Get the content key for repeatable items
+  const repeatableContentKey = currentSectionConfig?.repeatableKey;
+  const repeatableContent = repeatableContentKey ? localEdits[repeatableContentKey]?.value || '[]' : '[]';
+
   // Build content map for selected section
   const sectionContent: Record<string, string> = {};
   if (currentSectionConfig) {
@@ -485,6 +568,45 @@ const AdminVisualEditor = () => {
       sectionContent[key] = localEdits[key]?.value || '';
     });
   }
+
+  // Handle item content change (for ItemEditor)
+  const handleItemContentChange = (value: string) => {
+    if (repeatableContentKey) {
+      handleEditChange(repeatableContentKey, value);
+      // Notify iframe of content update
+      sendToIframe({ type: 'update-content' });
+    }
+  };
+
+  // Handle item selection from ItemEditor
+  const handleSelectItem = (index: number | undefined) => {
+    setSelectedItemIndex(index);
+    if (index !== undefined && selectedSection) {
+      setEditorMode('item');
+      sendToIframe({ type: 'select-item', sectionId: selectedSection, itemIndex: index });
+    } else {
+      setEditorMode('section');
+    }
+  };
+
+  // Handle item hover from ItemEditor
+  const handleHighlightItem = (index: number | undefined) => {
+    setHoveredItemIndex(index);
+    if (index !== undefined && selectedSection) {
+      sendToIframe({ type: 'highlight-item', sectionId: selectedSection, itemIndex: index });
+    } else if (selectedSection) {
+      sendToIframe({ type: 'highlight-section', sectionId: selectedSection });
+    }
+  };
+
+  // Switch to section editing mode
+  const switchToSectionMode = () => {
+    setSelectedItemIndex(undefined);
+    setEditorMode('section');
+    if (selectedSection) {
+      sendToIframe({ type: 'select-section', sectionId: selectedSection });
+    }
+  };
 
   if (isAuthenticated === null || isLoadingContent) {
     return (
@@ -614,10 +736,13 @@ const AdminVisualEditor = () => {
                       hoveredSection={hoveredSection}
                       onSelectSection={(id) => {
                         setSelectedSection(id);
+                        setSelectedItemIndex(undefined);
+                        setEditorMode('section');
                         sendToIframe({ type: 'select-section', sectionId: id });
                       }}
                       onHoverSection={(id) => {
                         setHoveredSection(id);
+                        setHoveredItemIndex(undefined);
                         if (id) {
                           sendToIframe({ type: 'highlight-section', sectionId: id });
                         }
@@ -693,13 +818,78 @@ const AdminVisualEditor = () => {
                         <div className="p-4 space-y-4">
                           {selectedSection && currentSectionConfig ? (
                             <>
-                              <SectionEditor
-                                section={currentSectionConfig}
-                                content={sectionContent}
-                                onChange={handleEditChange}
-                                highlightedField={highlightedField}
-                                onFieldFocus={setHighlightedField}
-                              />
+                              {/* Mode indicator and toggle */}
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                  <Badge 
+                                    variant={editorMode === 'item' ? 'default' : 'secondary'}
+                                    className="text-xs"
+                                  >
+                                    {editorMode === 'item' ? (
+                                      <>
+                                        <List className="w-3 h-3 mr-1" />
+                                        Editing Item #{(selectedItemIndex ?? 0) + 1}
+                                      </>
+                                    ) : (
+                                      <>
+                                        <FileText className="w-3 h-3 mr-1" />
+                                        Editing Section
+                                      </>
+                                    )}
+                                  </Badge>
+                                </div>
+                                {editorMode === 'item' && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={switchToSectionMode}
+                                    className="text-xs h-7"
+                                  >
+                                    ← Back to Section
+                                  </Button>
+                                )}
+                              </div>
+
+                              {/* Show ItemEditor for repeatable sections with item selected, otherwise SectionEditor */}
+                              {editorMode === 'item' && currentRepeatableConfig ? (
+                                <ItemEditor
+                                  config={currentRepeatableConfig}
+                                  content={repeatableContent}
+                                  onChange={handleItemContentChange}
+                                  selectedItemIndex={selectedItemIndex}
+                                  onSelectItem={handleSelectItem}
+                                  onHighlightItem={handleHighlightItem}
+                                />
+                              ) : currentRepeatableConfig ? (
+                                // Section has repeatable items - show ItemEditor in list mode
+                                <>
+                                  <SectionEditor
+                                    section={currentSectionConfig}
+                                    content={sectionContent}
+                                    onChange={handleEditChange}
+                                    highlightedField={highlightedField}
+                                    onFieldFocus={setHighlightedField}
+                                  />
+                                  <div className="border-t border-border pt-4 mt-4">
+                                    <ItemEditor
+                                      config={currentRepeatableConfig}
+                                      content={repeatableContent}
+                                      onChange={handleItemContentChange}
+                                      selectedItemIndex={selectedItemIndex}
+                                      onSelectItem={handleSelectItem}
+                                      onHighlightItem={handleHighlightItem}
+                                    />
+                                  </div>
+                                </>
+                              ) : (
+                                <SectionEditor
+                                  section={currentSectionConfig}
+                                  content={sectionContent}
+                                  onChange={handleEditChange}
+                                  highlightedField={highlightedField}
+                                  onFieldFocus={setHighlightedField}
+                                />
+                              )}
                             </>
                           ) : (
                             <div className="text-center py-12 text-muted-foreground">
