@@ -40,6 +40,7 @@ import {
 import { PageStructureMap, type PageSection } from '@/components/features/admin/PageStructureMap';
 import { SectionEditor } from '@/components/features/admin/SectionEditor';
 import { ImagePicker } from '@/components/features/admin/ImagePicker';
+import { ImageEditor } from '@/components/features/admin/ImageEditor';
 import { ItemEditor } from '@/components/features/admin/ItemEditor';
 import { 
   EDITABLE_PAGES, 
@@ -48,6 +49,13 @@ import {
 } from '@/lib/admin/sectionConfig';
 import { getIframeOverlayScript } from '@/lib/admin/iframeOverlayScript';
 import { getRepeatableConfig } from '@/lib/admin/repeatableItems';
+import {
+  type ImageLayout,
+  type AspectRatio,
+  type SelectedImageInfo,
+  type ImageFieldMetadata,
+  extractImageFieldKey,
+} from '@/lib/admin/imageUtils';
 
 type DeviceView = 'desktop' | 'tablet' | 'mobile';
 
@@ -81,7 +89,14 @@ interface SelectedElement {
   path?: string;
 }
 
-type EditorMode = 'section' | 'item' | 'none';
+type EditorMode = 'section' | 'item' | 'image' | 'none';
+
+// Image metadata for current editing
+interface ImageEditState {
+  info: SelectedImageInfo;
+  metadata: ImageFieldMetadata;
+  originalMetadata: ImageFieldMetadata;
+}
 
 const validateJson = (value: string): { isValid: boolean; errorMessage?: string } => {
   const trimmed = value.trim();
@@ -120,6 +135,9 @@ const AdminVisualEditor = () => {
   const [selectedElement, setSelectedElement] = useState<SelectedElement | null>(null);
   const [highlightedField, setHighlightedField] = useState<string | undefined>();
   const [editorMode, setEditorMode] = useState<EditorMode>('none');
+  
+  // Image editing state
+  const [imageEditState, setImageEditState] = useState<ImageEditState | null>(null);
   
   // Section visibility state
   const [sectionVisibility, setSectionVisibility] = useState<Record<string, boolean>>({});
@@ -254,6 +272,29 @@ const AdminVisualEditor = () => {
           break;
           
         case 'image-element-selected':
+        case 'image-selected':
+          const imgInfo: SelectedImageInfo = {
+            src: e.data.src,
+            alt: e.data.alt || '',
+            sectionId: e.data.sectionId,
+            itemIndex: e.data.itemIndex,
+            fieldKey: extractImageFieldKey(e.data.path || '', e.data.sectionId),
+            path: e.data.path || '',
+            naturalWidth: e.data.naturalWidth,
+            naturalHeight: e.data.naturalHeight,
+          };
+          
+          const initialMetadata: ImageFieldMetadata = {
+            src: e.data.src,
+            alt: e.data.alt || '',
+          };
+          
+          setImageEditState({
+            info: imgInfo,
+            metadata: { ...initialMetadata },
+            originalMetadata: { ...initialMetadata },
+          });
+          
           setSelectedElement({
             type: 'image',
             sectionId: e.data.sectionId,
@@ -267,11 +308,21 @@ const AdminVisualEditor = () => {
           }
           if (e.data.itemIndex !== undefined && e.data.itemIndex !== null) {
             setSelectedItemIndex(e.data.itemIndex);
-            setEditorMode('item');
-          } else {
-            setEditorMode('section');
           }
+          setEditorMode('image');
           setActiveTab('image');
+          break;
+          
+        case 'image-action':
+          // Handle toolbar actions - switch to appropriate tab
+          if (e.data.action === 'replace') setActiveTab('image');
+          else if (e.data.action === 'alt') setActiveTab('image');
+          else if (e.data.action === 'crop') setActiveTab('image');
+          else if (e.data.action === 'layout') setActiveTab('image');
+          break;
+          
+        case 'image-hovered':
+          // Could show preview info
           break;
           
         case 'section-action':
@@ -957,21 +1008,68 @@ const AdminVisualEditor = () => {
                     <TabsContent value="image" className="flex-1 m-0 overflow-hidden">
                       <ScrollArea className="h-full">
                         <div className="p-4 space-y-4">
-                          {selectedElement?.type === 'image' ? (
-                            <div className="space-y-4">
-                              <h3 className="font-medium text-sm">Edit Image</h3>
-                              <ImagePicker
-                                value={selectedElement.src || ''}
-                                onChange={(url) => {
-                                  // In a full implementation, this would update the content
-                                  toast({ title: 'Image updated', description: 'Image reference saved.' });
-                                }}
-                                onAltChange={(alt) => {
-                                  // Update alt text
-                                }}
-                                alt={selectedElement.alt}
-                              />
-                            </div>
+                          {imageEditState ? (
+                            <ImageEditor
+                              selectedImage={imageEditState.info}
+                              metadata={imageEditState.metadata}
+                              onImageChange={(src) => {
+                                setImageEditState(prev => prev ? {
+                                  ...prev,
+                                  metadata: { ...prev.metadata, src }
+                                } : null);
+                                sendToIframe({ 
+                                  type: 'update-image', 
+                                  oldSrc: imageEditState.info.src,
+                                  newSrc: src,
+                                  path: imageEditState.info.path 
+                                });
+                              }}
+                              onAltChange={(alt) => {
+                                setImageEditState(prev => prev ? {
+                                  ...prev,
+                                  metadata: { ...prev.metadata, alt }
+                                } : null);
+                                sendToIframe({ 
+                                  type: 'update-image', 
+                                  oldSrc: imageEditState.info.src,
+                                  newAlt: alt,
+                                  path: imageEditState.info.path 
+                                });
+                              }}
+                              onLayoutChange={(layout) => {
+                                setImageEditState(prev => prev ? {
+                                  ...prev,
+                                  metadata: { ...prev.metadata, layout }
+                                } : null);
+                              }}
+                              onAspectRatioChange={(aspectRatio) => {
+                                setImageEditState(prev => prev ? {
+                                  ...prev,
+                                  metadata: { ...prev.metadata, aspectRatio }
+                                } : null);
+                              }}
+                              onSizeChange={(maxWidth, maxHeight) => {
+                                setImageEditState(prev => prev ? {
+                                  ...prev,
+                                  metadata: { ...prev.metadata, maxWidth, maxHeight }
+                                } : null);
+                              }}
+                              onClose={() => {
+                                setImageEditState(null);
+                                setEditorMode('section');
+                                sendToIframe({ type: 'clear-selection' });
+                              }}
+                              onApply={() => {
+                                toast({ title: 'Image updated', description: 'Changes applied to draft.' });
+                                // Update content if there's a known field key
+                                if (imageEditState.info.fieldKey && imageEditState.metadata.src) {
+                                  handleEditChange(imageEditState.info.fieldKey, imageEditState.metadata.src);
+                                  if (imageEditState.info.fieldKey + '_alt') {
+                                    handleEditChange(imageEditState.info.fieldKey + '_alt', imageEditState.metadata.alt || '');
+                                  }
+                                }
+                              }}
+                            />
                           ) : (
                             <div className="text-center py-12 text-muted-foreground">
                               <ImageIcon className="w-12 h-12 mx-auto mb-4 opacity-20" />

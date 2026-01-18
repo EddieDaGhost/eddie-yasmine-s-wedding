@@ -1,7 +1,8 @@
 /**
  * Script to be injected into the preview iframe for overlay handling.
  * Communicates with parent via postMessage.
- * Supports section selection, item selection within repeating sections, and element highlighting.
+ * Supports section selection, item selection within repeating sections, 
+ * image selection with toolbar, and element highlighting.
  */
 
 export interface SectionData {
@@ -22,10 +23,13 @@ export const getIframeOverlayScript = (sections: SectionData[]) => {
   const sections = ${JSON.stringify(sections)};
   let selectedSection = null;
   let selectedItemIndex = null;
+  let selectedImage = null;
   let hoveredSection = null;
   let hoveredItemIndex = null;
+  let hoveredImage = null;
   let overlayContainer = null;
   let toolbarElement = null;
+  let imageToolbarElement = null;
 
   // Create overlay container
   function createOverlayContainer() {
@@ -115,6 +119,131 @@ export const getIframeOverlayScript = (sections: SectionData[]) => {
     return overlay;
   }
 
+  // Create image overlay with toolbar
+  function createImageOverlay(img, isSelected, isHovered) {
+    const rect = img.getBoundingClientRect();
+    
+    const overlay = document.createElement('div');
+    overlay.className = 'image-overlay';
+    overlay.style.cssText = \`
+      position: absolute;
+      top: \${rect.top + window.scrollY}px;
+      left: \${rect.left + window.scrollX}px;
+      width: \${rect.width}px;
+      height: \${rect.height}px;
+      border: 2px \${isSelected ? 'solid' : 'dashed'} \${isSelected ? '#3b82f6' : 'rgba(59, 130, 246, 0.5)'};
+      background: \${isSelected ? 'rgba(59, 130, 246, 0.08)' : (isHovered ? 'rgba(59, 130, 246, 0.04)' : 'transparent')};
+      pointer-events: none;
+      transition: all 0.15s ease;
+      border-radius: 4px;
+    \`;
+
+    // Image badge
+    const label = document.createElement('div');
+    label.style.cssText = \`
+      position: absolute;
+      bottom: -1px;
+      left: -1px;
+      background: \${isSelected ? '#3b82f6' : 'rgba(59, 130, 246, 0.85)'};
+      color: white;
+      font-size: 10px;
+      font-weight: 500;
+      padding: 2px 6px;
+      border-radius: 4px 0 0 0;
+      font-family: system-ui, sans-serif;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    \`;
+    label.innerHTML = '<span style="font-size: 12px;">🖼</span> Image';
+    overlay.appendChild(label);
+
+    overlayContainer.appendChild(overlay);
+    
+    // Create image toolbar if selected
+    if (isSelected) {
+      createImageToolbar(rect, img);
+    }
+    
+    return overlay;
+  }
+
+  // Create image-specific toolbar
+  function createImageToolbar(rect, img) {
+    if (imageToolbarElement) {
+      imageToolbarElement.remove();
+    }
+
+    imageToolbarElement = document.createElement('div');
+    imageToolbarElement.className = 'image-toolbar';
+    imageToolbarElement.style.cssText = \`
+      position: absolute;
+      top: \${rect.bottom + window.scrollY + 8}px;
+      left: \${rect.left + window.scrollX}px;
+      background: white;
+      border-radius: 6px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      display: flex;
+      gap: 2px;
+      padding: 4px;
+      pointer-events: auto;
+      z-index: 100001;
+      font-family: system-ui, sans-serif;
+    \`;
+
+    const buttons = [
+      { action: 'replace', label: 'Replace', icon: '🔄' },
+      { action: 'alt', label: 'Alt Text', icon: '📝' },
+      { action: 'crop', label: 'Crop', icon: '✂️' },
+      { action: 'layout', label: 'Layout', icon: '📐' },
+    ];
+
+    buttons.forEach(btn => {
+      const button = document.createElement('button');
+      button.style.cssText = \`
+        background: transparent;
+        border: none;
+        padding: 6px 10px;
+        cursor: pointer;
+        font-size: 12px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        color: #374151;
+        transition: background 0.15s;
+        white-space: nowrap;
+      \`;
+      button.innerHTML = \`<span>\${btn.icon}</span><span>\${btn.label}</span>\`;
+      button.onmouseenter = () => button.style.background = '#f3f4f6';
+      button.onmouseleave = () => button.style.background = 'transparent';
+      button.onclick = (e) => {
+        e.stopPropagation();
+        
+        const section = findSectionFromElement(img);
+        let itemIndex = -1;
+        if (section && section.itemSelector) {
+          itemIndex = findItemIndex(img, section);
+        }
+        
+        window.parent.postMessage({
+          type: 'image-action',
+          action: btn.action,
+          src: img.src,
+          alt: img.alt,
+          sectionId: section?.id || null,
+          itemIndex: itemIndex >= 0 ? itemIndex : null,
+          path: getElementPath(img),
+          naturalWidth: img.naturalWidth,
+          naturalHeight: img.naturalHeight
+        }, '*');
+      };
+      imageToolbarElement.appendChild(button);
+    });
+
+    overlayContainer.appendChild(imageToolbarElement);
+  }
+
   // Create floating toolbar for selected section
   function createToolbar(rect, section) {
     if (toolbarElement) {
@@ -183,6 +312,7 @@ export const getIframeOverlayScript = (sections: SectionData[]) => {
       overlayContainer.innerHTML = '';
     }
     toolbarElement = null;
+    imageToolbarElement = null;
   }
 
   // Update overlays based on current state
@@ -190,16 +320,17 @@ export const getIframeOverlayScript = (sections: SectionData[]) => {
     clearOverlays();
     if (!overlayContainer) createOverlayContainer();
 
+    // Section and item overlays
     sections.forEach(section => {
       const element = document.querySelector(section.selector);
       if (element) {
         const rect = element.getBoundingClientRect();
-        const isSelected = selectedSection === section.id;
-        const isHovered = hoveredSection === section.id;
+        const isSelected = selectedSection === section.id && !selectedImage;
+        const isHovered = hoveredSection === section.id && !hoveredImage;
         
         if (isSelected || isHovered) {
           createSectionOverlay(rect, section, isSelected);
-          if (isSelected) {
+          if (isSelected && !selectedItemIndex) {
             createToolbar(rect, section);
           }
         }
@@ -219,6 +350,14 @@ export const getIframeOverlayScript = (sections: SectionData[]) => {
         }
       }
     });
+
+    // Image overlays
+    if (selectedImage) {
+      createImageOverlay(selectedImage, true, false);
+    }
+    if (hoveredImage && hoveredImage !== selectedImage) {
+      createImageOverlay(hoveredImage, false, true);
+    }
   }
 
   // Find section from element
@@ -250,12 +389,43 @@ export const getIframeOverlayScript = (sections: SectionData[]) => {
 
   // Handle mouse move for hover detection
   document.addEventListener('mousemove', (e) => {
-    const section = findSectionFromElement(e.target);
+    const target = e.target;
+    
+    // Check for image hover
+    if (target.tagName === 'IMG') {
+      if (hoveredImage !== target) {
+        hoveredImage = target;
+        updateOverlays();
+        
+        // Send hover event
+        const section = findSectionFromElement(target);
+        let itemIndex = -1;
+        if (section && section.itemSelector) {
+          itemIndex = findItemIndex(target, section);
+        }
+        
+        window.parent.postMessage({
+          type: 'image-hovered',
+          src: target.src,
+          alt: target.alt,
+          sectionId: section?.id || null,
+          itemIndex: itemIndex >= 0 ? itemIndex : null,
+          path: getElementPath(target)
+        }, '*');
+      }
+      return;
+    } else if (hoveredImage) {
+      hoveredImage = null;
+      updateOverlays();
+    }
+    
+    // Section/item hover
+    const section = findSectionFromElement(target);
     const newHovered = section ? section.id : null;
     let newHoveredItem = -1;
     
     if (section && section.itemSelector) {
-      newHoveredItem = findItemIndex(e.target, section);
+      newHoveredItem = findItemIndex(target, section);
     }
     
     if (newHovered !== hoveredSection || newHoveredItem !== hoveredItemIndex) {
@@ -267,7 +437,49 @@ export const getIframeOverlayScript = (sections: SectionData[]) => {
 
   // Handle click for selection
   document.addEventListener('click', (e) => {
-    const section = findSectionFromElement(e.target);
+    const target = e.target;
+    
+    // Check if clicking on an image
+    if (target.tagName === 'IMG') {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      selectedImage = target;
+      
+      const section = findSectionFromElement(target);
+      let itemIndex = -1;
+      if (section && section.itemSelector) {
+        itemIndex = findItemIndex(target, section);
+      }
+      
+      // Update section selection if image is in a section
+      if (section) {
+        selectedSection = section.id;
+        if (itemIndex >= 0) {
+          selectedItemIndex = itemIndex;
+        }
+      }
+      
+      updateOverlays();
+      
+      window.parent.postMessage({
+        type: 'image-selected',
+        src: target.src,
+        alt: target.alt,
+        sectionId: section?.id || null,
+        itemIndex: itemIndex >= 0 ? itemIndex : null,
+        path: getElementPath(target),
+        naturalWidth: target.naturalWidth,
+        naturalHeight: target.naturalHeight
+      }, '*');
+      
+      return;
+    }
+    
+    // Clear image selection if clicking elsewhere
+    selectedImage = null;
+    
+    const section = findSectionFromElement(target);
     
     if (section) {
       e.preventDefault();
@@ -277,7 +489,7 @@ export const getIframeOverlayScript = (sections: SectionData[]) => {
       
       // Check if clicking on a repeating item
       if (section.itemSelector) {
-        const itemIndex = findItemIndex(e.target, section);
+        const itemIndex = findItemIndex(target, section);
         if (itemIndex >= 0) {
           selectedItemIndex = itemIndex;
           
@@ -306,61 +518,6 @@ export const getIframeOverlayScript = (sections: SectionData[]) => {
     }
   }, true);
 
-  // Handle text/image element clicks
-  document.addEventListener('click', (e) => {
-    const target = e.target;
-    
-    // Check if it's an editable text element
-    if (target.matches('h1, h2, h3, h4, h5, h6, p, span, a, li')) {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      // Highlight the element
-      target.style.outline = '2px solid #8b5cf6';
-      target.style.outlineOffset = '2px';
-      
-      // Find parent section and item
-      const section = findSectionFromElement(target);
-      let itemIndex = -1;
-      if (section && section.itemSelector) {
-        itemIndex = findItemIndex(target, section);
-      }
-      
-      window.parent.postMessage({
-        type: 'text-element-selected',
-        sectionId: section?.id || null,
-        itemIndex: itemIndex >= 0 ? itemIndex : null,
-        text: target.textContent,
-        tagName: target.tagName.toLowerCase(),
-        path: getElementPath(target)
-      }, '*');
-    }
-    
-    // Check if it's an image
-    if (target.tagName === 'IMG') {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      target.style.outline = '2px solid #8b5cf6';
-      target.style.outlineOffset = '2px';
-      
-      const section = findSectionFromElement(target);
-      let itemIndex = -1;
-      if (section && section.itemSelector) {
-        itemIndex = findItemIndex(target, section);
-      }
-      
-      window.parent.postMessage({
-        type: 'image-element-selected',
-        sectionId: section?.id || null,
-        itemIndex: itemIndex >= 0 ? itemIndex : null,
-        src: target.src,
-        alt: target.alt,
-        path: getElementPath(target)
-      }, '*');
-    }
-  }, true);
-
   // Get element path for identification
   function getElementPath(el) {
     const parts = [];
@@ -382,6 +539,7 @@ export const getIframeOverlayScript = (sections: SectionData[]) => {
     if (e.data.type === 'highlight-section') {
       const sectionId = e.data.sectionId;
       hoveredSection = sectionId;
+      hoveredImage = null;
       updateOverlays();
       
       // Scroll to section
@@ -398,6 +556,7 @@ export const getIframeOverlayScript = (sections: SectionData[]) => {
       const { sectionId, itemIndex } = e.data;
       hoveredSection = sectionId;
       hoveredItemIndex = itemIndex;
+      hoveredImage = null;
       updateOverlays();
       
       // Scroll to item
@@ -413,9 +572,24 @@ export const getIframeOverlayScript = (sections: SectionData[]) => {
       }
     }
     
+    if (e.data.type === 'highlight-image') {
+      const { path } = e.data;
+      // Find image by path or src
+      const images = document.querySelectorAll('img');
+      for (const img of images) {
+        if (getElementPath(img) === path || img.src === e.data.src) {
+          hoveredImage = img;
+          updateOverlays();
+          img.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          break;
+        }
+      }
+    }
+    
     if (e.data.type === 'select-section') {
       selectedSection = e.data.sectionId;
       selectedItemIndex = e.data.itemIndex ?? null;
+      selectedImage = null;
       updateOverlays();
       
       // Scroll to section
@@ -432,6 +606,7 @@ export const getIframeOverlayScript = (sections: SectionData[]) => {
       const { sectionId, itemIndex } = e.data;
       selectedSection = sectionId;
       selectedItemIndex = itemIndex;
+      selectedImage = null;
       updateOverlays();
       
       // Scroll to item
@@ -447,11 +622,26 @@ export const getIframeOverlayScript = (sections: SectionData[]) => {
       }
     }
     
+    if (e.data.type === 'select-image') {
+      const { src, path } = e.data;
+      const images = document.querySelectorAll('img');
+      for (const img of images) {
+        if (getElementPath(img) === path || img.src === src) {
+          selectedImage = img;
+          updateOverlays();
+          img.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          break;
+        }
+      }
+    }
+    
     if (e.data.type === 'clear-selection') {
       selectedSection = null;
       selectedItemIndex = null;
+      selectedImage = null;
       hoveredSection = null;
       hoveredItemIndex = null;
+      hoveredImage = null;
       updateOverlays();
     }
     
@@ -465,6 +655,20 @@ export const getIframeOverlayScript = (sections: SectionData[]) => {
         el.style.outline = '';
         el.style.outlineOffset = '';
       });
+    }
+    
+    if (e.data.type === 'update-image') {
+      // Update specific image src/alt
+      const { oldSrc, newSrc, newAlt, path } = e.data;
+      const images = document.querySelectorAll('img');
+      for (const img of images) {
+        if (getElementPath(img) === path || img.src === oldSrc) {
+          if (newSrc) img.src = newSrc;
+          if (newAlt !== undefined) img.alt = newAlt;
+          updateOverlays();
+          break;
+        }
+      }
     }
   });
 
