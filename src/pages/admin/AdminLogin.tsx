@@ -14,6 +14,8 @@ const AdminLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
 
   // Check if already logged in
   useEffect(() => {
@@ -28,6 +30,18 @@ const AdminLogin = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Check if user is locked out
+    if (lockoutUntil && Date.now() < lockoutUntil) {
+      const remainingSeconds = Math.ceil((lockoutUntil - Date.now()) / 1000);
+      toast({
+        title: "Too many attempts",
+        description: `Please wait ${remainingSeconds} seconds before trying again.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -37,12 +51,30 @@ const AdminLogin = () => {
       });
 
       if (error) {
-        toast({
-          title: "Login Failed",
-          description: error.message,
-          variant: "destructive",
-        });
+        // Failed login - increment attempts
+        const newAttempts = loginAttempts + 1;
+        setLoginAttempts(newAttempts);
+
+        // Exponential backoff: 30s, 1m, 2m, 5m, 15m
+        const backoffSeconds = Math.min(30 * Math.pow(2, newAttempts - 1), 900);
+        if (newAttempts >= 3) {
+          setLockoutUntil(Date.now() + backoffSeconds * 1000);
+          toast({
+            title: "Too many failed attempts",
+            description: `Account locked for ${backoffSeconds} seconds. Please try again later.`,
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Login Failed",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
       } else if (data.session) {
+        // Successful login - reset attempts
+        setLoginAttempts(0);
+        setLockoutUntil(null);
         toast({
           title: "Welcome!",
           description: "You've been logged in successfully.",

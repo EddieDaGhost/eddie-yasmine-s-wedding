@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAllContent } from '@/hooks/useContent';
+import { sanitizeHtml } from '@/lib/sanitize';
 
 interface RSVPSuccessViewProps {
   guestName: string;
@@ -108,7 +109,7 @@ export const RSVPSuccessView = ({ guestName, onSubmitAnother }: RSVPSuccessViewP
             </div>
               <div className="text-left">
               <p className="font-medium">{venueName}</p>
-              <p className="text-sm text-muted-foreground" dangerouslySetInnerHTML={{ __html: venueAddress }} />
+              <p className="text-sm text-muted-foreground" dangerouslySetInnerHTML={{ __html: sanitizeHtml(venueAddress) }} />
             </div>
           </div>
         </div>
