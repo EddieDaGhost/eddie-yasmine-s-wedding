@@ -216,26 +216,49 @@ export const getImagePlaceholder = (): string => {
 };
 
 /**
- * Extract image field key from element path
+ * Extract image field key from element path (legacy fallback).
+ * Prefer using resolveImageField from sectionConfig.ts instead.
  */
 export const extractImageFieldKey = (path: string, sectionId: string | null): string | null => {
-  // Try to extract a meaningful field key from the path
   const parts = path.split(' > ');
-  
-  // Look for data attributes or class names that suggest the field
   for (const part of parts.reverse()) {
-    if (part.includes('hero')) return 'hero_image';
+    if (part.includes('hero')) return 'home_hero_image';
+    if (part.includes('story')) return 'story_image';
     if (part.includes('avatar')) return 'avatar';
     if (part.includes('background')) return 'background_image';
     if (part.includes('thumbnail')) return 'thumbnail';
     if (part.includes('photo')) return 'photo';
     if (part.includes('logo')) return 'logo';
   }
-  
-  // Default to generic image field based on section
-  if (sectionId) {
-    return `${sectionId}_image`;
-  }
-  
+  if (sectionId) return `${sectionId}_image`;
   return 'image';
+};
+
+/**
+ * Layout to CSS class mapping for iframe preview rendering.
+ */
+export const LAYOUT_CSS_MAP: Record<ImageLayout, string> = {
+  full: 'width: 100%; height: auto;',
+  'half-left': 'width: 50%; float: left; margin-right: 1rem;',
+  'half-right': 'width: 50%; float: right; margin-left: 1rem;',
+  inline: 'width: 8rem; display: inline-block;',
+  grid: 'width: 100%; aspect-ratio: 1/1; object-fit: cover;',
+};
+
+/**
+ * Get inline CSS string for a layout option (for iframe injection).
+ */
+export const getLayoutInlineCss = (layout: ImageLayout): string => {
+  return LAYOUT_CSS_MAP[layout] || LAYOUT_CSS_MAP.full;
+};
+
+/**
+ * Build complete image metadata for draft JSON storage.
+ */
+export const buildImageDraftValue = (metadata: ImageFieldMetadata): string => {
+  // Store as JSON if there's layout/crop metadata, otherwise just the URL
+  if (metadata.layout || metadata.aspectRatio || metadata.maxWidth || metadata.maxHeight || metadata.caption) {
+    return JSON.stringify(metadata);
+  }
+  return metadata.src;
 };

@@ -11,6 +11,16 @@ export interface SectionData {
   label: string;
   itemSelector?: string;
   repeatableKey?: string;
+  imageFields?: Array<{
+    key: string;
+    label: string;
+    jsonPath: string;
+    selector: string;
+    allowedLayouts?: string[];
+    allowedAspectRatios?: string[];
+    defaultAspectRatio?: string;
+    altKey?: string;
+  }>;
 }
 
 export const getIframeOverlayScript = (sections: SectionData[]) => {
@@ -220,11 +230,7 @@ export const getIframeOverlayScript = (sections: SectionData[]) => {
       button.onclick = (e) => {
         e.stopPropagation();
         
-        const section = findSectionFromElement(img);
-        let itemIndex = -1;
-        if (section && section.itemSelector) {
-          itemIndex = findItemIndex(img, section);
-        }
+        const { section, fieldConfig, itemIndex } = resolveImageFieldFromElement(img);
         
         window.parent.postMessage({
           type: 'image-action',
@@ -235,7 +241,12 @@ export const getIframeOverlayScript = (sections: SectionData[]) => {
           itemIndex: itemIndex >= 0 ? itemIndex : null,
           path: getElementPath(img),
           naturalWidth: img.naturalWidth,
-          naturalHeight: img.naturalHeight
+          naturalHeight: img.naturalHeight,
+          fieldKey: fieldConfig?.key || null,
+          jsonPath: fieldConfig?.jsonPath || null,
+          altKey: fieldConfig?.altKey || null,
+          allowedLayouts: fieldConfig?.allowedLayouts || null,
+          allowedAspectRatios: fieldConfig?.allowedAspectRatios || null,
         }, '*');
       };
       imageToolbarElement.appendChild(button);
@@ -387,6 +398,42 @@ export const getIframeOverlayScript = (sections: SectionData[]) => {
     return -1;
   }
 
+  // Resolve image field metadata from sections config
+  function resolveImageFieldFromElement(img) {
+    const section = findSectionFromElement(img);
+    if (!section) return { section: null, fieldConfig: null, itemIndex: -1 };
+    
+    let itemIndex = -1;
+    if (section.itemSelector) {
+      itemIndex = findItemIndex(img, section);
+    }
+    
+    // Try to match against image field selectors
+    let fieldConfig = null;
+    if (section.imageFields && section.imageFields.length > 0) {
+      for (const imgField of section.imageFields) {
+        const selectors = imgField.selector.split(',').map(s => s.trim());
+        for (const sel of selectors) {
+          try {
+            const matches = document.querySelectorAll(sel);
+            for (const match of matches) {
+              if (match === img || match.contains(img) || img.contains(match)) {
+                fieldConfig = imgField;
+                break;
+              }
+            }
+          } catch(e) { /* invalid selector */ }
+          if (fieldConfig) break;
+        }
+        if (fieldConfig) break;
+      }
+      // Fallback to first image field if none matched
+      if (!fieldConfig) fieldConfig = section.imageFields[0];
+    }
+    
+    return { section, fieldConfig, itemIndex };
+  }
+
   // Handle mouse move for hover detection
   document.addEventListener('mousemove', (e) => {
     const target = e.target;
@@ -397,12 +444,7 @@ export const getIframeOverlayScript = (sections: SectionData[]) => {
         hoveredImage = target;
         updateOverlays();
         
-        // Send hover event
-        const section = findSectionFromElement(target);
-        let itemIndex = -1;
-        if (section && section.itemSelector) {
-          itemIndex = findItemIndex(target, section);
-        }
+        const { section, fieldConfig, itemIndex } = resolveImageFieldFromElement(target);
         
         window.parent.postMessage({
           type: 'image-hovered',
@@ -410,7 +452,12 @@ export const getIframeOverlayScript = (sections: SectionData[]) => {
           alt: target.alt,
           sectionId: section?.id || null,
           itemIndex: itemIndex >= 0 ? itemIndex : null,
-          path: getElementPath(target)
+          path: getElementPath(target),
+          fieldKey: fieldConfig?.key || null,
+          jsonPath: fieldConfig?.jsonPath || null,
+          altKey: fieldConfig?.altKey || null,
+          allowedLayouts: fieldConfig?.allowedLayouts || null,
+          allowedAspectRatios: fieldConfig?.allowedAspectRatios || null,
         }, '*');
       }
       return;
@@ -446,11 +493,7 @@ export const getIframeOverlayScript = (sections: SectionData[]) => {
       
       selectedImage = target;
       
-      const section = findSectionFromElement(target);
-      let itemIndex = -1;
-      if (section && section.itemSelector) {
-        itemIndex = findItemIndex(target, section);
-      }
+      const { section, fieldConfig, itemIndex } = resolveImageFieldFromElement(target);
       
       // Update section selection if image is in a section
       if (section) {
@@ -470,7 +513,13 @@ export const getIframeOverlayScript = (sections: SectionData[]) => {
         itemIndex: itemIndex >= 0 ? itemIndex : null,
         path: getElementPath(target),
         naturalWidth: target.naturalWidth,
-        naturalHeight: target.naturalHeight
+        naturalHeight: target.naturalHeight,
+        fieldKey: fieldConfig?.key || null,
+        jsonPath: fieldConfig?.jsonPath || null,
+        altKey: fieldConfig?.altKey || null,
+        allowedLayouts: fieldConfig?.allowedLayouts || null,
+        allowedAspectRatios: fieldConfig?.allowedAspectRatios || null,
+        defaultAspectRatio: fieldConfig?.defaultAspectRatio || null,
       }, '*');
       
       return;
@@ -658,13 +707,14 @@ export const getIframeOverlayScript = (sections: SectionData[]) => {
     }
     
     if (e.data.type === 'update-image') {
-      // Update specific image src/alt
-      const { oldSrc, newSrc, newAlt, path } = e.data;
+      // Update specific image src/alt and apply layout CSS
+      const { oldSrc, newSrc, newAlt, path, layoutCss } = e.data;
       const images = document.querySelectorAll('img');
       for (const img of images) {
         if (getElementPath(img) === path || img.src === oldSrc) {
           if (newSrc) img.src = newSrc;
           if (newAlt !== undefined) img.alt = newAlt;
+          if (layoutCss) img.style.cssText = layoutCss;
           updateOverlays();
           break;
         }
