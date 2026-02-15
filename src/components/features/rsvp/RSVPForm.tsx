@@ -1,19 +1,27 @@
-import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { FadeIn } from '@/components/animation';
+import { nameSchema, emailSchema, optionalMessageSchema } from '@/lib/validation';
 
-interface RSVPFormData {
-  name: string;
-  email: string;
-  attending: boolean | null;
-  plusOnes: number;
-  dietaryNeeds: string;
-}
+// RSVP Form Validation Schema
+const rsvpSchema = z.object({
+  name: nameSchema,
+  email: emailSchema,
+  attending: z.boolean({
+    required_error: 'Please select whether you will attend',
+  }),
+  plusOnes: z.number().int().min(0).max(5, 'Maximum 5 additional guests'),
+  dietaryNeeds: optionalMessageSchema,
+});
+
+type RSVPFormData = z.infer<typeof rsvpSchema>;
 
 interface RSVPFormProps {
   onSubmit?: (data: RSVPFormData) => Promise<void>;
@@ -21,34 +29,45 @@ interface RSVPFormProps {
 }
 
 export const RSVPForm = ({ onSubmit, isLoading = false }: RSVPFormProps) => {
-  const [formData, setFormData] = useState<RSVPFormData>({
-    name: '',
-    email: '',
-    attending: null,
-    plusOnes: 0,
-    dietaryNeeds: '',
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+    setValue,
+  } = useForm<RSVPFormData>({
+    resolver: zodResolver(rsvpSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      plusOnes: 0,
+      dietaryNeeds: '',
+    },
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const attending = watch('attending');
+
+  const onSubmitHandler = async (data: RSVPFormData) => {
     if (onSubmit) {
-      await onSubmit(formData);
+      await onSubmit(data);
     }
   };
 
   return (
     <FadeIn>
-      <form onSubmit={handleSubmit} className="space-y-6 max-w-lg mx-auto">
+      <form onSubmit={handleSubmit(onSubmitHandler)} className="space-y-6 max-w-lg mx-auto">
         {/* Name */}
         <div className="space-y-2">
           <Label htmlFor="name">Full Name</Label>
           <Input
             id="name"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            {...register('name')}
             placeholder="Your full name"
-            required
+            className={errors.name ? 'border-destructive' : ''}
           />
+          {errors.name && (
+            <p className="text-sm text-destructive">{errors.name.message}</p>
+          )}
         </div>
 
         {/* Email */}
@@ -57,19 +76,21 @@ export const RSVPForm = ({ onSubmit, isLoading = false }: RSVPFormProps) => {
           <Input
             id="email"
             type="email"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            {...register('email')}
             placeholder="your@email.com"
-            required
+            className={errors.email ? 'border-destructive' : ''}
           />
+          {errors.email && (
+            <p className="text-sm text-destructive">{errors.email.message}</p>
+          )}
         </div>
 
         {/* Attendance */}
         <div className="space-y-3">
           <Label>Will you be attending?</Label>
           <RadioGroup
-            value={formData.attending === null ? '' : formData.attending ? 'yes' : 'no'}
-            onValueChange={(value) => setFormData({ ...formData, attending: value === 'yes' })}
+            value={attending === undefined ? '' : attending ? 'yes' : 'no'}
+            onValueChange={(value) => setValue('attending', value === 'yes', { shouldValidate: true })}
           >
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="yes" id="attending-yes" />
@@ -84,10 +105,13 @@ export const RSVPForm = ({ onSubmit, isLoading = false }: RSVPFormProps) => {
               </Label>
             </div>
           </RadioGroup>
+          {errors.attending && (
+            <p className="text-sm text-destructive">{errors.attending.message}</p>
+          )}
         </div>
 
         {/* Plus Ones - only show if attending */}
-        {formData.attending && (
+        {attending && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
@@ -99,14 +123,17 @@ export const RSVPForm = ({ onSubmit, isLoading = false }: RSVPFormProps) => {
               type="number"
               min="0"
               max="5"
-              value={formData.plusOnes}
-              onChange={(e) => setFormData({ ...formData, plusOnes: parseInt(e.target.value) || 0 })}
+              {...register('plusOnes', { valueAsNumber: true })}
+              className={errors.plusOnes ? 'border-destructive' : ''}
             />
+            {errors.plusOnes && (
+              <p className="text-sm text-destructive">{errors.plusOnes.message}</p>
+            )}
           </motion.div>
         )}
 
         {/* Dietary Needs */}
-        {formData.attending && (
+        {attending && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
@@ -115,11 +142,14 @@ export const RSVPForm = ({ onSubmit, isLoading = false }: RSVPFormProps) => {
             <Label htmlFor="dietary">Dietary Requirements</Label>
             <Textarea
               id="dietary"
-              value={formData.dietaryNeeds}
-              onChange={(e) => setFormData({ ...formData, dietaryNeeds: e.target.value })}
+              {...register('dietaryNeeds')}
               placeholder="Any allergies or dietary restrictions..."
               rows={3}
+              className={errors.dietaryNeeds ? 'border-destructive' : ''}
             />
+            {errors.dietaryNeeds && (
+              <p className="text-sm text-destructive">{errors.dietaryNeeds.message}</p>
+            )}
           </motion.div>
         )}
 
@@ -129,7 +159,7 @@ export const RSVPForm = ({ onSubmit, isLoading = false }: RSVPFormProps) => {
           variant="romantic"
           size="lg"
           className="w-full"
-          disabled={isLoading || formData.attending === null}
+          disabled={isLoading}
         >
           {isLoading ? 'Sending...' : 'Send RSVP'}
         </Button>
