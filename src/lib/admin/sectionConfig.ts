@@ -14,6 +14,27 @@ export interface SectionConfig {
   repeatableKey?: string;
   /** CSS selector for individual repeating items within the section */
   itemSelector?: string;
+  /** Image field definitions for this section */
+  imageFields?: ImageFieldConfig[];
+}
+
+export interface ImageFieldConfig {
+  /** Content key for this image field */
+  key: string;
+  /** Human-readable label */
+  label: string;
+  /** JSON path within content (dot-notation) */
+  jsonPath: string;
+  /** CSS selector to find this image in the DOM */
+  selector: string;
+  /** Allowed layout options (defaults to all) */
+  allowedLayouts?: string[];
+  /** Allowed aspect ratios (defaults to all) */
+  allowedAspectRatios?: string[];
+  /** Default aspect ratio */
+  defaultAspectRatio?: string;
+  /** Alt text content key (if separate from image src) */
+  altKey?: string;
 }
 
 export interface FieldConfig {
@@ -45,6 +66,18 @@ const homeSections: SectionConfig[] = [
       { key: 'home_names', label: 'Names', type: 'text', path: 'home_names', placeholder: 'Eddie & Yasmine' },
       { key: 'home_date', label: 'Wedding Date', type: 'text', path: 'home_date', placeholder: 'July 2nd, 2027' },
       { key: 'home_location', label: 'Location', type: 'text', path: 'home_location', placeholder: 'The Grand Estate, California' },
+    ],
+    imageFields: [
+      {
+        key: 'home_hero_image',
+        label: 'Hero Background',
+        jsonPath: 'home_hero_image',
+        selector: '[data-section="hero"] img, section:first-of-type img',
+        allowedLayouts: ['full'],
+        allowedAspectRatios: ['16:9', '21:9', 'original'],
+        defaultAspectRatio: '16:9',
+        altKey: 'home_hero_image_alt',
+      },
     ],
   },
   {
@@ -78,6 +111,18 @@ const ourStorySections: SectionConfig[] = [
     contentKeys: ['story_quote'],
     fields: [
       { key: 'story_quote', label: 'Quote', type: 'textarea', path: 'story_quote', placeholder: 'A meaningful quote...' },
+    ],
+    imageFields: [
+      {
+        key: 'story_image',
+        label: 'Story Photo',
+        jsonPath: 'story_image',
+        selector: '[data-section="story-content"] img, .story-content img',
+        allowedLayouts: ['full', 'half-left', 'half-right'],
+        allowedAspectRatios: ['original', 'square', '4:3', '3:2'],
+        defaultAspectRatio: '3:2',
+        altKey: 'story_image_alt',
+      },
     ],
   },
 ];
@@ -268,4 +313,53 @@ export const getSectionConfig = (pageKey: string, sectionId: string): SectionCon
   const page = getPageConfig(pageKey);
   if (!page) return undefined;
   return page.sections.find(s => s.id === sectionId);
+};
+
+/**
+ * Get all image field configs for a page
+ */
+export const getPageImageFields = (pageKey: string): Array<ImageFieldConfig & { sectionId: string }> => {
+  const page = getPageConfig(pageKey);
+  if (!page) return [];
+  return page.sections.flatMap(s =>
+    (s.imageFields || []).map(f => ({ ...f, sectionId: s.id }))
+  );
+};
+
+/**
+ * Resolve an image field from a sectionId and DOM selector match.
+ * Returns the matching ImageFieldConfig or undefined.
+ */
+export const resolveImageField = (
+  pageKey: string,
+  sectionId: string,
+  imgSelector?: string,
+): ImageFieldConfig | undefined => {
+  const section = getSectionConfig(pageKey, sectionId);
+  if (!section?.imageFields?.length) return undefined;
+  if (!imgSelector) return section.imageFields[0];
+  // Try to match selector
+  return section.imageFields.find(f => {
+    // Check if any part of the field selector appears in the given selector
+    const parts = f.selector.split(',').map(s => s.trim());
+    return parts.some(p => imgSelector.includes(p.replace(/\s+/g, ' ')));
+  }) || section.imageFields[0];
+};
+
+/**
+ * Get image fields for repeating items from repeatableItems config.
+ * Returns field keys that are of type 'image'.
+ */
+export const getRepeatableImageFields = (repeatableKey: string): string[] => {
+  // This is a lightweight lookup - actual schema is in repeatableItems.ts
+  // We just need to know which fields are images for the resolver
+  const imageFieldsByRepeatable: Record<string, string[]> = {
+    bridesmaids_data: ['image'],
+    groomsmen_data: ['image'],
+    registry_items: ['image'],
+    travel_hotels: ['image'],
+    timeline_items: ['image'],
+    gallery_items: ['src'],
+  };
+  return imageFieldsByRepeatable[repeatableKey] || [];
 };

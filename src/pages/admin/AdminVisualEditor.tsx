@@ -47,6 +47,7 @@ import {
   getPageConfig, 
   getPageContentKeys,
 } from '@/lib/admin/sectionConfig';
+import type { ImageFieldConfig } from '@/lib/admin/sectionConfig';
 import { getIframeOverlayScript } from '@/lib/admin/iframeOverlayScript';
 import { getRepeatableConfig } from '@/lib/admin/repeatableItems';
 import {
@@ -55,6 +56,8 @@ import {
   type SelectedImageInfo,
   type ImageFieldMetadata,
   extractImageFieldKey,
+  buildImageDraftValue,
+  getLayoutInlineCss,
 } from '@/lib/admin/imageUtils';
 
 type DeviceView = 'desktop' | 'tablet' | 'mobile';
@@ -96,6 +99,8 @@ interface ImageEditState {
   info: SelectedImageInfo;
   metadata: ImageFieldMetadata;
   originalMetadata: ImageFieldMetadata;
+  /** Resolved field config from metadata (constraints) */
+  fieldConfig?: Partial<ImageFieldConfig>;
 }
 
 const validateJson = (value: string): { isValid: boolean; errorMessage?: string } => {
@@ -272,13 +277,15 @@ const AdminVisualEditor = () => {
           break;
           
         case 'image-element-selected':
-        case 'image-selected':
+        case 'image-selected': {
+          // Use metadata-driven field key from iframe if available, fallback to legacy
+          const fieldKey = e.data.fieldKey || extractImageFieldKey(e.data.path || '', e.data.sectionId);
           const imgInfo: SelectedImageInfo = {
             src: e.data.src,
             alt: e.data.alt || '',
             sectionId: e.data.sectionId,
             itemIndex: e.data.itemIndex,
-            fieldKey: extractImageFieldKey(e.data.path || '', e.data.sectionId),
+            fieldKey,
             path: e.data.path || '',
             naturalWidth: e.data.naturalWidth,
             naturalHeight: e.data.naturalHeight,
@@ -289,10 +296,21 @@ const AdminVisualEditor = () => {
             alt: e.data.alt || '',
           };
           
+          // Apply metadata constraints from iframe
+          const resolvedField: Partial<ImageFieldConfig> = {
+            key: fieldKey || undefined,
+            jsonPath: e.data.jsonPath || undefined,
+            altKey: e.data.altKey || undefined,
+            allowedLayouts: e.data.allowedLayouts || undefined,
+            allowedAspectRatios: e.data.allowedAspectRatios || undefined,
+            defaultAspectRatio: e.data.defaultAspectRatio || undefined,
+          };
+          
           setImageEditState({
             info: imgInfo,
             metadata: { ...initialMetadata },
             originalMetadata: { ...initialMetadata },
+            fieldConfig: resolvedField,
           });
           
           setSelectedElement({
@@ -312,6 +330,7 @@ const AdminVisualEditor = () => {
           setEditorMode('image');
           setActiveTab('image');
           break;
+        }
           
         case 'image-action':
           // Handle toolbar actions - switch to appropriate tab
@@ -364,6 +383,7 @@ const AdminVisualEditor = () => {
           label: s.label,
           itemSelector: s.itemSelector,
           repeatableKey: s.repeatableKey,
+          imageFields: s.imageFields || [],
         }));
         script.textContent = getIframeOverlayScript(sectionData);
         iframeDoc.body.appendChild(script);
@@ -1060,14 +1080,27 @@ const AdminVisualEditor = () => {
                                 sendToIframe({ type: 'clear-selection' });
                               }}
                               onApply={() => {
-                                toast({ title: 'Image updated', description: 'Changes applied to draft.' });
-                                // Update content if there's a known field key
+                                // Build draft value with full metadata
                                 if (imageEditState.info.fieldKey && imageEditState.metadata.src) {
-                                  handleEditChange(imageEditState.info.fieldKey, imageEditState.metadata.src);
-                                  if (imageEditState.info.fieldKey + '_alt') {
-                                    handleEditChange(imageEditState.info.fieldKey + '_alt', imageEditState.metadata.alt || '');
+                                  const draftValue = buildImageDraftValue(imageEditState.metadata);
+                                  handleEditChange(imageEditState.info.fieldKey, draftValue);
+                                  // Update alt key if defined
+                                  const altKey = imageEditState.info.fieldKey + '_alt';
+                                  handleEditChange(altKey, imageEditState.metadata.alt || '');
+                                  
+                                  // Sync layout to iframe
+                                  if (imageEditState.metadata.layout) {
+                                    sendToIframe({
+                                      type: 'update-image',
+                                      oldSrc: imageEditState.info.src,
+                                      newSrc: imageEditState.metadata.src,
+                                      newAlt: imageEditState.metadata.alt,
+                                      path: imageEditState.info.path,
+                                      layoutCss: getLayoutInlineCss(imageEditState.metadata.layout),
+                                    });
                                   }
                                 }
+                                toast({ title: 'Image updated', description: 'Changes applied to draft.' });
                               }}
                             />
                           ) : (
