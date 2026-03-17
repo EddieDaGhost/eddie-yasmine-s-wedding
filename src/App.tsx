@@ -27,6 +27,8 @@ const PhotoUpload = lazy(() => import("./pages/locked/PhotoUpload"));
 const LiveUpdates = lazy(() => import("./pages/locked/LiveUpdates"));
 const Gallery = lazy(() => import("./pages/locked/Gallery"));
 const SecretPage = lazy(() => import("./pages/locked/SecretPage"));
+const SeatingChart = lazy(() => import("./pages/locked/SeatingChart"));
+const PhotoBooth = lazy(() => import("./pages/locked/PhotoBooth"));
 
 // Admin pages
 const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
@@ -75,6 +77,8 @@ const App = () => (
             <Route path="/updates" element={<LiveUpdates />} />
             <Route path="/gallery" element={<Gallery />} />
             <Route path="/secret" element={<SecretPage />} />
+            <Route path="/seating" element={<SeatingChart />} />
+            <Route path="/photo-booth" element={<PhotoBooth />} />
             {/* Admin Routes */}
             <Route path="/admin" element={<AdminLogin />} />
             <Route path="/admin/login" element={<AdminLogin />} />

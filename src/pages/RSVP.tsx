@@ -8,6 +8,7 @@ import { FadeIn } from '@/components/animation';
 import { RSVPFormCard, RSVPSuccessView, RSVPFormData } from '@/components/features/rsvp';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import PlaylistEmbed from '@/components/features/songs/PlaylistEmbed';
 
 const RSVP = () => {
   const { toast } = useToast();
@@ -135,6 +136,11 @@ const RSVP = () => {
                 Please respond by June 1st, 2027
               </span>
             </motion.div>
+
+            {/* Playlist Widget */}
+            <div className="mt-10">
+              <PlaylistEmbed />
+            </div>
 
             {/* Decorative Footer */}
             <motion.div

@@ -7,15 +7,23 @@ import { SectionHeader } from '@/components/shared/SectionHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
-import { Upload, Image, X, Check } from 'lucide-react';
+import { Upload, Image, X, Check, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import imageCompression from 'browser-image-compression';
 
 interface UploadedPhoto {
   id: string;
+  file: File;
   preview: string;
   caption: string;
-  status: 'pending' | 'uploaded';
+  status: 'pending' | 'compressing' | 'uploaded';
 }
+
+const COMPRESSION_OPTIONS = {
+  maxSizeMB: 1,
+  maxWidthOrHeight: 1920,
+  useWebWorker: true,
+};
 
 const PhotoUpload = () => {
   const { toast } = useToast();
@@ -33,21 +41,55 @@ const PhotoUpload = () => {
     );
   }
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
 
     const newPhotos: UploadedPhoto[] = Array.from(files).map((file) => ({
       id: Date.now().toString() + Math.random(),
+      file,
       preview: URL.createObjectURL(file),
       caption: '',
       status: 'pending' as const,
     }));
 
-    setPhotos([...photos, ...newPhotos]);
+    setPhotos((prev) => [...prev, ...newPhotos]);
+
+    // Compress each photo in the background
+    for (const photo of newPhotos) {
+      try {
+        setPhotos((prev) =>
+          prev.map((p) => (p.id === photo.id ? { ...p, status: 'compressing' as const } : p))
+        );
+
+        const compressed = await imageCompression(photo.file, COMPRESSION_OPTIONS);
+        const compressedPreview = URL.createObjectURL(compressed);
+
+        setPhotos((prev) =>
+          prev.map((p) =>
+            p.id === photo.id
+              ? { ...p, file: compressed, preview: compressedPreview, status: 'pending' as const }
+              : p
+          )
+        );
+
+        // Revoke old preview URL
+        URL.revokeObjectURL(photo.preview);
+      } catch {
+        // Keep original if compression fails
+        setPhotos((prev) =>
+          prev.map((p) => (p.id === photo.id ? { ...p, status: 'pending' as const } : p))
+        );
+      }
+    }
+
+    // Reset file input
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const removePhoto = (id: string) => {
+    const photo = photos.find((p) => p.id === id);
+    if (photo) URL.revokeObjectURL(photo.preview);
     setPhotos(photos.filter((p) => p.id !== id));
   };
 
@@ -57,23 +99,26 @@ const PhotoUpload = () => {
 
   const handleUpload = async () => {
     setIsUploading(true);
-    
+
     // Simulate upload
     await new Promise((resolve) => setTimeout(resolve, 2000));
-    
+
     setPhotos(photos.map((p) => ({ ...p, status: 'uploaded' as const })));
     setIsUploading(false);
-    
+
     toast({
       title: "Photos Uploaded!",
       description: "Your photos will appear in the gallery after approval.",
     });
   };
 
+  const pendingCount = photos.filter((p) => p.status === 'pending').length;
+  const compressingCount = photos.filter((p) => p.status === 'compressing').length;
+
   return (
     <Layout>
       {isAdminPreview && <AdminPreviewBanner pageName="Photo Upload" />}
-      
+
       <section className={`py-20 md:py-32 romantic-gradient ${isAdminPreview ? 'mt-12' : ''}`}>
         <div className="container mx-auto px-4">
           <SectionHeader
@@ -100,7 +145,7 @@ const PhotoUpload = () => {
                 onChange={handleFileSelect}
                 className="hidden"
               />
-              
+
               <div
                 onClick={() => fileInputRef.current?.click()}
                 className="border-2 border-dashed border-primary/30 rounded-2xl p-12 cursor-pointer hover:border-primary/50 transition-colors"
@@ -111,6 +156,9 @@ const PhotoUpload = () => {
                 </h3>
                 <p className="text-muted-foreground text-sm">
                   Or drag and drop your photos here
+                </p>
+                <p className="text-muted-foreground/60 text-xs mt-2">
+                  Photos are automatically compressed for faster upload
                 </p>
               </div>
             </motion.div>
@@ -133,6 +181,11 @@ const PhotoUpload = () => {
                           alt="Upload preview"
                           className="w-full h-full object-cover"
                         />
+                        {photo.status === 'compressing' && (
+                          <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
+                            <Loader2 className="w-6 h-6 text-primary animate-spin" />
+                          </div>
+                        )}
                         {photo.status === 'uploaded' && (
                           <div className="absolute inset-0 bg-sage/20 flex items-center justify-center">
                             <Check className="w-8 h-8 text-sage" />
@@ -160,12 +213,17 @@ const PhotoUpload = () => {
                   size="lg"
                   className="w-full"
                   onClick={handleUpload}
-                  disabled={isUploading || photos.every((p) => p.status === 'uploaded')}
+                  disabled={isUploading || pendingCount === 0 || compressingCount > 0}
                 >
-                  {isUploading ? 'Uploading...' : (
+                  {isUploading ? 'Uploading...' : compressingCount > 0 ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Compressing {compressingCount} photo{compressingCount > 1 ? 's' : ''}...
+                    </>
+                  ) : (
                     <>
                       <Image className="w-5 h-5 mr-2" />
-                      Upload {photos.filter((p) => p.status === 'pending').length} Photos
+                      Upload {pendingCount} Photo{pendingCount !== 1 ? 's' : ''}
                     </>
                   )}
                 </Button>
