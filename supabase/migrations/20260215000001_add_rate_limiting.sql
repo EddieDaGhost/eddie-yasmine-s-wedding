@@ -2,6 +2,7 @@
 -- RATE LIMITING FOR PUBLIC SUBMISSIONS
 -- Created: 2026-02-15
 -- Purpose: Prevent spam and abuse via database triggers
+-- Idempotent: Safe to run multiple times
 -- =====================================================
 
 -- =====================================================
@@ -23,6 +24,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS rsvp_rate_limit_trigger ON public.rsvps;
 CREATE TRIGGER rsvp_rate_limit_trigger
 BEFORE INSERT ON public.rsvps
 FOR EACH ROW
@@ -47,6 +49,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS guestbook_rate_limit_trigger ON public.guestbook_messages;
 CREATE TRIGGER guestbook_rate_limit_trigger
 BEFORE INSERT ON public.guestbook_messages
 FOR EACH ROW
@@ -54,14 +57,13 @@ EXECUTE FUNCTION check_guestbook_rate_limit();
 
 -- =====================================================
 -- 3. PHOTO UPLOAD RATE LIMITING
--- Max 10 photos per hour (by created_at timestamp)
+-- Max 10 photos per hour (global, by created_at timestamp)
 -- =====================================================
 CREATE OR REPLACE FUNCTION check_photo_upload_rate_limit()
 RETURNS TRIGGER AS $$
 DECLARE
   recent_uploads INTEGER;
 BEGIN
-  -- Count recent uploads (last hour)
   SELECT COUNT(*)
   INTO recent_uploads
   FROM public.photos
@@ -75,6 +77,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS photo_upload_rate_limit_trigger ON public.photos;
 CREATE TRIGGER photo_upload_rate_limit_trigger
 BEFORE INSERT ON public.photos
 FOR EACH ROW
@@ -104,6 +107,7 @@ BEGIN
       $func$ LANGUAGE plpgsql;
     ';
 
+    EXECUTE 'DROP TRIGGER IF EXISTS song_request_rate_limit_trigger ON public.song_requests';
     EXECUTE '
       CREATE TRIGGER song_request_rate_limit_trigger
       BEFORE INSERT ON public.song_requests
