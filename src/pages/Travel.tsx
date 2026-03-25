@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plane, Hotel, Car, MapPin, ExternalLink, UtensilsCrossed,
   Wine, Waves, TreePine, Sun, Music, Palette, ShoppingBag,
   Clock, Calendar, Heart, Sparkles, ChevronRight, Star,
   Compass, Camera, Coffee, Sailboat, Landmark, GlassWater,
-  Navigation, Shirt, Umbrella, SunMedium, Phone, CreditCard,
+  Navigation, Shirt, Umbrella, SunMedium, Phone,
   ChevronDown
 } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
@@ -14,6 +14,19 @@ import { FadeIn } from '@/components/animation/FadeIn';
 import { StaggerContainer, StaggerItem } from '@/components/animation/StaggerContainer';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+
+/* ------------------------------------------------------------------ */
+/*  Shared animation constants                                         */
+/* ------------------------------------------------------------------ */
+
+const EASE_OUT_EXPO = [0.22, 1, 0.36, 1] as const;
+
+const floatingParticles = [
+  { className: 'top-16 left-[10%] w-2 h-2 bg-primary/30', duration: 4, y: -15, delay: 0 },
+  { className: 'top-32 right-[15%] w-3 h-3 bg-accent/20', duration: 5, y: -20, delay: 1 },
+  { className: 'bottom-20 left-[25%] w-1.5 h-1.5 bg-primary/25', duration: 3.5, y: -12, delay: 0.5 },
+  { className: 'top-24 right-[30%] w-1 h-1 bg-gold/30', duration: 3, y: -10, delay: 2 },
+] as const;
 
 /* ------------------------------------------------------------------ */
 /*  Data                                                               */
@@ -96,40 +109,16 @@ const weekendSchedule: Record<WeekendDay, { label: string; date: string; events:
       },
       {
         time: 'Evening',
-        title: 'Casual Welcome Drinks',
-        description: 'Join us for a relaxed evening at a local spot — details to follow!',
+        title: 'Welcome Drinks & Rehearsal Dinner',
+        description: 'Rehearsal dinner for the wedding party and immediate family. Everyone else — join us for casual welcome drinks at a local spot!',
         icon: <Wine className="w-4 h-4" />,
+        highlight: true,
       },
     ],
   },
   friday: {
     label: 'Friday',
     date: 'July 2',
-    events: [
-      {
-        time: 'Morning',
-        title: 'Beach Morning',
-        description: 'Hit Silver Beach or Tiscornia Beach for swimming, sunbathing, and volleyball.',
-        icon: <Sun className="w-4 h-4" />,
-      },
-      {
-        time: 'Afternoon',
-        title: 'Explore & Taste',
-        description: 'Wine tasting along the Lake Michigan Shore Wine Trail, or explore local galleries and shops.',
-        icon: <Wine className="w-4 h-4" />,
-      },
-      {
-        time: 'Evening',
-        title: 'Rehearsal Dinner',
-        description: 'For the wedding party and immediate family — invitations sent separately.',
-        icon: <UtensilsCrossed className="w-4 h-4" />,
-        highlight: true,
-      },
-    ],
-  },
-  saturday: {
-    label: 'Saturday',
-    date: 'July 3',
     events: [
       {
         time: 'Morning',
@@ -153,9 +142,9 @@ const weekendSchedule: Record<WeekendDay, { label: string; date: string; events:
       },
     ],
   },
-  sunday: {
-    label: 'Sunday',
-    date: 'July 4',
+  saturday: {
+    label: 'Saturday',
+    date: 'July 3',
     events: [
       {
         time: 'Morning',
@@ -165,6 +154,18 @@ const weekendSchedule: Record<WeekendDay, { label: string; date: string; events:
       },
       {
         time: 'Afternoon',
+        title: 'Beach & Explore',
+        description: 'Hit Silver Beach, wine-taste along the Lake Michigan Shore Wine Trail, or explore local galleries and shops.',
+        icon: <Sun className="w-4 h-4" />,
+      },
+    ],
+  },
+  sunday: {
+    label: 'Sunday',
+    date: 'July 4',
+    events: [
+      {
+        time: 'All Day',
         title: '4th of July Festivities',
         description: 'Stick around for fireworks over Lake Michigan! St. Joseph puts on a spectacular show.',
         icon: <Sparkles className="w-4 h-4" />,
@@ -305,6 +306,13 @@ const categoryConfig: { key: EntertainmentCategory; label: string; icon: React.R
   { key: 'shopping', label: 'Shopping', icon: <ShoppingBag className="w-4 h-4" /> },
 ];
 
+/** O(1) category label lookup instead of .find() in every render */
+const categoryLabelMap = Object.fromEntries(
+  categoryConfig.map((c) => [c.key, c.label])
+) as Record<EntertainmentCategory, string>;
+
+const WEEKEND_DAYS = Object.keys(weekendSchedule) as WeekendDay[];
+
 const packingTips = [
   {
     icon: <SunMedium className="w-5 h-5" />,
@@ -343,39 +351,34 @@ const packingTips = [
 /* ------------------------------------------------------------------ */
 
 const Travel = () => {
-  const [activeDay, setActiveDay] = useState<WeekendDay>('saturday');
+  const [activeDay, setActiveDay] = useState<WeekendDay>('friday');
   const [activeCategory, setActiveCategory] = useState<EntertainmentCategory>('all');
 
-  const filteredEntertainment =
-    activeCategory === 'all'
-      ? entertainmentOptions
-      : entertainmentOptions.filter((e) => e.category === activeCategory);
+  const filteredEntertainment = useMemo(
+    () =>
+      activeCategory === 'all'
+        ? entertainmentOptions
+        : entertainmentOptions.filter((e) => e.category === activeCategory),
+    [activeCategory]
+  );
+
+  const scrollToVenue = useCallback(() => {
+    document.getElementById('venue-spotlight')?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
 
   return (
     <Layout>
       {/* Hero Section */}
       <section className="relative py-28 md:py-40 romantic-gradient overflow-hidden">
         {/* Decorative floating elements */}
-        <motion.div
-          className="absolute top-16 left-[10%] w-2 h-2 rounded-full bg-primary/30"
-          animate={{ y: [0, -15, 0], opacity: [0.3, 0.7, 0.3] }}
-          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        <motion.div
-          className="absolute top-32 right-[15%] w-3 h-3 rounded-full bg-accent/20"
-          animate={{ y: [0, -20, 0], opacity: [0.2, 0.5, 0.2] }}
-          transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-        />
-        <motion.div
-          className="absolute bottom-20 left-[25%] w-1.5 h-1.5 rounded-full bg-primary/25"
-          animate={{ y: [0, -12, 0], opacity: [0.3, 0.6, 0.3] }}
-          transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
-        />
-        <motion.div
-          className="absolute top-24 right-[30%] w-1 h-1 rounded-full bg-gold/30"
-          animate={{ y: [0, -10, 0], opacity: [0.2, 0.6, 0.2] }}
-          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
-        />
+        {floatingParticles.map((p, i) => (
+          <motion.div
+            key={i}
+            className={`absolute rounded-full ${p.className}`}
+            animate={{ y: [0, p.y, 0], opacity: [0.3, 0.7, 0.3] }}
+            transition={{ duration: p.duration, repeat: Infinity, ease: 'easeInOut', delay: p.delay }}
+          />
+        ))}
 
         <div className="container mx-auto px-4 relative z-10">
           <SectionHeader
@@ -392,7 +395,7 @@ const Travel = () => {
               </div>
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Calendar className="w-4 h-4 text-primary" />
-                <span className="font-serif text-lg">July 3, 2027</span>
+                <span className="font-serif text-lg">July 2, 2027</span>
               </div>
             </div>
           </FadeIn>
@@ -403,7 +406,7 @@ const Travel = () => {
               className="flex flex-col items-center mt-10 cursor-pointer"
               animate={{ y: [0, 8, 0] }}
               transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-              onClick={() => document.getElementById('venue-spotlight')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={scrollToVenue}
             >
               <span className="text-xs text-muted-foreground/60 uppercase tracking-widest mb-2">Explore</span>
               <ChevronDown className="w-5 h-5 text-primary/50" />
@@ -617,7 +620,7 @@ const Travel = () => {
           {/* Day Selector Tabs */}
           <div className="flex justify-center mb-12">
             <div className="inline-flex bg-background/80 backdrop-blur-sm rounded-full p-1.5 shadow-sm border border-border/50">
-              {(Object.keys(weekendSchedule) as WeekendDay[]).map((day) => (
+              {WEEKEND_DAYS.map((day) => (
                 <button
                   key={day}
                   onClick={() => setActiveDay(day)}
@@ -652,7 +655,7 @@ const Travel = () => {
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: 0.3, ease: EASE_OUT_EXPO }}
                 className="relative"
               >
                 {/* Vertical line */}
@@ -664,7 +667,7 @@ const Travel = () => {
                       key={event.title}
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.12, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                      transition={{ delay: index * 0.12, duration: 0.4, ease: EASE_OUT_EXPO }}
                       className="flex gap-5"
                     >
                       {/* Dot */}
@@ -759,7 +762,7 @@ const Travel = () => {
                     transition={{
                       delay: index * 0.06,
                       duration: 0.4,
-                      ease: [0.22, 1, 0.36, 1],
+                      ease: EASE_OUT_EXPO,
                     }}
                     whileHover={{ y: -4, transition: { duration: 0.2 } }}
                     className="glass-card rounded-2xl p-6 group cursor-default"
@@ -771,7 +774,7 @@ const Travel = () => {
                       <div>
                         <h4 className="font-serif text-lg text-foreground leading-snug">{item.name}</h4>
                         <span className="text-[11px] font-medium text-primary/70 uppercase tracking-wider">
-                          {categoryConfig.find((c) => c.key === item.category)?.label}
+                          {categoryLabelMap[item.category]}
                         </span>
                       </div>
                     </div>
