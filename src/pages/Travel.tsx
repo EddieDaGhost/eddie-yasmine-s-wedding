@@ -4,7 +4,9 @@ import {
   Plane, Hotel, Car, MapPin, ExternalLink, UtensilsCrossed,
   Wine, Waves, TreePine, Sun, Music, Palette, ShoppingBag,
   Clock, Calendar, Heart, Sparkles, ChevronRight, Star,
-  Compass, Camera, Coffee, Sailboat, Landmark, GlassWater
+  Compass, Camera, Coffee, Sailboat, Landmark, GlassWater,
+  Navigation, Shirt, Umbrella, SunMedium, Phone, CreditCard,
+  ChevronDown
 } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { SectionHeader } from '@/components/shared/SectionHeader';
@@ -303,6 +305,39 @@ const categoryConfig: { key: EntertainmentCategory; label: string; icon: React.R
   { key: 'shopping', label: 'Shopping', icon: <ShoppingBag className="w-4 h-4" /> },
 ];
 
+const packingTips = [
+  {
+    icon: <SunMedium className="w-5 h-5" />,
+    title: 'Sun Protection',
+    items: 'Sunscreen, sunglasses, and a hat — Michigan summer sun is no joke near the lake.',
+  },
+  {
+    icon: <Shirt className="w-5 h-5" />,
+    title: 'Layers for Evening',
+    items: 'Warm days, cooler lakeside evenings. Bring a light jacket or wrap for the reception.',
+  },
+  {
+    icon: <Umbrella className="w-5 h-5" />,
+    title: 'Just in Case',
+    items: 'A small umbrella or rain jacket — Michigan weather can surprise you.',
+  },
+  {
+    icon: <Waves className="w-5 h-5" />,
+    title: 'Beach Ready',
+    items: 'Swimsuit, towel, and sandals if you plan to hit Silver Beach or the dunes.',
+  },
+  {
+    icon: <Camera className="w-5 h-5" />,
+    title: 'Capture It All',
+    items: 'Camera or charged phone — the sunsets and venue are incredibly photogenic.',
+  },
+  {
+    icon: <Phone className="w-5 h-5" />,
+    title: 'Stay Connected',
+    items: 'Cell service can be spotty in rural areas. Download offline maps just in case.',
+  },
+];
+
 /* ------------------------------------------------------------------ */
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
@@ -319,7 +354,7 @@ const Travel = () => {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="relative py-24 md:py-36 romantic-gradient overflow-hidden">
+      <section className="relative py-28 md:py-40 romantic-gradient overflow-hidden">
         {/* Decorative floating elements */}
         <motion.div
           className="absolute top-16 left-[10%] w-2 h-2 rounded-full bg-primary/30"
@@ -336,22 +371,107 @@ const Travel = () => {
           animate={{ y: [0, -12, 0], opacity: [0.3, 0.6, 0.3] }}
           transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
         />
+        <motion.div
+          className="absolute top-24 right-[30%] w-1 h-1 rounded-full bg-gold/30"
+          animate={{ y: [0, -10, 0], opacity: [0.2, 0.6, 0.2] }}
+          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
+        />
 
         <div className="container mx-auto px-4 relative z-10">
           <SectionHeader
             title="Travel & Accommodations"
             subtitle="Everything you need to plan your weekend in beautiful Southwest Michigan."
             size="lg"
+            ornament
           />
           <FadeIn delay={0.4}>
-            <div className="flex flex-col items-center gap-3 mt-2">
+            <div className="flex flex-col items-center gap-3 mt-4">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <MapPin className="w-4 h-4 text-primary" />
                 <span className="font-serif text-lg">Blue Dress Barn &middot; Benton Harbor, Michigan</span>
               </div>
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Calendar className="w-4 h-4 text-primary" />
-                <span className="font-serif text-lg">July 2, 2027</span>
+                <span className="font-serif text-lg">July 3, 2027</span>
+              </div>
+            </div>
+          </FadeIn>
+
+          {/* Scroll indicator */}
+          <FadeIn delay={0.8}>
+            <motion.div
+              className="flex flex-col items-center mt-10 cursor-pointer"
+              animate={{ y: [0, 8, 0] }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+              onClick={() => document.getElementById('venue-spotlight')?.scrollIntoView({ behavior: 'smooth' })}
+            >
+              <span className="text-xs text-muted-foreground/60 uppercase tracking-widest mb-2">Explore</span>
+              <ChevronDown className="w-5 h-5 text-primary/50" />
+            </motion.div>
+          </FadeIn>
+        </div>
+      </section>
+
+      {/* Venue Spotlight */}
+      <section id="venue-spotlight" className="py-16 md:py-24">
+        <div className="container mx-auto px-4">
+          <FadeIn>
+            <div className="max-w-4xl mx-auto">
+              <div className="glass-card rounded-3xl overflow-hidden">
+                <div className="grid md:grid-cols-2">
+                  {/* Venue Info */}
+                  <div className="p-8 md:p-10 flex flex-col justify-center">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-gold/10 rounded-full mb-4 w-fit">
+                      <Star className="w-3.5 h-3.5 text-gold" />
+                      <span className="text-xs font-medium text-gold uppercase tracking-wider">The Venue</span>
+                    </div>
+                    <h3 className="font-display text-3xl md:text-4xl text-foreground mb-3 gold-shimmer">
+                      Blue Dress Barn
+                    </h3>
+                    <p className="text-muted-foreground leading-relaxed mb-4">
+                      Nestled on a 10-acre lavender farm in Benton Harbor, Blue Dress Barn is a
+                      stunning restored barn venue surrounded by rolling fields and Michigan
+                      countryside. Expect rustic elegance with breathtaking golden-hour light.
+                    </p>
+                    <div className="space-y-2 mb-6">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <MapPin className="w-4 h-4 text-primary flex-shrink-0" />
+                        <span>5023 Territorial Rd, Benton Harbor, MI 49022</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Clock className="w-4 h-4 text-primary flex-shrink-0" />
+                        <span>Ceremony at 4:00 PM &middot; Doors open 3:30 PM</span>
+                      </div>
+                    </div>
+                    <Button variant="romantic" asChild className="w-fit">
+                      <a
+                        href="https://maps.google.com/?q=Blue+Dress+Barn+Benton+Harbor+MI"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Navigation className="w-4 h-4 mr-2" />
+                        Get Directions
+                      </a>
+                    </Button>
+                  </div>
+
+                  {/* Decorative Visual */}
+                  <div className="relative bg-gradient-to-br from-primary/5 via-champagne/30 to-gold/10 min-h-[280px] md:min-h-0 flex items-center justify-center">
+                    <div className="text-center p-8">
+                      <motion.div
+                        className="inline-block"
+                        animate={{ rotate: [0, 5, -5, 0] }}
+                        transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+                      >
+                        <Heart className="w-16 h-16 text-primary/20 mx-auto mb-4" />
+                      </motion.div>
+                      <p className="font-display text-xl text-foreground/60 italic">
+                        "A barn full of love,<br />lavender, and light"
+                      </p>
+                      <div className="decorative-line mx-auto mt-4" />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </FadeIn>
@@ -359,27 +479,32 @@ const Travel = () => {
       </section>
 
       {/* Getting Here */}
-      <section className="py-16 md:py-24">
+      <section className="py-16 md:py-24 bg-secondary/30">
         <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="flex items-center gap-3 justify-center mb-12"
-          >
-            <Plane className="w-6 h-6 text-primary" />
-            <h3 className="font-display text-2xl text-foreground">Getting Here</h3>
-          </motion.div>
+          <SectionHeader
+            title="Getting Here"
+            subtitle="Several airports serve Southwest Michigan — pick the one that works best for your trip."
+            size="sm"
+          />
 
           <StaggerContainer className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             {airports.map((airport) => (
               <StaggerItem key={airport.name}>
-                <div className="glass-card rounded-2xl p-6 h-full hover:shadow-lg transition-shadow duration-300">
-                  <h4 className="font-serif text-lg text-foreground mb-2">{airport.name}</h4>
-                  <p className="text-muted-foreground text-sm flex items-center gap-2 mb-2">
-                    <MapPin className="w-4 h-4 flex-shrink-0" />
-                    {airport.distance}
-                  </p>
+                <div className="glass-card rounded-2xl p-6 h-full hover:shadow-lg transition-all duration-300 group">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                        <Plane className="w-5 h-5 text-primary" />
+                      </div>
+                      <h4 className="font-serif text-lg text-foreground leading-snug">{airport.name}</h4>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 text-primary text-xs font-medium rounded-full">
+                      <Car className="w-3 h-3" />
+                      {airport.distance}
+                    </span>
+                  </div>
                   <p className="text-muted-foreground text-sm">{airport.description}</p>
                 </div>
               </StaggerItem>
@@ -389,17 +514,13 @@ const Travel = () => {
       </section>
 
       {/* Where to Stay */}
-      <section className="py-16 md:py-24 bg-secondary/30">
+      <section className="py-16 md:py-24">
         <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="flex items-center gap-3 justify-center mb-12"
-          >
-            <Hotel className="w-6 h-6 text-primary" />
-            <h3 className="font-display text-2xl text-foreground">Where to Stay</h3>
-          </motion.div>
+          <SectionHeader
+            title="Where to Stay"
+            subtitle="We've handpicked hotels close to the venue for every budget."
+            size="sm"
+          />
 
           <StaggerContainer className="grid gap-6 max-w-3xl mx-auto">
             {hotels.map((hotel) => (
@@ -445,17 +566,13 @@ const Travel = () => {
       </section>
 
       {/* Transportation */}
-      <section className="py-16 md:py-24">
+      <section className="py-16 md:py-24 bg-secondary/30">
         <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="flex items-center gap-3 justify-center mb-12"
-          >
-            <Car className="w-6 h-6 text-primary" />
-            <h3 className="font-display text-2xl text-foreground">Transportation</h3>
-          </motion.div>
+          <SectionHeader
+            title="Getting Around"
+            subtitle="Tips for navigating Southwest Michigan during the weekend."
+            size="sm"
+          />
 
           <FadeIn>
             <div className="max-w-3xl mx-auto grid md:grid-cols-2 gap-6">
@@ -489,7 +606,7 @@ const Travel = () => {
       </section>
 
       {/* Weekend at a Glance — Interactive Timeline */}
-      <section className="py-16 md:py-24 bg-secondary/30">
+      <section className="py-16 md:py-24">
         <div className="container mx-auto px-4">
           <SectionHeader
             title="Your Weekend at a Glance"
@@ -594,7 +711,7 @@ const Travel = () => {
       </section>
 
       {/* Entertainment & Sightseeing */}
-      <section className="py-16 md:py-24">
+      <section className="py-16 md:py-24 bg-secondary/30">
         <div className="container mx-auto px-4">
           <SectionHeader
             title="Entertainment & Sightseeing"
@@ -672,6 +789,33 @@ const Travel = () => {
               </motion.div>
             </AnimatePresence>
           </div>
+        </div>
+      </section>
+
+      {/* Packing Tips */}
+      <section className="py-16 md:py-24">
+        <div className="container mx-auto px-4">
+          <SectionHeader
+            title="Packing Tips"
+            subtitle="A Michigan summer wedding weekend — here's what to toss in your bag."
+            size="sm"
+          />
+
+          <StaggerContainer className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-4xl mx-auto">
+            {packingTips.map((tip) => (
+              <StaggerItem key={tip.title}>
+                <div className="glass-card rounded-2xl p-6 h-full hover:shadow-lg transition-all duration-300 group">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-xl bg-champagne/50 flex items-center justify-center text-primary flex-shrink-0 group-hover:bg-champagne transition-colors">
+                      {tip.icon}
+                    </div>
+                    <h4 className="font-serif text-lg text-foreground">{tip.title}</h4>
+                  </div>
+                  <p className="text-muted-foreground text-sm leading-relaxed">{tip.items}</p>
+                </div>
+              </StaggerItem>
+            ))}
+          </StaggerContainer>
         </div>
       </section>
 
