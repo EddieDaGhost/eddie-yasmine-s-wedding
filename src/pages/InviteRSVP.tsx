@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, Users, Check, AlertCircle, Loader2, Calendar, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Layout } from '@/components/layout/Layout';
+import { InviteReveal } from '@/components/features/invite';
 import {
   Select,
   SelectContent,
@@ -23,6 +24,8 @@ interface Invite {
   max_guests: number;
   used_by: string | null;
   label: string | null;
+  venue_name: string | null;
+  venue_address: string | null;
 }
 
 interface ExistingRSVP {
@@ -46,6 +49,7 @@ export default function InviteRSVP() {
   const [existingRsvp, setExistingRsvp] = useState<ExistingRSVP | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [showIntro, setShowIntro] = useState(false);
 
   const [formData, setFormData] = useState({
     email: '',
@@ -107,6 +111,11 @@ export default function InviteRSVP() {
           invite_id: inviteData.id,
           event_type: 'view',
         });
+
+        // Show animated intro for fresh (unused) invites
+        if (!inviteData.used_by) {
+          setShowIntro(true);
+        }
 
         // If invite is used, fetch the existing RSVP
         if (inviteData.used_by) {
@@ -255,6 +264,18 @@ export default function InviteRSVP() {
     );
   }
 
+  if (showIntro && invite) {
+    return (
+      <AnimatePresence mode="wait">
+        <InviteReveal
+          key="invite-reveal"
+          label={invite.label || 'Dear Guest'}
+          onComplete={() => setShowIntro(false)}
+        />
+      </AnimatePresence>
+    );
+  }
+
   if (existingRsvp) {
     return (
       <Layout>
@@ -378,15 +399,15 @@ export default function InviteRSVP() {
             <div className="flex items-center gap-4 mb-4">
               <Calendar className="w-5 h-5 text-primary" />
               <div>
-                <p className="font-medium text-foreground">July 15, 2027</p>
+                <p className="font-medium text-foreground">July 2, 2027</p>
                 <p className="text-sm text-muted-foreground">4:00 PM</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
               <MapPin className="w-5 h-5 text-primary" />
               <div>
-                <p className="font-medium text-foreground">The Grand Estate</p>
-                <p className="text-sm text-muted-foreground">123 Wedding Lane, City</p>
+                <p className="font-medium text-foreground">Blue Dress Barn</p>
+                <p className="text-sm text-muted-foreground">Benton Harbor, Michigan</p>
               </div>
             </div>
           </div>
