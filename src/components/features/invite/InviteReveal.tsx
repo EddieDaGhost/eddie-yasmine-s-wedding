@@ -79,14 +79,14 @@ export const InviteReveal = ({ label, onComplete, venueName, venueAddress }: Inv
           transition={{ delay: 0.3, duration: 0.8, ease: EASE }}
         />
 
-        {/* "Together with their families" */}
+        {/* "With hearts full of love," */}
         <motion.p
-          className="font-sans text-xs md:text-sm uppercase tracking-[0.3em] text-muted-foreground/70 mb-6"
+          className="font-serif italic text-base md:text-lg text-muted-foreground/80 mb-6"
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.6, ease: EASE }}
         >
-          Together with their families
+          With hearts full of love,
         </motion.p>
 
         {/* Couple names — italic / cursive style with primary color */}
@@ -122,15 +122,20 @@ export const InviteReveal = ({ label, onComplete, venueName, venueAddress }: Inv
           </motion.h1>
         </div>
 
-        {/* "request the pleasure of your company" */}
-        <motion.p
-          className="font-serif italic text-base md:text-lg text-muted-foreground/80 mb-10"
+        {/* "invite you to share in the celebration of their wedding day" */}
+        <motion.div
+          className="mb-10"
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.4, duration: 0.6, ease: EASE }}
         >
-          request the pleasure of your company
-        </motion.p>
+          <p className="font-serif italic text-base md:text-lg text-muted-foreground/80">
+            invite you to share in the celebration
+          </p>
+          <p className="font-serif italic text-base md:text-lg text-muted-foreground/80">
+            of their wedding day
+          </p>
+        </motion.div>
 
         {/* Guest name — the showstopper */}
         <div className="relative mb-10">
@@ -238,7 +243,7 @@ export const InviteReveal = ({ label, onComplete, venueName, venueAddress }: Inv
         >
           <div className="flex items-center justify-center gap-2 text-muted-foreground">
             <Calendar className="w-4 h-4 text-primary" />
-            <span className="font-serif text-base md:text-lg">July 2, 2027 &middot; 4:00 PM</span>
+            <span className="font-serif text-base md:text-lg">July 2, 2027 &middot; 4PM ET | 3PM CT</span>
           </div>
           <div className="flex items-center justify-center gap-2 text-muted-foreground">
             <MapPin className="w-4 h-4 text-primary" />

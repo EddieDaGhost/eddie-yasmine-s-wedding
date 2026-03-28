@@ -422,7 +422,7 @@ export default function InviteRSVP() {
               <Calendar className="w-5 h-5 text-primary" />
               <div>
                 <p className="font-medium text-foreground">July 2, 2027</p>
-                <p className="text-sm text-muted-foreground">4:00 PM</p>
+                <p className="text-sm text-muted-foreground">4PM ET | 3PM CT</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
