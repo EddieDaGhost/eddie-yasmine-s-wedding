@@ -19,19 +19,19 @@ const templates: Template[] = [
     name: 'Formal',
     style: 'border-primary/30',
     generate: (label, url) =>
-      `Dear ${label},\n\nYou are cordially invited to the wedding of Eddie & Yasmine on July 2, 2027 at 4:00 PM.\n\nPlease RSVP using your personal invitation link:\n${url}\n\nWe look forward to celebrating with you!\n\nWith love,\nEddie & Yasmine`,
+      `Dear ${label},\n\nYou are cordially invited to the wedding of Eddie & Yasmine on July 2, 2027 at 4PM ET | 3PM CT.\n\nPlease RSVP using your personal invitation link:\n${url}\n\nWe look forward to celebrating with you!\n\nWith love,\nEddie & Yasmine`,
   },
   {
     name: 'Casual',
     style: 'border-amber-500/30',
     generate: (label, url) =>
-      `Hey ${label}! 🎉\n\nWe're getting married and we'd love for you to be there!\n\nJuly 2, 2027 • 4:00 PM\n\nRSVP here: ${url}\n\nCan't wait to celebrate with you!\n— Eddie & Yasmine`,
+      `Hey ${label}! 🎉\n\nWe're getting married and we'd love for you to be there!\n\nJuly 2, 2027 • 4PM ET | 3PM CT\n\nRSVP here: ${url}\n\nCan't wait to celebrate with you!\n— Eddie & Yasmine`,
   },
   {
     name: 'Reminder',
     style: 'border-blue-500/30',
     generate: (label, url) =>
-      `Hi ${label},\n\nJust a friendly reminder to RSVP for our wedding! We want to make sure we have an accurate headcount.\n\nDate: July 2, 2027 at 4:00 PM\n\nYour personal RSVP link: ${url}\n\nThank you!\nEddie & Yasmine`,
+      `Hi ${label},\n\nJust a friendly reminder to RSVP for our wedding! We want to make sure we have an accurate headcount.\n\nDate: July 2, 2027 at 4PM ET | 3PM CT\n\nYour personal RSVP link: ${url}\n\nThank you!\nEddie & Yasmine`,
   },
   {
     name: 'Short (SMS/WhatsApp)',
