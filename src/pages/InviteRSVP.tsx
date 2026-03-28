@@ -271,6 +271,8 @@ export default function InviteRSVP() {
           key="invite-reveal"
           label={invite.label || 'Dear Guest'}
           onComplete={() => setShowIntro(false)}
+          venueName={invite.venue_name || undefined}
+          venueAddress={invite.venue_address || undefined}
         />
       </AnimatePresence>
     );
@@ -406,8 +408,8 @@ export default function InviteRSVP() {
             <div className="flex items-center gap-4">
               <MapPin className="w-5 h-5 text-primary" />
               <div>
-                <p className="font-medium text-foreground">Blue Dress Barn</p>
-                <p className="text-sm text-muted-foreground">Benton Harbor, Michigan</p>
+                <p className="font-medium text-foreground">{invite?.venue_name || 'Blue Dress Barn'}</p>
+                <p className="text-sm text-muted-foreground">{invite?.venue_address || 'Benton Harbor, Michigan'}</p>
               </div>
             </div>
           </div>

@@ -5,7 +5,8 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { AdminLayout } from '@/components/features/admin/AdminLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, format } from 'date-fns';
+import { exportToCSV } from '@/lib/csv';
 
 interface RSVP {
   id: string;
@@ -13,7 +14,10 @@ interface RSVP {
   email: string | null;
   attending: boolean | null;
   guests: number | null;
+  meal_preference: string | null;
+  song_requests: string | null;
   message: string | null;
+  invite_code: string | null;
   created_at: string;
 }
 
@@ -48,24 +52,21 @@ const AdminRSVPs = () => {
     totalGuests: rsvps?.filter((r) => r.attending === true).reduce((acc, r) => acc + (r.guests || 1), 0) || 0,
   };
 
-  const exportCSV = () => {
+  const handleExportCSV = () => {
     if (!rsvps) return;
-    const headers = ['Name', 'Email', 'Attending', 'Guests', 'Message', 'Date'];
+    const headers = ['Name', 'Email', 'Attending', 'Guests', 'Meal Preference', 'Song Requests', 'Message', 'Invite Code', 'Date'];
     const rows = rsvps.map((r) => [
       r.name || '',
       r.email || '',
       r.attending === true ? 'Yes' : r.attending === false ? 'No' : 'Pending',
-      r.guests?.toString() || '1',
+      r.guests ?? 1,
+      r.meal_preference || '',
+      r.song_requests || '',
       r.message || '',
+      r.invite_code || '',
       new Date(r.created_at).toLocaleDateString(),
     ]);
-    const csv = [headers, ...rows].map((row) => row.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'rsvps.csv';
-    a.click();
+    exportToCSV(headers, rows, `rsvps-${format(new Date(), 'yyyy-MM-dd')}`);
   };
 
   return (
@@ -75,7 +76,7 @@ const AdminRSVPs = () => {
           <h1 className="font-display text-3xl text-foreground mb-1">RSVP Responses</h1>
           <p className="text-muted-foreground">View and manage guest responses</p>
         </div>
-        <Button variant="outline" onClick={exportCSV}>
+        <Button variant="outline" onClick={handleExportCSV}>
           <Download className="w-4 h-4 mr-2" />
           Export CSV
         </Button>
