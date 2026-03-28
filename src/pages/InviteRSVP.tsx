@@ -112,31 +112,51 @@ export default function InviteRSVP() {
           event_type: 'view',
         });
 
-        // Show animated intro for fresh (unused) invites
-        if (!inviteData.used_by) {
-          setShowIntro(true);
-        }
-
-        // If invite is used, fetch the existing RSVP
+        // Check for existing RSVP — first by used_by, then by invite_code as fallback
+        let rsvpData = null;
         if (inviteData.used_by) {
-          const { data: rsvpData } = await supabase
+          const { data } = await supabase
             .from('rsvps')
             .select('*')
             .eq('id', inviteData.used_by)
             .single();
+          rsvpData = data;
+        }
 
-          if (rsvpData) {
-            setExistingRsvp({
-              id: rsvpData.id,
-              name: rsvpData.name || '',
-              email: rsvpData.email || '',
-              attending: rsvpData.attending ?? false,
-              guests: rsvpData.guests || 1,
-              meal_preference: rsvpData.meal_preference,
-              song_requests: rsvpData.song_requests,
-              message: rsvpData.message,
-            });
+        // Fallback: look up RSVP by invite_code in case the used_by update failed
+        if (!rsvpData) {
+          const { data } = await supabase
+            .from('rsvps')
+            .select('*')
+            .eq('invite_code', code)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          rsvpData = data;
+
+          // If we found an RSVP but used_by wasn't set, try to fix the link
+          if (rsvpData && !inviteData.used_by) {
+            await supabase
+              .from('invites')
+              .update({ used_by: rsvpData.id })
+              .eq('id', inviteData.id);
           }
+        }
+
+        if (rsvpData) {
+          setExistingRsvp({
+            id: rsvpData.id,
+            name: rsvpData.name || '',
+            email: rsvpData.email || '',
+            attending: rsvpData.attending ?? false,
+            guests: rsvpData.guests || 1,
+            meal_preference: rsvpData.meal_preference,
+            song_requests: rsvpData.song_requests,
+            message: rsvpData.message,
+          });
+        } else {
+          // Only show animated intro for truly fresh invites
+          setShowIntro(true);
         }
       } catch (err) {
         console.error('Error validating invite:', err);
