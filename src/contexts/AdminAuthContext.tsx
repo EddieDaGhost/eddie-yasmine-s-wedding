@@ -1,29 +1,39 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { Session } from "@supabase/supabase-js";
 
-const AdminAuthContext = createContext(null);
+interface AdminAuthContextType {
+  session: Session | null;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+}
 
-export const AdminAuthProvider = ({ children }) => {
-  const [session, setSession] = useState(null);
+const AdminAuthContext = createContext<AdminAuthContextType | null>(null);
+
+export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadSession = async () => {
-      const { data } = await supabase.auth.getSession();
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setSession(session);
+        setLoading(false);
+      }
+    );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setLoading(false);
-    };
-
-    loadSession();
-
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
     });
 
-    return () => listener.subscription.unsubscribe();
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (email, password) => {
+  const login = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -45,4 +55,10 @@ export const AdminAuthProvider = ({ children }) => {
   );
 };
 
-export const useAdminAuth = () => useContext(AdminAuthContext);
+export const useAdminAuthContext = () => {
+  const context = useContext(AdminAuthContext);
+  if (!context) {
+    throw new Error("useAdminAuthContext must be used within an AdminAuthProvider");
+  }
+  return context;
+};

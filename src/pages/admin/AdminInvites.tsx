@@ -1,9 +1,7 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  Heart, Link2, Copy, Check, Trash2, Users, Plus, Eye, 
-  LogOut, Settings, MessageSquare, Image, Bell, Loader2,
+import {
+  Link2, Copy, Check, Trash2, Users, Plus, Loader2,
   BarChart3, MousePointer, UserCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,6 +10,8 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { AdminLayout } from '@/components/features/admin/AdminLayout';
 import { formatDistanceToNow, format } from 'date-fns';
 import {
   Dialog,
@@ -73,7 +73,7 @@ function generateSecureCode(): string {
 }
 
 export default function AdminInvites() {
-  const navigate = useNavigate();
+  const { logout } = useAdminAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -187,68 +187,11 @@ export default function AdminInvites() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('admin_authenticated');
-    navigate('/admin');
-  };
-
   const usedCount = invites?.filter(i => i.used_by).length || 0;
   const totalMaxGuests = invites?.reduce((sum, i) => sum + i.max_guests, 0) || 0;
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Sidebar */}
-      <aside className="fixed left-0 top-0 bottom-0 w-64 bg-card border-r border-border p-6 hidden lg:block">
-        <div className="flex items-center gap-2 mb-8">
-          <Heart className="w-6 h-6 text-primary" />
-          <span className="font-serif text-xl">Admin Panel</span>
-        </div>
-
-        <nav className="space-y-2">
-          <Link to="/" className="flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
-            <Eye className="w-5 h-5" />
-            View Site
-          </Link>
-          <Link to="/admin/dashboard" className="flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
-            <Users className="w-5 h-5" />
-            Dashboard
-          </Link>
-          <Link to="/admin/invites" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 text-primary font-medium transition-colors">
-            <Link2 className="w-5 h-5" />
-            Invite Links
-          </Link>
-          <Link to="/admin/rsvps" className="flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
-            <Users className="w-5 h-5" />
-            RSVPs
-          </Link>
-          <Link to="/admin/content" className="flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
-            <Settings className="w-5 h-5" />
-            Edit Content
-          </Link>
-          <Link to="/admin/guestbook" className="flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
-            <MessageSquare className="w-5 h-5" />
-            Guestbook
-          </Link>
-          <Link to="/admin/photos" className="flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
-            <Image className="w-5 h-5" />
-            Photos
-          </Link>
-          <Link to="/admin/song-requests" className="flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
-            <Bell className="w-5 h-5" />
-            Song Requests
-          </Link>
-        </nav>
-
-        <div className="absolute bottom-6 left-6 right-6">
-          <Button variant="ghost" className="w-full justify-start" onClick={handleLogout}>
-            <LogOut className="w-5 h-5 mr-3" />
-            Logout
-          </Button>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <main className="lg:ml-64 p-6 md:p-8">
+    <AdminLayout onLogout={logout}>
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -256,9 +199,6 @@ export default function AdminInvites() {
             <p className="text-muted-foreground">Generate and manage invite links for your guests</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleLogout} className="lg:hidden">
-              <LogOut className="w-5 h-5" />
-            </Button>
             <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
               <DialogTrigger asChild>
                 <Button>
@@ -495,7 +435,6 @@ export default function AdminInvites() {
             </div>
           )}
         </div>
-      </main>
-    </div>
+    </AdminLayout>
   );
 }

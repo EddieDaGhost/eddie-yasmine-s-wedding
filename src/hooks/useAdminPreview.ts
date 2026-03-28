@@ -1,5 +1,5 @@
 import { useSearchParams } from 'react-router-dom';
-import { useAdminAuth } from '@/contexts/AdminAuthContext';
+import { useAdminAuthContext } from '@/contexts/AdminAuthContext';
 import { isAfterWeddingDate as baseIsAfterWeddingDate } from '@/lib/wedding-utils';
 
 /**
@@ -10,7 +10,7 @@ import { isAfterWeddingDate as baseIsAfterWeddingDate } from '@/lib/wedding-util
  */
 export const useAdminPreview = () => {
   const [searchParams] = useSearchParams();
-  const adminAuth = useAdminAuth();
+  const adminAuth = useAdminAuthContext();
   
   const hasPreviewParam = searchParams.get('adminPreview') === 'true';
   const isAuthenticated = !!adminAuth?.session;

@@ -4,6 +4,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AdminAuthProvider } from "@/contexts/AdminAuthContext";
+import ProtectedRoute from "@/components/admin/ProtectedRoute";
 
 // Eager-load the landing page for fastest initial render
 import Home from "./pages/Home";
@@ -59,43 +61,45 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Suspense fallback={<LazyFallback />}>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/our-story" element={<OurStory />} />
-            <Route path="/wedding-party" element={<WeddingParty />} />
-            <Route path="/event-details" element={<EventDetails />} />
-            <Route path="/travel" element={<Travel />} />
-            <Route path="/faq" element={<FAQ />} />
-            <Route path="/registry" element={<Registry />} />
-            <Route path="/rsvp" element={<RSVP />} />
-            {/* Locked Pages */}
-            <Route path="/timeline" element={<InteractiveTimeline />} />
-            <Route path="/quiz" element={<GuestQuiz />} />
-            <Route path="/guestbook" element={<MessageWall />} />
-            <Route path="/photos" element={<PhotoUpload />} />
-            <Route path="/updates" element={<LiveUpdates />} />
-            <Route path="/gallery" element={<Gallery />} />
-            <Route path="/secret" element={<SecretPage />} />
-            <Route path="/seating" element={<SeatingChart />} />
-            <Route path="/photo-booth" element={<PhotoBooth />} />
-            {/* Admin Routes */}
-            <Route path="/admin" element={<AdminLogin />} />
-            <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/content" element={<AdminContent />} />
-            <Route path="/admin/visual-editor" element={<AdminVisualEditor />} />
-            <Route path="/admin/guestbook" element={<AdminGuestbook />} />
-            <Route path="/admin/photos" element={<AdminPhotos />} />
-            <Route path="/admin/rsvps" element={<AdminRsvps />} />
-            <Route path="/admin/song-requests" element={<AdminSongRequests />} />
-            <Route path="/admin/invites" element={<AdminInvites />} />
-            <Route path="/admin/locked-pages" element={<AdminLockedPages />} />
-            {/* Invite RSVP */}
-            <Route path="/invite/:code" element={<InviteRSVP />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
+        <AdminAuthProvider>
+          <Suspense fallback={<LazyFallback />}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/our-story" element={<OurStory />} />
+              <Route path="/wedding-party" element={<WeddingParty />} />
+              <Route path="/event-details" element={<EventDetails />} />
+              <Route path="/travel" element={<Travel />} />
+              <Route path="/faq" element={<FAQ />} />
+              <Route path="/registry" element={<Registry />} />
+              <Route path="/rsvp" element={<RSVP />} />
+              {/* Locked Pages */}
+              <Route path="/timeline" element={<InteractiveTimeline />} />
+              <Route path="/quiz" element={<GuestQuiz />} />
+              <Route path="/guestbook" element={<MessageWall />} />
+              <Route path="/photos" element={<PhotoUpload />} />
+              <Route path="/updates" element={<LiveUpdates />} />
+              <Route path="/gallery" element={<Gallery />} />
+              <Route path="/secret" element={<SecretPage />} />
+              <Route path="/seating" element={<SeatingChart />} />
+              <Route path="/photo-booth" element={<PhotoBooth />} />
+              {/* Admin Routes */}
+              <Route path="/admin" element={<AdminLogin />} />
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/admin/dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+              <Route path="/admin/content" element={<ProtectedRoute><AdminContent /></ProtectedRoute>} />
+              <Route path="/admin/visual-editor" element={<ProtectedRoute><AdminVisualEditor /></ProtectedRoute>} />
+              <Route path="/admin/guestbook" element={<ProtectedRoute><AdminGuestbook /></ProtectedRoute>} />
+              <Route path="/admin/photos" element={<ProtectedRoute><AdminPhotos /></ProtectedRoute>} />
+              <Route path="/admin/rsvps" element={<ProtectedRoute><AdminRsvps /></ProtectedRoute>} />
+              <Route path="/admin/song-requests" element={<ProtectedRoute><AdminSongRequests /></ProtectedRoute>} />
+              <Route path="/admin/invites" element={<ProtectedRoute><AdminInvites /></ProtectedRoute>} />
+              <Route path="/admin/locked-pages" element={<ProtectedRoute><AdminLockedPages /></ProtectedRoute>} />
+              {/* Invite RSVP */}
+              <Route path="/invite/:code" element={<InviteRSVP />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
+        </AdminAuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

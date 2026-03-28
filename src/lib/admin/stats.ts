@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 // -----------------------------
 // RSVP STATS
@@ -60,16 +60,16 @@ export async function getRsvpStats() {
 // -----------------------------
 export async function getGuestbookStats() {
   const { count: total } = await supabase
-    .from("guestbook")
+    .from("messages")
     .select("*", { count: "exact", head: true });
 
   const { count: unread } = await supabase
-    .from("guestbook")
+    .from("messages")
     .select("*", { count: "exact", head: true })
     .eq("approved", false);
 
   const { count: approved } = await supabase
-    .from("guestbook")
+    .from("messages")
     .select("*", { count: "exact", head: true })
     .eq("approved", true);
 
