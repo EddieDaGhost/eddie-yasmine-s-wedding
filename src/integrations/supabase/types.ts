@@ -131,6 +131,7 @@ export type Database = {
         Row: {
           code: string
           created_at: string
+          custom_message: string | null
           id: string
           label: string | null
           max_guests: number
@@ -141,6 +142,7 @@ export type Database = {
         Insert: {
           code: string
           created_at?: string
+          custom_message?: string | null
           id?: string
           label?: string | null
           max_guests?: number
@@ -151,6 +153,7 @@ export type Database = {
         Update: {
           code?: string
           created_at?: string
+          custom_message?: string | null
           id?: string
           label?: string | null
           max_guests?: number

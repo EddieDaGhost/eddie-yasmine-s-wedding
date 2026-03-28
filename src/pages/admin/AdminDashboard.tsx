@@ -1,11 +1,11 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Users, MessageSquare, Image, Music, CheckCircle, XCircle,
   Clock, Camera, Heart, TrendingUp, ArrowRight,
   Loader2, UtensilsCrossed, AlertCircle, Palette, Mail,
-  FileText, Lock, CalendarDays
+  FileText, Lock, CalendarDays, Download
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -13,8 +13,10 @@ import { useAdminStats } from '@/hooks/useAdminStats';
 import { AdminLayout } from '@/components/features/admin/AdminLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { exportToCSV } from '@/lib/csv';
+import { useToast } from '@/hooks/use-toast';
 
 /* ------------------------------------------------------------------ */
 /*  Wedding countdown                                                  */
@@ -190,6 +192,32 @@ const activityMeta: Record<ActivityItem['type'], { icon: React.ReactNode; color:
 const AdminDashboard = () => {
   const { isAuthenticated, logout } = useAdminAuth();
   const { data: stats, isLoading: statsLoading } = useAdminStats();
+  const { toast } = useToast();
+
+  const handleExportRSVPs = useCallback(async () => {
+    const { data } = await supabase
+      .from('rsvps')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (!data || data.length === 0) {
+      toast({ title: 'No RSVPs to export', variant: 'destructive' });
+      return;
+    }
+    const headers = ['Name', 'Email', 'Attending', 'Guests', 'Meal Preference', 'Song Requests', 'Message', 'Invite Code', 'Date'];
+    const rows = data.map((r) => [
+      r.name || '',
+      r.email || '',
+      r.attending === true ? 'Yes' : r.attending === false ? 'No' : 'Pending',
+      r.guests ?? 1,
+      r.meal_preference || '',
+      r.song_requests || '',
+      r.message || '',
+      r.invite_code || '',
+      new Date(r.created_at).toLocaleDateString(),
+    ]);
+    exportToCSV(headers, rows, `rsvps-${format(new Date(), 'yyyy-MM-dd')}`);
+    toast({ title: 'RSVPs exported!' });
+  }, [toast]);
 
   // Fetch recent activity: latest RSVPs, messages, photos, song requests in parallel
   const { data: recentActivity, isLoading: activityLoading } = useQuery({
@@ -550,6 +578,16 @@ const AdminDashboard = () => {
             <QuickAction to="/admin/song-requests" icon={<Music className="w-4 h-4" />} label="Song Requests" />
             <QuickAction to="/admin/locked-pages" icon={<Lock className="w-4 h-4" />} label="Locked Pages" />
             <QuickAction to="/admin/content" icon={<FileText className="w-4 h-4" />} label="Edit Content" />
+            <button
+              onClick={handleExportRSVPs}
+              className="flex items-center gap-3 px-4 py-3 rounded-lg border border-border bg-card hover:bg-muted/50 transition-colors group w-full"
+            >
+              <div className="p-2 rounded-lg bg-primary/5 text-primary group-hover:bg-primary/10 transition-colors">
+                <Download className="w-4 h-4" />
+              </div>
+              <span className="font-medium text-sm text-foreground">Export RSVPs (CSV)</span>
+              <ArrowRight className="w-4 h-4 text-muted-foreground/40 ml-auto group-hover:translate-x-0.5 transition-transform" />
+            </button>
           </div>
         </motion.div>
       </div>

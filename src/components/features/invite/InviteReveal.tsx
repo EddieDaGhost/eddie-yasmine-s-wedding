@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 interface InviteRevealProps {
   label: string;
   onComplete: () => void;
+  venueName?: string;
+  venueAddress?: string;
 }
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -17,7 +19,7 @@ const floatingParticles = [
   { className: 'top-[45%] left-[5%] w-1 h-1 bg-champagne/30', duration: 4.5, y: -12, delay: 1 },
 ] as const;
 
-export const InviteReveal = ({ label, onComplete }: InviteRevealProps) => {
+export const InviteReveal = ({ label, onComplete, venueName, venueAddress }: InviteRevealProps) => {
   return (
     <motion.div
       className="fixed inset-0 z-50 flex items-center justify-center romantic-gradient overflow-hidden"
@@ -113,7 +115,7 @@ export const InviteReveal = ({ label, onComplete }: InviteRevealProps) => {
           </div>
           <div className="flex items-center justify-center gap-2 text-muted-foreground">
             <MapPin className="w-4 h-4 text-primary" />
-            <span className="font-serif text-base md:text-lg">Blue Dress Barn &middot; Benton Harbor, MI</span>
+            <span className="font-serif text-base md:text-lg">{venueName || 'Blue Dress Barn'} &middot; {venueAddress || 'Benton Harbor, MI'}</span>
           </div>
         </motion.div>
 
