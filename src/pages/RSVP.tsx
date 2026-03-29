@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Heart, Calendar } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
@@ -12,6 +13,15 @@ import PlaylistEmbed from '@/components/features/songs/PlaylistEmbed';
 
 const RSVP = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  // Redirect to personal invite page if the guest has visited one before
+  useEffect(() => {
+    const savedCode = localStorage.getItem('wedding_invite_code');
+    if (savedCode) {
+      navigate(`/invite/${savedCode}`, { replace: true });
+    }
+  }, [navigate]);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submittedName, setSubmittedName] = useState('');
 
@@ -111,8 +121,17 @@ const RSVP = () => {
 
         <SectionHeader
           title="RSVP"
-          subtitle="Please let us know if you'll be joining us on our special day. We would be honored to have you celebrate with us."
+          subtitle="If you've received a personal invitation, please use the QR code on your invite card to RSVP — it's been specially prepared just for you."
         />
+
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5, duration: 0.5 }}
+          className="text-center text-sm text-muted-foreground/70 -mt-8 mb-4"
+        >
+          Don't have an invitation? You may use the form below.
+        </motion.p>
       </Section>
 
       {/* Form Section */}

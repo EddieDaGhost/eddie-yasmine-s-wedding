@@ -56,30 +56,37 @@ export default function InviteRSVP() {
     attending: true,
     guests: 1,
     guestNames: [''] as string[],
-    mealPreference: '',
+    mealPreferences: [''] as string[],
     songRequests: '',
     message: '',
   });
 
-  // Update guest names array when guest count changes
+  // Update guest names and meal preferences arrays when guest count changes
   const updateGuestCount = (count: number) => {
     const newGuestNames = [...formData.guestNames];
+    const newMealPreferences = [...formData.mealPreferences];
     if (count > newGuestNames.length) {
-      // Add empty strings for new guests
       while (newGuestNames.length < count) {
         newGuestNames.push('');
+        newMealPreferences.push('');
       }
     } else {
-      // Trim array to new count
       newGuestNames.length = count;
+      newMealPreferences.length = count;
     }
-    setFormData({ ...formData, guests: count, guestNames: newGuestNames });
+    setFormData({ ...formData, guests: count, guestNames: newGuestNames, mealPreferences: newMealPreferences });
   };
 
   const updateGuestName = (index: number, name: string) => {
     const newGuestNames = [...formData.guestNames];
     newGuestNames[index] = name;
     setFormData({ ...formData, guestNames: newGuestNames });
+  };
+
+  const updateMealPreference = (index: number, meal: string) => {
+    const newMealPreferences = [...formData.mealPreferences];
+    newMealPreferences[index] = meal;
+    setFormData({ ...formData, mealPreferences: newMealPreferences });
   };
 
   useEffect(() => {
@@ -105,6 +112,9 @@ export default function InviteRSVP() {
         }
 
         setInvite(inviteData);
+
+        // Remember this invite code so /rsvp can redirect back here
+        localStorage.setItem('wedding_invite_code', code);
 
         // Track the view event
         await supabase.from('invite_analytics').insert({
@@ -201,7 +211,17 @@ export default function InviteRSVP() {
 
       // Create the RSVP with all guest names (stored as comma-separated in name field)
       const allNames = formData.guestNames.slice(0, formData.guests).map(n => n.trim()).join(', ');
-      
+
+      // Build per-guest meal preferences string (e.g. "Eddie: Beef | Yasmine: Chicken")
+      const mealParts = formData.guestNames.slice(0, formData.guests)
+        .map((name, i) => {
+          const meal = formData.mealPreferences[i];
+          if (!meal) return null;
+          return `${name.trim()}: ${meal.charAt(0).toUpperCase() + meal.slice(1)}`;
+        })
+        .filter(Boolean);
+      const mealPreferenceStr = mealParts.length > 0 ? mealParts.join(' | ') : null;
+
       const { data: rsvpData, error: rsvpError } = await supabase
         .from('rsvps')
         .insert({
@@ -209,7 +229,7 @@ export default function InviteRSVP() {
           email: formData.email,
           attending: formData.attending,
           guests: formData.guests,
-          meal_preference: formData.mealPreference || null,
+          meal_preference: mealPreferenceStr,
           song_requests: formData.songRequests || null,
           message: formData.message || null,
           invite_code: invite.code,
@@ -334,9 +354,17 @@ export default function InviteRSVP() {
                   <span className="font-medium">{existingRsvp.guests}</span>
                 </div>
                 {existingRsvp.meal_preference && (
-                  <div className="flex justify-between py-2 border-b border-border">
-                    <span className="text-muted-foreground">Meal Preference</span>
-                    <span className="font-medium">{existingRsvp.meal_preference}</span>
+                  <div className="py-2 border-b border-border">
+                    <span className="text-muted-foreground block mb-2">Meal Preferences</span>
+                    {existingRsvp.meal_preference.includes('|') ? (
+                      <div className="space-y-1">
+                        {existingRsvp.meal_preference.split('|').map((entry, i) => (
+                          <p key={i} className="font-medium text-sm">{entry.trim()}</p>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="font-medium">{existingRsvp.meal_preference}</p>
+                    )}
                   </div>
                 )}
                 {existingRsvp.song_requests && (
@@ -518,23 +546,30 @@ export default function InviteRSVP() {
 
             {formData.attending && (
               <>
-                <div className="space-y-2">
-                  <Label htmlFor="meal">Meal Preference</Label>
-                  <Select
-                    value={formData.mealPreference}
-                    onValueChange={(value) => setFormData({ ...formData, mealPreference: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a meal option" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="beef">Beef</SelectItem>
-                      <SelectItem value="chicken">Chicken</SelectItem>
-                      <SelectItem value="fish">Fish</SelectItem>
-                      <SelectItem value="vegetarian">Vegetarian</SelectItem>
-                      <SelectItem value="vegan">Vegan</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="space-y-4">
+                  <Label>Meal Preferences</Label>
+                  {Array.from({ length: formData.guests }, (_, index) => (
+                    <div key={index} className="space-y-1">
+                      <Label htmlFor={`meal-${index}`} className="text-sm text-muted-foreground">
+                        {formData.guestNames[index]?.trim() || (index === 0 ? 'Your meal' : `Guest ${index + 1}'s meal`)}
+                      </Label>
+                      <Select
+                        value={formData.mealPreferences[index] || ''}
+                        onValueChange={(value) => updateMealPreference(index, value)}
+                      >
+                        <SelectTrigger id={`meal-${index}`}>
+                          <SelectValue placeholder="Select a meal option" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="beef">Beef</SelectItem>
+                          <SelectItem value="chicken">Chicken</SelectItem>
+                          <SelectItem value="fish">Fish</SelectItem>
+                          <SelectItem value="vegetarian">Vegetarian</SelectItem>
+                          <SelectItem value="vegan">Vegan</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ))}
                 </div>
 
                 <div className="space-y-2">
