@@ -1,16 +1,19 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Save, 
-  Plus, 
-  Trash2, 
-  FileText, 
-  Loader2, 
-  ChevronDown, 
-  ChevronUp, 
+import {
+  Save,
+  Plus,
+  Trash2,
+  FileText,
+  Loader2,
+  ChevronDown,
+  ChevronUp,
   RotateCcw,
   AlertCircle,
-  CheckCircle2
+  CheckCircle2,
+  Search,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -96,7 +99,34 @@ const getContentCategory = (key: string | null): string => {
   if (lowerKey.includes('registry')) return 'Registry';
   if (lowerKey.includes('timeline') || lowerKey.includes('event')) return 'Timeline & Events';
   if (lowerKey.includes('story')) return 'Our Story';
+  if (lowerKey.includes('home') || lowerKey.includes('hero') || lowerKey.includes('announcement')) return 'Home';
+  if (lowerKey.includes('nav_') || lowerKey.includes('page_')) return 'Site Settings';
   return 'General';
+};
+
+// Human-readable label from content key
+const getFriendlyLabel = (key: string | null): string => {
+  if (!key) return 'Unknown';
+  return key
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+};
+
+// Short preview of a value for the collapsed header
+const getValuePreview = (value: string | null): string => {
+  if (!value) return '(empty)';
+  const trimmed = value.trim();
+  if (isJsonContent(trimmed)) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) return `[${parsed.length} items]`;
+      const keys = Object.keys(parsed);
+      return `{${keys.slice(0, 3).join(', ')}${keys.length > 3 ? ', ...' : ''}}`;
+    } catch {
+      return trimmed.slice(0, 60) + (trimmed.length > 60 ? '...' : '');
+    }
+  }
+  return trimmed.slice(0, 80) + (trimmed.length > 80 ? '...' : '');
 };
 
 // Collapsible content card component
@@ -132,28 +162,38 @@ const ContentCard = ({
     >
       <Collapsible open={isExpanded} onOpenChange={onToggle}>
         <CollapsibleTrigger asChild>
-          <button className="w-full p-4 flex items-center justify-between hover:bg-muted/30 transition-colors">
-            <div className="flex items-center gap-3">
-              <FileText className="w-5 h-5 text-primary" />
-              <span className="font-mono text-sm bg-muted px-2 py-1 rounded">
+          <button className="w-full p-4 flex items-center justify-between hover:bg-muted/30 transition-colors text-left">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <FileText className="w-4 h-4 text-primary shrink-0" />
+                <span className="font-medium text-sm text-foreground">
+                  {getFriendlyLabel(item.key)}
+                </span>
+                {isJson && (
+                  <Badge variant="outline" className="text-xs">JSON</Badge>
+                )}
+                {hasChanges && (
+                  <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
+                    Unsaved
+                  </Badge>
+                )}
+                {!localValue.isValid && (
+                  <Badge variant="destructive" className="text-xs">
+                    <AlertCircle className="w-3 h-3 mr-1" />
+                    Invalid
+                  </Badge>
+                )}
+              </div>
+              {!isExpanded && (
+                <p className="text-xs text-muted-foreground mt-1 truncate max-w-md">
+                  {getValuePreview(item.value)}
+                </p>
+              )}
+              <span className="text-[10px] font-mono text-muted-foreground/60 mt-0.5 block">
                 {item.key}
               </span>
-              {isJson && (
-                <Badge variant="outline" className="text-xs">JSON</Badge>
-              )}
-              {hasChanges && (
-                <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
-                  Unsaved
-                </Badge>
-              )}
-              {!localValue.isValid && (
-                <Badge variant="destructive" className="text-xs">
-                  <AlertCircle className="w-3 h-3 mr-1" />
-                  Invalid
-                </Badge>
-              )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0 ml-2">
               {isExpanded ? (
                 <ChevronUp className="w-5 h-5 text-muted-foreground" />
               ) : (
@@ -233,6 +273,7 @@ const AdminContent = () => {
   const updateContent = useUpdateContent();
   const createContent = useCreateContent();
   const deleteContent = useDeleteContent();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Local state for editing
   const [localEdits, setLocalEdits] = useState<Record<string, LocalEdit>>({});
@@ -240,6 +281,7 @@ const AdminContent = () => {
   const [newItem, setNewItem] = useState({ key: '', value: '' });
   const [showNewForm, setShowNewForm] = useState(false);
   const [isSavingAll, setIsSavingAll] = useState(false);
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('filter') || '');
 
   // Initialize local edits when content loads
   useEffect(() => {
@@ -450,8 +492,17 @@ const AdminContent = () => {
     }
   };
 
-  // Group content by category
-  const groupedContent = contentItems?.reduce((acc, item) => {
+  // Filter and group content by category
+  const filteredItems = contentItems?.filter((item) => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    const key = (item.key || '').toLowerCase();
+    const value = (item.value || '').toLowerCase();
+    const friendly = getFriendlyLabel(item.key).toLowerCase();
+    return key.includes(q) || value.includes(q) || friendly.includes(q);
+  });
+
+  const groupedContent = filteredItems?.reduce((acc, item) => {
     const category = getContentCategory(item.key);
     if (!acc[category]) {
       acc[category] = [];
@@ -468,7 +519,7 @@ const AdminContent = () => {
     );
   }
 
-  const categoryOrder = ['Wedding Party', 'Timeline & Events', 'Our Story', 'FAQ', 'Travel', 'Registry', 'General', 'Other'];
+  const categoryOrder = ['Home', 'Wedding Party', 'Timeline & Events', 'Our Story', 'FAQ', 'Travel', 'Registry', 'Site Settings', 'General', 'Other'];
 
   return (
     <AdminLayout onLogout={logout}>
@@ -507,6 +558,30 @@ const AdminContent = () => {
             Add Content
           </Button>
         </div>
+      </div>
+
+      {/* Search / Filter */}
+      <div className="mb-6 relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input
+          placeholder="Search content by key, label, or value..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10 pr-10"
+        />
+        {searchQuery && (
+          <button
+            onClick={() => { setSearchQuery(''); setSearchParams({}); }}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+        {searchQuery && filteredItems && (
+          <p className="text-xs text-muted-foreground mt-1">
+            {filteredItems.length} result{filteredItems.length !== 1 ? 's' : ''} for "{searchQuery}"
+          </p>
+        )}
       </div>
 
       {/* Unsaved changes indicator */}

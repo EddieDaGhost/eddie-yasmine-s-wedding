@@ -14,6 +14,7 @@ import {
   Lock,
   Mail,
   Palette,
+  ToggleLeft,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -31,6 +32,7 @@ const navItems = [
   { href: '/admin/guestbook', label: 'Guestbook', icon: MessageSquare },
   { href: '/admin/photos', label: 'Photos', icon: Image },
   { href: '/admin/song-requests', label: 'Songs', icon: Music },
+  { href: '/admin/page-manager', label: 'Page Manager', icon: ToggleLeft },
   { href: '/admin/locked-pages', label: 'Locked Pages', icon: Lock },
   { href: '/admin/content', label: 'Content', icon: FileText },
 ];

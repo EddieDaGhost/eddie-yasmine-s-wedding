@@ -43,6 +43,7 @@ const AdminRsvps = lazy(() => import("./pages/admin/AdminRSVPs"));
 const AdminSongRequests = lazy(() => import("./pages/admin/AdminSongRequests"));
 const AdminInvites = lazy(() => import("./pages/admin/AdminInvites"));
 const AdminLockedPages = lazy(() => import("./pages/admin/AdminLockedPages"));
+const AdminPageManager = lazy(() => import("./pages/admin/AdminPageManager"));
 
 const queryClient = new QueryClient();
 
@@ -93,6 +94,7 @@ const App = () => (
               <Route path="/admin/rsvps" element={<ProtectedRoute><AdminRsvps /></ProtectedRoute>} />
               <Route path="/admin/song-requests" element={<ProtectedRoute><AdminSongRequests /></ProtectedRoute>} />
               <Route path="/admin/invites" element={<ProtectedRoute><AdminInvites /></ProtectedRoute>} />
+              <Route path="/admin/page-manager" element={<ProtectedRoute><AdminPageManager /></ProtectedRoute>} />
               <Route path="/admin/locked-pages" element={<ProtectedRoute><AdminLockedPages /></ProtectedRoute>} />
               {/* Invite RSVP */}
               <Route path="/invite/:code" element={<InviteRSVP />} />
