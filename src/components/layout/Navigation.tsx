@@ -14,7 +14,6 @@ export const allNavLinks = [
   { href: '/travel', label: 'Travel' },
   { href: '/faq', label: 'FAQ' },
   { href: '/registry', label: 'Registry' },
-  { href: '/rsvp', label: 'RSVP' },
 ];
 
 export const Navigation = () => {

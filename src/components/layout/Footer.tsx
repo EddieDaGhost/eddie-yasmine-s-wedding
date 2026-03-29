@@ -5,7 +5,6 @@ import { useHiddenPages } from '@/hooks/usePageVisibility';
 const footerLinks = [
   { href: '/our-story', label: 'Our Story' },
   { href: '/event-details', label: 'Event Details' },
-  { href: '/rsvp', label: 'RSVP' },
   { href: '/faq', label: 'FAQ' },
 ];
 
