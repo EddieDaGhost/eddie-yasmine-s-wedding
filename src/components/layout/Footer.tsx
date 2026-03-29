@@ -1,7 +1,20 @@
 import { Link } from 'react-router-dom';
 import { Heart, Instagram, Mail } from 'lucide-react';
+import { useHiddenPages } from '@/hooks/usePageVisibility';
+
+const footerLinks = [
+  { href: '/our-story', label: 'Our Story' },
+  { href: '/event-details', label: 'Event Details' },
+  { href: '/rsvp', label: 'RSVP' },
+  { href: '/faq', label: 'FAQ' },
+];
 
 export const Footer = () => {
+  const { data: hiddenPages } = useHiddenPages();
+  const visibleLinks = hiddenPages?.length
+    ? footerLinks.filter((link) => !hiddenPages.includes(link.href))
+    : footerLinks;
+
   return (
     <footer className="bg-secondary/50 border-t border-border">
       <div className="container mx-auto px-4 py-12">
@@ -23,18 +36,15 @@ export const Footer = () => {
 
           {/* Links */}
           <nav className="flex flex-wrap justify-center gap-6 text-sm">
-            <Link to="/our-story" className="text-muted-foreground hover:text-primary transition-colors">
-              Our Story
-            </Link>
-            <Link to="/event-details" className="text-muted-foreground hover:text-primary transition-colors">
-              Event Details
-            </Link>
-            <Link to="/rsvp" className="text-muted-foreground hover:text-primary transition-colors">
-              RSVP
-            </Link>
-            <Link to="/faq" className="text-muted-foreground hover:text-primary transition-colors">
-              FAQ
-            </Link>
+            {visibleLinks.map((link) => (
+              <Link
+                key={link.href}
+                to={link.href}
+                className="text-muted-foreground hover:text-primary transition-colors"
+              >
+                {link.label}
+              </Link>
+            ))}
           </nav>
 
           {/* Social Links */}

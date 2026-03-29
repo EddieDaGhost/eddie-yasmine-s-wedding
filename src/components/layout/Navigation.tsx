@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useHiddenPages } from '@/hooks/usePageVisibility';
 
-const navLinks = [
+export const allNavLinks = [
   { href: '/', label: 'Home' },
   { href: '/our-story', label: 'Our Story' },
   { href: '/wedding-party', label: 'Wedding Party' },
@@ -19,6 +20,12 @@ const navLinks = [
 export const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { data: hiddenPages } = useHiddenPages();
+
+  const navLinks = useMemo(() => {
+    if (!hiddenPages || hiddenPages.length === 0) return allNavLinks;
+    return allNavLinks.filter((link) => !hiddenPages.includes(link.href));
+  }, [hiddenPages]);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50">
