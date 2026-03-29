@@ -106,6 +106,9 @@ export default function InviteRSVP() {
 
         setInvite(inviteData);
 
+        // Remember this invite code so /rsvp can redirect back here
+        localStorage.setItem('wedding_invite_code', code);
+
         // Track the view event
         await supabase.from('invite_analytics').insert({
           invite_id: inviteData.id,
