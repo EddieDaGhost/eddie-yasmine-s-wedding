@@ -1,12 +1,14 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Users, CheckCircle, XCircle, Clock, Loader2, Download } from 'lucide-react';
+import { Users, CheckCircle, XCircle, Clock, Loader2, Download, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { AdminLayout } from '@/components/features/admin/AdminLayout';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow, format } from 'date-fns';
 import { exportToCSV } from '@/lib/csv';
+import { useToast } from '@/hooks/use-toast';
 
 interface RSVP {
   id: string;
@@ -23,6 +25,9 @@ interface RSVP {
 
 const AdminRSVPs = () => {
   const { isAuthenticated, logout } = useAdminAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const { data: rsvps, isLoading } = useQuery({
     queryKey: ['admin-rsvps'],
@@ -35,6 +40,66 @@ const AdminRSVPs = () => {
       return data as RSVP[];
     },
   });
+
+  const deleteRsvps = useMutation({
+    mutationFn: async (ids: string[]) => {
+      // Also clear used_by on any invites pointing to these RSVPs
+      for (const id of ids) {
+        await supabase
+          .from('invites')
+          .update({ used_by: null })
+          .eq('used_by', id);
+      }
+      const { error } = await supabase
+        .from('rsvps')
+        .delete()
+        .in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-rsvps'] });
+      setSelected(new Set());
+    },
+  });
+
+  const handleDelete = async (id: string, name: string | null) => {
+    if (!confirm(`Delete RSVP from "${name || 'Unknown'}"? This cannot be undone.`)) return;
+    try {
+      await deleteRsvps.mutateAsync([id]);
+      toast({ title: 'RSVP deleted', description: `Removed RSVP from ${name || 'Unknown'}.` });
+    } catch {
+      toast({ title: 'Error', description: 'Failed to delete RSVP.', variant: 'destructive' });
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selected.size === 0) return;
+    if (!confirm(`Delete ${selected.size} selected RSVP(s)? This cannot be undone.`)) return;
+    try {
+      await deleteRsvps.mutateAsync(Array.from(selected));
+      toast({ title: 'RSVPs deleted', description: `Removed ${selected.size} RSVP(s).` });
+    } catch {
+      toast({ title: 'Error', description: 'Failed to delete RSVPs.', variant: 'destructive' });
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (!rsvps) return;
+    if (selected.size === rsvps.length) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(rsvps.map((r) => r.id)));
+    }
+  };
 
   if (isAuthenticated === null || isLoading) {
     return (
@@ -71,15 +136,31 @@ const AdminRSVPs = () => {
 
   return (
     <AdminLayout onLogout={logout}>
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl text-foreground mb-1">RSVP Responses</h1>
           <p className="text-muted-foreground">View and manage guest responses</p>
         </div>
-        <Button variant="outline" onClick={handleExportCSV}>
-          <Download className="w-4 h-4 mr-2" />
-          Export CSV
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {selected.size > 0 && (
+            <Button
+              variant="destructive"
+              onClick={handleBulkDelete}
+              disabled={deleteRsvps.isPending}
+            >
+              {deleteRsvps.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Trash2 className="w-4 h-4 mr-2" />
+              )}
+              Delete {selected.size} Selected
+            </Button>
+          )}
+          <Button variant="outline" onClick={handleExportCSV}>
+            <Download className="w-4 h-4 mr-2" />
+            Export CSV
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -110,20 +191,38 @@ const AdminRSVPs = () => {
           <table className="w-full">
             <thead className="bg-muted/50 border-b border-border">
               <tr>
-                <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Name</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Email</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Status</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Guests</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Message</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Date</th>
+                <th className="px-4 py-4 w-10">
+                  <input
+                    type="checkbox"
+                    checked={rsvps != null && rsvps.length > 0 && selected.size === rsvps.length}
+                    onChange={toggleSelectAll}
+                    className="rounded border-border"
+                  />
+                </th>
+                <th className="text-left px-4 py-4 text-sm font-medium text-muted-foreground">Name</th>
+                <th className="text-left px-4 py-4 text-sm font-medium text-muted-foreground">Email</th>
+                <th className="text-left px-4 py-4 text-sm font-medium text-muted-foreground">Status</th>
+                <th className="text-left px-4 py-4 text-sm font-medium text-muted-foreground">Guests</th>
+                <th className="text-left px-4 py-4 text-sm font-medium text-muted-foreground">Meal</th>
+                <th className="text-left px-4 py-4 text-sm font-medium text-muted-foreground">Message</th>
+                <th className="text-left px-4 py-4 text-sm font-medium text-muted-foreground">Date</th>
+                <th className="px-4 py-4 w-10"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {rsvps?.map((rsvp) => (
-                <tr key={rsvp.id} className="hover:bg-muted/30 transition-colors">
-                  <td className="px-6 py-4 font-medium">{rsvp.name || '-'}</td>
-                  <td className="px-6 py-4 text-muted-foreground">{rsvp.email || '-'}</td>
-                  <td className="px-6 py-4">
+                <tr key={rsvp.id} className={`hover:bg-muted/30 transition-colors ${selected.has(rsvp.id) ? 'bg-primary/5' : ''}`}>
+                  <td className="px-4 py-4">
+                    <input
+                      type="checkbox"
+                      checked={selected.has(rsvp.id)}
+                      onChange={() => toggleSelect(rsvp.id)}
+                      className="rounded border-border"
+                    />
+                  </td>
+                  <td className="px-4 py-4 font-medium">{rsvp.name || '-'}</td>
+                  <td className="px-4 py-4 text-muted-foreground text-sm">{rsvp.email || '-'}</td>
+                  <td className="px-4 py-4">
                     <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
                       rsvp.attending === true ? 'bg-sage/20 text-sage-foreground' :
                       rsvp.attending === false ? 'bg-destructive/20 text-destructive' :
@@ -132,12 +231,24 @@ const AdminRSVPs = () => {
                       {rsvp.attending === true ? 'Attending' : rsvp.attending === false ? 'Declined' : 'Pending'}
                     </span>
                   </td>
-                  <td className="px-6 py-4">{rsvp.guests || 1}</td>
-                  <td className="px-6 py-4 text-muted-foreground max-w-[200px] truncate">
+                  <td className="px-4 py-4">{rsvp.guests || 1}</td>
+                  <td className="px-4 py-4 text-muted-foreground text-sm max-w-[150px] truncate">
+                    {rsvp.meal_preference || '-'}
+                  </td>
+                  <td className="px-4 py-4 text-muted-foreground text-sm max-w-[150px] truncate">
                     {rsvp.message || '-'}
                   </td>
-                  <td className="px-6 py-4 text-muted-foreground text-sm">
+                  <td className="px-4 py-4 text-muted-foreground text-sm">
                     {formatDistanceToNow(new Date(rsvp.created_at), { addSuffix: true })}
+                  </td>
+                  <td className="px-4 py-4">
+                    <button
+                      onClick={() => handleDelete(rsvp.id, rsvp.name)}
+                      className="text-muted-foreground hover:text-destructive transition-colors p-1"
+                      title="Delete RSVP"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </td>
                 </tr>
               ))}
