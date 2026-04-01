@@ -576,23 +576,23 @@ export default function InviteRSVP() {
             {/* Attending Toggle */}
             <div className="space-y-2">
               <Label>Will you be attending? *</Label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col sm:grid sm:grid-cols-2 gap-3">
                 <Button
                   type="button"
                   variant={formData.attending ? 'default' : 'outline'}
-                  className="h-12 text-sm font-medium"
+                  className="h-12 text-sm font-medium w-full"
                   onClick={() => setFormData({ ...formData, attending: true })}
                 >
                   <Check className="w-4 h-4 mr-2 flex-shrink-0" />
-                  <span className="truncate">Yes, I'll be there!</span>
+                  Yes, I'll be there!
                 </Button>
                 <Button
                   type="button"
                   variant={!formData.attending ? 'default' : 'outline'}
-                  className="h-12 text-sm font-medium"
+                  className="h-12 text-sm font-medium w-full"
                   onClick={() => setFormData({ ...formData, attending: false })}
                 >
-                  <span className="truncate">Sorry, can't make it</span>
+                  Sorry, can't make it
                 </Button>
               </div>
             </div>

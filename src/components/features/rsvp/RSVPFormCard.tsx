@@ -175,31 +175,31 @@ export const RSVPFormCard = ({ onSubmit, onSuccess }: RSVPFormCardProps) => {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Attending Toggle */}
         <RSVPFormField label="Will you be attending?" required>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col sm:grid sm:grid-cols-2 gap-3">
             <Button
               type="button"
               variant={isAttending ? 'default' : 'outline'}
               className={cn(
-                "h-12 text-sm font-medium transition-all",
+                "h-12 text-sm font-medium transition-all w-full",
                 isAttending && "bg-primary text-primary-foreground shadow-md"
               )}
               onClick={() => updateField('attending', true)}
               disabled={isLoading}
             >
               <Check className="w-4 h-4 mr-2 flex-shrink-0" />
-              <span className="truncate">Yes, I'll be there!</span>
+              Yes, I'll be there!
             </Button>
             <Button
               type="button"
               variant={!isAttending ? 'default' : 'outline'}
               className={cn(
-                "h-12 text-sm font-medium transition-all",
+                "h-12 text-sm font-medium transition-all w-full",
                 !isAttending && "bg-muted-foreground/80 text-white shadow-md"
               )}
               onClick={() => updateField('attending', false)}
               disabled={isLoading}
             >
-              <span className="truncate">Sorry, can't make it</span>
+              Sorry, can't make it
             </Button>
           </div>
         </RSVPFormField>
