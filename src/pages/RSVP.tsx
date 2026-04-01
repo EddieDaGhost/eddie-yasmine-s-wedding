@@ -32,11 +32,12 @@ const RSVP = () => {
     try {
       // Map form data to your existing table columns
       const rsvpData: any = {
-        name: data.fullName,
-        email: data.email,
+        name: data.fullName || null,
+        email: data.email || null,
+        phone: data.phone || null,
         // Set attending based on flag (defaults to true)
         attending: typeof attending === 'boolean' ? attending : true,
-        guests: parseInt(data.numberOfGuests, 10),
+        guests: data.numberOfGuests ? parseInt(data.numberOfGuests, 10) : 1,
         // DB column is `meal_preference`; map from the form's `mealChoice`
         meal_preference: data.mealChoice || null,
         // Store song request in dedicated column

@@ -127,9 +127,9 @@ const weekendSchedule: Record<WeekendDay, { label: string; date: string; events:
         icon: <Coffee className="w-4 h-4" />,
       },
       {
-        time: '4:00 PM',
+        time: '4:30 PM',
         title: 'Wedding Ceremony',
-        description: 'Blue Dress Barn, Benton Harbor. Doors open at 3:30 PM.',
+        description: 'Blue Dress Barn, Benton Harbor. Doors open at 4:00 PM.',
         icon: <Heart className="w-4 h-4" />,
         highlight: true,
       },
@@ -443,7 +443,7 @@ const Travel = () => {
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Clock className="w-4 h-4 text-primary flex-shrink-0" />
-                        <span>Ceremony at 4:00 PM &middot; Doors open 3:30 PM</span>
+                        <span>Ceremony at 4:30 PM &middot; Doors open 4:00 PM</span>
                       </div>
                     </div>
                     <Button variant="romantic" asChild className="w-fit">

@@ -100,7 +100,7 @@ export const RSVPSuccessView = ({ guestName, onSubmitAnother }: RSVPSuccessViewP
             </div>
             <div className="text-left">
               <p className="font-medium">July 2nd, 2027</p>
-              <p className="text-sm text-muted-foreground">Ceremony begins at 4:00 PM</p>
+              <p className="text-sm text-muted-foreground">Ceremony begins at 4:30 PM</p>
             </div>
           </div>
           <div className="flex items-center gap-3 text-foreground">
