@@ -187,17 +187,7 @@ export default function InviteRSVP() {
 
     if (!invite) return;
 
-    // Require at least email or phone
-    if (!formData.email.trim() && !formData.phone.trim()) {
-      toast({
-        title: 'Contact info required',
-        description: 'Please provide either an email address or a phone number.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    // If declining, skip guest/name validation
+    // If declining via invite link, no info needed — just submit
     if (!formData.attending) {
       setSubmitting(true);
       try {
@@ -255,6 +245,16 @@ export default function InviteRSVP() {
       } finally {
         setSubmitting(false);
       }
+      return;
+    }
+
+    // Attending — require at least email or phone
+    if (!formData.email.trim() && !formData.phone.trim()) {
+      toast({
+        title: 'Contact info required',
+        description: 'Please provide either an email address or a phone number.',
+        variant: 'destructive',
+      });
       return;
     }
 
@@ -644,35 +644,35 @@ export default function InviteRSVP() {
               </div>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="your@email.com"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="(555) 123-4567"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              />
-            </div>
-
-            {/* Helper text for email/phone */}
-            <p className="text-xs text-muted-foreground/70 -mt-4">
-              Please provide either an email address or a phone number so we can confirm your RSVP.
-            </p>
-
             {formData.attending && (
               <>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="your@email.com"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="(555) 123-4567"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  />
+                </div>
+
+                {/* Helper text for email/phone */}
+                <p className="text-xs text-muted-foreground/70 -mt-4">
+                  Please provide either an email address or a phone number so we can confirm your RSVP.
+                </p>
+
                 <div className="space-y-4">
                   <Label>Meal Preferences</Label>
                   {Array.from({ length: formData.guests }, (_, index) => (
@@ -709,19 +709,19 @@ export default function InviteRSVP() {
                     className="text-sm"
                   />
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="message">Message for the Couple</Label>
+                  <Textarea
+                    id="message"
+                    placeholder="Share your well wishes..."
+                    value={formData.message}
+                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                    className="min-h-[80px]"
+                  />
+                </div>
               </>
             )}
-
-            <div className="space-y-2">
-              <Label htmlFor="message">Message for the Couple</Label>
-              <Textarea
-                id="message"
-                placeholder="Share your well wishes..."
-                value={formData.message}
-                onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                className="min-h-[80px]"
-              />
-            </div>
 
             <Button type="submit" className="w-full" size="lg" disabled={submitting}>
               {submitting ? (
