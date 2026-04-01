@@ -201,21 +201,31 @@ export default function InviteRSVP() {
     if (!formData.attending) {
       setSubmitting(true);
       try {
-        const { data: rsvpData, error: rsvpError } = await supabase
+        const insertData: any = {
+          name: formData.guestNames[0]?.trim() || null,
+          email: formData.email || null,
+          attending: false,
+          guests: 1,
+          meal_preference: null,
+          song_requests: null,
+          message: formData.message || null,
+          invite_code: invite.code,
+        };
+        if (formData.phone) insertData.phone = formData.phone;
+
+        let { data: rsvpData, error: rsvpError } = await supabase
           .from('rsvps')
-          .insert({
-            name: formData.guestNames[0]?.trim() || null,
-            email: formData.email || null,
-            phone: formData.phone || null,
-            attending: false,
-            guests: 1,
-            meal_preference: null,
-            song_requests: null,
-            message: formData.message || null,
-            invite_code: invite.code,
-          })
+          .insert(insertData)
           .select()
           .single();
+
+        // Retry without phone if column doesn't exist yet
+        if (rsvpError && rsvpError.message?.includes('phone')) {
+          delete insertData.phone;
+          const retry = await supabase.from('rsvps').insert(insertData).select().single();
+          rsvpData = retry.data;
+          rsvpError = retry.error;
+        }
 
         if (rsvpError) throw rsvpError;
 
@@ -286,21 +296,31 @@ export default function InviteRSVP() {
         .filter(Boolean);
       const mealPreferenceStr = mealParts.length > 0 ? mealParts.join(' | ') : null;
 
-      const { data: rsvpData, error: rsvpError } = await supabase
+      const rsvpInsert: any = {
+        name: allNames,
+        email: formData.email || null,
+        attending: formData.attending,
+        guests: formData.guests,
+        meal_preference: mealPreferenceStr,
+        song_requests: formData.songRequests || null,
+        message: formData.message || null,
+        invite_code: invite.code,
+      };
+      if (formData.phone) rsvpInsert.phone = formData.phone;
+
+      let { data: rsvpData, error: rsvpError } = await supabase
         .from('rsvps')
-        .insert({
-          name: allNames,
-          email: formData.email || null,
-          phone: formData.phone || null,
-          attending: formData.attending,
-          guests: formData.guests,
-          meal_preference: mealPreferenceStr,
-          song_requests: formData.songRequests || null,
-          message: formData.message || null,
-          invite_code: invite.code,
-        })
+        .insert(rsvpInsert)
         .select()
         .single();
+
+      // Retry without phone if column doesn't exist yet
+      if (rsvpError && rsvpError.message?.includes('phone')) {
+        delete rsvpInsert.phone;
+        const retry = await supabase.from('rsvps').insert(rsvpInsert).select().single();
+        rsvpData = retry.data;
+        rsvpError = retry.error;
+      }
 
       if (rsvpError) throw rsvpError;
 

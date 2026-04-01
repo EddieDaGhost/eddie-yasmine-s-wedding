@@ -34,7 +34,6 @@ const RSVP = () => {
       const rsvpData: any = {
         name: data.fullName || null,
         email: data.email || null,
-        phone: data.phone || null,
         // Set attending based on flag (defaults to true)
         attending: typeof attending === 'boolean' ? attending : true,
         guests: data.numberOfGuests ? parseInt(data.numberOfGuests, 10) : 1,
@@ -44,13 +43,25 @@ const RSVP = () => {
         song_requests: data.songRequest || null,
       };
 
+      // Add phone if provided
+      if (data.phone) {
+        rsvpData.phone = data.phone;
+      }
+
       // Add optional notes to message field
       if (data.notes) {
         rsvpData.message = data.notes;
       }
 
       // Insert RSVP into Supabase
-      const { error } = await supabase.from('rsvps').insert(rsvpData);
+      let { error } = await supabase.from('rsvps').insert(rsvpData);
+
+      // If phone column doesn't exist yet, retry without it
+      if (error && error.message?.includes('phone')) {
+        delete rsvpData.phone;
+        const retry = await supabase.from('rsvps').insert(rsvpData);
+        error = retry.error;
+      }
 
       if (error) {
         console.error('Supabase error:', error);
