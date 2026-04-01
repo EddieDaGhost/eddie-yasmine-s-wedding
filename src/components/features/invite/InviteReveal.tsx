@@ -243,7 +243,7 @@ export const InviteReveal = ({ label, onComplete, venueName, venueAddress }: Inv
         >
           <div className="flex items-center justify-center gap-2 text-muted-foreground">
             <Calendar className="w-4 h-4 text-primary" />
-            <span className="font-serif text-base md:text-lg">July 2, 2027 &middot; 4PM ET | 3PM CT</span>
+            <span className="font-serif text-base md:text-lg">July 2, 2027 &middot; 4:30 PM ET | 3:30 PM CT</span>
           </div>
           <div className="flex items-center justify-center gap-2 text-muted-foreground">
             <MapPin className="w-4 h-4 text-primary" />

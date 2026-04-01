@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, Users, Check, AlertCircle, Loader2, Calendar, MapPin } from 'lucide-react';
+import { Heart, Users, Check, AlertCircle, Loader2, Calendar, MapPin, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -32,6 +32,7 @@ interface ExistingRSVP {
   id: string;
   name: string;
   email: string;
+  phone: string;
   attending: boolean;
   guests: number;
   meal_preference: string | null;
@@ -42,7 +43,7 @@ interface ExistingRSVP {
 export default function InviteRSVP() {
   const { code } = useParams<{ code: string }>();
   const { toast } = useToast();
-  
+
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [invite, setInvite] = useState<Invite | null>(null);
@@ -53,6 +54,7 @@ export default function InviteRSVP() {
 
   const [formData, setFormData] = useState({
     email: '',
+    phone: '',
     attending: true,
     guests: 1,
     guestNames: [''] as string[],
@@ -158,6 +160,7 @@ export default function InviteRSVP() {
             id: rsvpData.id,
             name: rsvpData.name || '',
             email: rsvpData.email || '',
+            phone: rsvpData.phone || '',
             attending: rsvpData.attending ?? false,
             guests: rsvpData.guests || 1,
             meal_preference: rsvpData.meal_preference,
@@ -181,8 +184,69 @@ export default function InviteRSVP() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!invite) return;
+
+    // Require at least email or phone
+    if (!formData.email.trim() && !formData.phone.trim()) {
+      toast({
+        title: 'Contact info required',
+        description: 'Please provide either an email address or a phone number.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // If declining, skip guest/name validation
+    if (!formData.attending) {
+      setSubmitting(true);
+      try {
+        const { data: rsvpData, error: rsvpError } = await supabase
+          .from('rsvps')
+          .insert({
+            name: formData.guestNames[0]?.trim() || null,
+            email: formData.email || null,
+            phone: formData.phone || null,
+            attending: false,
+            guests: 1,
+            meal_preference: null,
+            song_requests: null,
+            message: formData.message || null,
+            invite_code: invite.code,
+          })
+          .select()
+          .single();
+
+        if (rsvpError) throw rsvpError;
+
+        await supabase
+          .from('invites')
+          .update({ used_by: rsvpData.id })
+          .eq('id', invite.id);
+
+        await supabase.from('invite_analytics').insert({
+          invite_id: invite.id,
+          event_type: 'rsvp',
+          metadata: { attending: false, guests: 1 },
+        });
+
+        setSubmitted(true);
+        toast({
+          title: 'RSVP submitted!',
+          description: 'Thank you for letting us know.',
+        });
+      } catch (err) {
+        console.error('Error submitting RSVP:', err);
+        toast({
+          title: 'Error',
+          description: 'Failed to submit RSVP. Please try again.',
+          variant: 'destructive',
+        });
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
 
     // Validate guest count
     if (formData.guests > invite.max_guests) {
@@ -199,7 +263,7 @@ export default function InviteRSVP() {
     try {
       // Validate all guest names are filled
       const filledNames = formData.guestNames.slice(0, formData.guests).filter(n => n.trim());
-      if (formData.attending && filledNames.length !== formData.guests) {
+      if (filledNames.length !== formData.guests) {
         toast({
           title: 'Missing guest names',
           description: 'Please enter names for all attending guests.',
@@ -226,7 +290,8 @@ export default function InviteRSVP() {
         .from('rsvps')
         .insert({
           name: allNames,
-          email: formData.email,
+          email: formData.email || null,
+          phone: formData.phone || null,
           attending: formData.attending,
           guests: formData.guests,
           meal_preference: mealPreferenceStr,
@@ -257,8 +322,8 @@ export default function InviteRSVP() {
       setSubmitted(true);
       toast({
         title: 'RSVP submitted!',
-        description: formData.attending 
-          ? "We can't wait to celebrate with you!" 
+        description: formData.attending
+          ? "We can't wait to celebrate with you!"
           : 'Thank you for letting us know.',
       });
     } catch (err) {
@@ -339,10 +404,18 @@ export default function InviteRSVP() {
                   <span className="text-muted-foreground">Name</span>
                   <span className="font-medium">{existingRsvp.name}</span>
                 </div>
-                <div className="flex justify-between py-2 border-b border-border">
-                  <span className="text-muted-foreground">Email</span>
-                  <span className="font-medium">{existingRsvp.email}</span>
-                </div>
+                {existingRsvp.email && (
+                  <div className="flex justify-between py-2 border-b border-border">
+                    <span className="text-muted-foreground">Email</span>
+                    <span className="font-medium">{existingRsvp.email}</span>
+                  </div>
+                )}
+                {existingRsvp.phone && (
+                  <div className="flex justify-between py-2 border-b border-border">
+                    <span className="text-muted-foreground">Phone</span>
+                    <span className="font-medium">{existingRsvp.phone}</span>
+                  </div>
+                )}
                 <div className="flex justify-between py-2 border-b border-border">
                   <span className="text-muted-foreground">Attending</span>
                   <span className={`font-medium ${existingRsvp.attending ? 'text-sage' : 'text-destructive'}`}>
@@ -413,8 +486,8 @@ export default function InviteRSVP() {
             </motion.div>
             <h1 className="font-display text-3xl text-foreground mb-2">Thank You!</h1>
             <p className="text-muted-foreground mb-6">
-              {formData.attending 
-                ? "We're so excited to celebrate with you!" 
+              {formData.attending
+                ? "We're so excited to celebrate with you!"
                 : "We'll miss you, but thank you for letting us know."}
             </p>
             <Link to="/">
@@ -434,10 +507,26 @@ export default function InviteRSVP() {
           animate={{ opacity: 1, y: 0 }}
           className="max-w-lg mx-auto"
         >
-          {/* Header */}
+          {/* Header - styled to match InviteReveal */}
           <div className="text-center mb-8">
-            <Heart className="w-12 h-12 text-primary mx-auto mb-4" />
-            <h1 className="font-display text-4xl text-foreground mb-2">You're Invited!</h1>
+            <motion.div
+              initial={{ scaleX: 0, opacity: 0 }}
+              animate={{ scaleX: 1, opacity: 1 }}
+              transition={{ duration: 0.8 }}
+              className="w-16 md:w-24 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent mx-auto mb-6"
+            />
+            <p className="font-serif italic text-base text-muted-foreground/80 mb-3">
+              With hearts full of love,
+            </p>
+            <h1
+              className="font-display italic text-4xl md:text-5xl text-primary mb-3"
+              style={{ fontFamily: "'Cormorant Garamond', 'Playfair Display', serif" }}
+            >
+              Eddie <span className="gold-shimmer text-3xl md:text-4xl">&amp;</span> Yasmine
+            </h1>
+            <p className="font-serif italic text-base text-muted-foreground/80 mb-4">
+              invite you to share in the celebration of their wedding day
+            </p>
             <p className="text-muted-foreground">
               {invite?.label ? `${invite.label} – ` : ''}
               Please RSVP for up to {invite?.max_guests} guest{invite?.max_guests !== 1 ? 's' : ''}
@@ -447,14 +536,14 @@ export default function InviteRSVP() {
           {/* Event Info */}
           <div className="glass-card rounded-2xl p-6 mb-8">
             <div className="flex items-center gap-4 mb-4">
-              <Calendar className="w-5 h-5 text-primary" />
+              <Calendar className="w-5 h-5 text-primary flex-shrink-0" />
               <div>
                 <p className="font-medium text-foreground">July 2, 2027</p>
-                <p className="text-sm text-muted-foreground">4PM ET | 3PM CT</p>
+                <p className="text-sm text-muted-foreground">4:30 PM ET | 3:30 PM CT</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <MapPin className="w-5 h-5 text-primary" />
+              <MapPin className="w-5 h-5 text-primary flex-shrink-0" />
               <div>
                 <p className="font-medium text-foreground">{invite?.venue_name || 'Blue Dress Barn'}</p>
                 <p className="text-sm text-muted-foreground">{invite?.venue_address || 'Benton Harbor, Michigan'}</p>
@@ -463,58 +552,83 @@ export default function InviteRSVP() {
           </div>
 
           {/* RSVP Form */}
-          <form onSubmit={handleSubmit} className="glass-card rounded-2xl p-8 space-y-6">
-            {/* Guest Names Section */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label>Guest Names *</Label>
-                <span className="text-xs text-muted-foreground">
-                  {formData.guests} of {invite?.max_guests} guests
-                </span>
-              </div>
-              
-              {/* Number of guests selector first */}
-              <Select
-                value={formData.guests.toString()}
-                onValueChange={(value) => updateGuestCount(parseInt(value))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: invite?.max_guests || 1 }, (_, i) => i + 1).map((num) => (
-                    <SelectItem key={num} value={num.toString()}>
-                      {num} {num === 1 ? 'guest' : 'guests'}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Name inputs for each guest */}
-              <div className="space-y-3">
-                {Array.from({ length: formData.guests }, (_, index) => (
-                  <div key={index} className="space-y-1">
-                    <Label htmlFor={`guest-${index}`} className="text-sm text-muted-foreground">
-                      {index === 0 ? 'Primary Guest (You)' : `Guest ${index + 1}`}
-                    </Label>
-                    <Input
-                      id={`guest-${index}`}
-                      required
-                      placeholder={index === 0 ? 'Enter your full name' : `Enter guest ${index + 1}'s full name`}
-                      value={formData.guestNames[index] || ''}
-                      onChange={(e) => updateGuestName(index, e.target.value)}
-                    />
-                  </div>
-                ))}
+          <form onSubmit={handleSubmit} className="glass-card rounded-2xl p-6 md:p-8 space-y-6">
+            {/* Attending Toggle */}
+            <div className="space-y-2">
+              <Label>Will you be attending? *</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  type="button"
+                  variant={formData.attending ? 'default' : 'outline'}
+                  className="h-12 text-sm font-medium"
+                  onClick={() => setFormData({ ...formData, attending: true })}
+                >
+                  <Check className="w-4 h-4 mr-2 flex-shrink-0" />
+                  <span className="truncate">Yes, I'll be there!</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant={!formData.attending ? 'default' : 'outline'}
+                  className="h-12 text-sm font-medium"
+                  onClick={() => setFormData({ ...formData, attending: false })}
+                >
+                  <span className="truncate">Sorry, can't make it</span>
+                </Button>
               </div>
             </div>
 
+            {/* Guest Names Section - only when attending */}
+            {formData.attending && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label>Guest Names *</Label>
+                  <span className="text-xs text-muted-foreground">
+                    {formData.guests} of {invite?.max_guests} guests
+                  </span>
+                </div>
+
+                {/* Number of guests selector first */}
+                <Select
+                  value={formData.guests.toString()}
+                  onValueChange={(value) => updateGuestCount(parseInt(value))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: invite?.max_guests || 1 }, (_, i) => i + 1).map((num) => (
+                      <SelectItem key={num} value={num.toString()}>
+                        {num} {num === 1 ? 'guest' : 'guests'}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Name inputs for each guest */}
+                <div className="space-y-3">
+                  {Array.from({ length: formData.guests }, (_, index) => (
+                    <div key={index} className="space-y-1">
+                      <Label htmlFor={`guest-${index}`} className="text-sm text-muted-foreground">
+                        {index === 0 ? 'Primary Guest (You)' : `Guest ${index + 1}`}
+                      </Label>
+                      <Input
+                        id={`guest-${index}`}
+                        required
+                        placeholder={index === 0 ? 'Enter your full name' : `Enter guest ${index + 1}'s full name`}
+                        value={formData.guestNames[index] || ''}
+                        onChange={(e) => updateGuestName(index, e.target.value)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2">
-              <Label htmlFor="email">Email Address *</Label>
+              <Label htmlFor="email">Email Address</Label>
               <Input
                 id="email"
                 type="email"
-                required
                 placeholder="your@email.com"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -522,27 +636,20 @@ export default function InviteRSVP() {
             </div>
 
             <div className="space-y-2">
-              <Label>Will you be attending? *</Label>
-              <div className="flex gap-4">
-                <Button
-                  type="button"
-                  variant={formData.attending ? 'default' : 'outline'}
-                  className="flex-1"
-                  onClick={() => setFormData({ ...formData, attending: true })}
-                >
-                  <Check className="w-4 h-4 mr-2" />
-                  Yes, I'll be there!
-                </Button>
-                <Button
-                  type="button"
-                  variant={!formData.attending ? 'default' : 'outline'}
-                  className="flex-1"
-                  onClick={() => setFormData({ ...formData, attending: false })}
-                >
-                  Sorry, can't make it
-                </Button>
-              </div>
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="(555) 123-4567"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              />
             </div>
+
+            {/* Helper text for email/phone */}
+            <p className="text-xs text-muted-foreground/70 -mt-4">
+              Please provide either an email address or a phone number so we can confirm your RSVP.
+            </p>
 
             {formData.attending && (
               <>
@@ -576,9 +683,10 @@ export default function InviteRSVP() {
                   <Label htmlFor="song">Song Request</Label>
                   <Input
                     id="song"
-                    placeholder="What song will get you on the dance floor?"
+                    placeholder="Artist - Song Title"
                     value={formData.songRequests}
                     onChange={(e) => setFormData({ ...formData, songRequests: e.target.value })}
+                    className="text-sm"
                   />
                 </div>
               </>
@@ -591,7 +699,7 @@ export default function InviteRSVP() {
                 placeholder="Share your well wishes..."
                 value={formData.message}
                 onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                className="min-h-[100px]"
+                className="min-h-[80px]"
               />
             </div>
 

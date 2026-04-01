@@ -118,7 +118,7 @@ export const InviteCardPreview = ({
 
       ctx.fillStyle = '#8a8580';
       ctx.font = '16px "Montserrat", sans-serif';
-      ctx.fillText('4PM ET | 3PM CT', cx, 700);
+      ctx.fillText('4:30 PM ET | 3:30 PM CT', cx, 700);
 
       // Venue
       ctx.fillStyle = '#2a2520';

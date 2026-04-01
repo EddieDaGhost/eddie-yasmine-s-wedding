@@ -1,13 +1,47 @@
 import { z } from 'zod';
 
 export const rsvpFormSchema = z.object({
-  fullName: z.string().min(2, 'Please enter your full name').max(100, 'Name is too long'),
-  email: z.string().email('Please enter a valid email address'),
-  numberOfGuests: z.string().min(1, 'Please select number of guests'),
-  mealChoice: z.string().min(1, 'Please select a meal preference').optional(),
+  fullName: z.string().max(100, 'Name is too long').optional().or(z.literal('')),
+  email: z.string().email('Please enter a valid email address').optional().or(z.literal('')),
+  phone: z.string().max(20, 'Phone number is too long').optional().or(z.literal('')),
+  numberOfGuests: z.string().optional().or(z.literal('')),
+  mealChoice: z.string().optional().or(z.literal('')),
   attending: z.boolean().optional(),
   songRequest: z.string().max(200, 'Song request is too long').optional(),
   notes: z.string().max(500, 'Notes are too long').optional(),
+}).superRefine((data, ctx) => {
+  // If attending (or no explicit choice yet), require name + (email or phone)
+  if (data.attending !== false) {
+    if (!data.fullName || data.fullName.length < 2) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Please enter your full name',
+        path: ['fullName'],
+      });
+    }
+    if (!data.numberOfGuests) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Please select number of guests',
+        path: ['numberOfGuests'],
+      });
+    }
+  }
+  // Always require at least email or phone
+  const hasEmail = data.email && data.email.length > 0;
+  const hasPhone = data.phone && data.phone.length > 0;
+  if (!hasEmail && !hasPhone) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Please provide an email address or phone number',
+      path: ['email'],
+    });
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Please provide an email address or phone number',
+      path: ['phone'],
+    });
+  }
 });
 
 export type RSVPFormData = z.infer<typeof rsvpFormSchema>;

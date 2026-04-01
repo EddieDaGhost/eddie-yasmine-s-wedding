@@ -288,6 +288,7 @@ export type Database = {
           meal_preference: string | null
           message: string | null
           name: string | null
+          phone: string | null
           song_requests: string | null
         }
         Insert: {
@@ -300,6 +301,7 @@ export type Database = {
           meal_preference?: string | null
           message?: string | null
           name?: string | null
+          phone?: string | null
           song_requests?: string | null
         }
         Update: {
@@ -312,6 +314,7 @@ export type Database = {
           meal_preference?: string | null
           message?: string | null
           name?: string | null
+          phone?: string | null
           song_requests?: string | null
         }
         Relationships: []
