@@ -52,7 +52,7 @@ VITE_SUPABASE_PROJECT_ID=<project-id>
 ```
 
 - All `VITE_*` variables are bundled into the client — never put `service_role` key here.
-- The active Supabase project ID is `hxvydccjwfnbyrzwybsz`.
+- The active Supabase project ID is `kuksvquqwtrvxogyknwo`.
 - Access in code with `import.meta.env.VITE_*`.
 
 ---
