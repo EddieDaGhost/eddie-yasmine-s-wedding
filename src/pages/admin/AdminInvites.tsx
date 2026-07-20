@@ -17,6 +17,8 @@ import { AdminLayout } from '@/components/features/admin/AdminLayout';
 import { InviteQRCode } from '@/components/features/admin/InviteQRCode';
 import { InviteCardPreview } from '@/components/features/admin/InviteCardPreview';
 import { InviteMessageTemplates } from '@/components/features/admin/InviteMessageTemplates';
+import { ExcelImport } from '@/components/features/admin/ExcelImport';
+import { StickerSheetDownload } from '@/components/features/admin/StickerSheetDownload';
 import { exportToCSV } from '@/lib/csv';
 import { formatDistanceToNow, format } from 'date-fns';
 import {
@@ -120,6 +122,8 @@ export default function AdminInvites() {
   const [bulkMaxGuests, setBulkMaxGuests] = useState(2);
   const [bulkProgress, setBulkProgress] = useState<{ total: number; done: number } | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [excelProgress, setExcelProgress] = useState<{ total: number; done: number } | null>(null);
+  const [isExcelImporting, setIsExcelImporting] = useState(false);
 
   const isValidInvite = () => newInvite.maxGuests >= 1 && newInvite.maxGuests <= 20 && newInvite.label.trim().length > 0;
 
@@ -260,6 +264,24 @@ export default function AdminInvites() {
     },
   });
 
+  const handleExcelImport = async (guests: { label: string; maxGuests: number }[]) => {
+    setIsExcelImporting(true);
+    setExcelProgress({ total: guests.length, done: 0 });
+    let done = 0;
+    for (const guest of guests) {
+      const code = generateSecureCode();
+      await supabase.from('invites').insert({
+        code,
+        max_guests: guest.maxGuests,
+        label: guest.label,
+      });
+      done++;
+      setExcelProgress({ total: guests.length, done });
+    }
+    queryClient.invalidateQueries({ queryKey: ['admin-invites'] });
+    setIsExcelImporting(false);
+  };
+
   const copyInviteUrl = (code: string, id: string) => {
     navigator.clipboard.writeText(getInviteUrl(code));
     setCopiedId(id);
@@ -301,6 +323,12 @@ export default function AdminInvites() {
             <Download className="w-4 h-4 mr-2" />
             Export CSV
           </Button>
+          <ExcelImport
+            onImport={handleExcelImport}
+            isImporting={isExcelImporting}
+            progress={excelProgress}
+          />
+          <StickerSheetDownload invites={invites ?? []} />
           <Dialog open={isBulkOpen} onOpenChange={setIsBulkOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
