@@ -12,6 +12,7 @@ export const allNavLinks = [
   { href: '/wedding-party', label: 'Wedding Party' },
   { href: '/event-details', label: 'Details' },
   { href: '/travel', label: 'Travel' },
+  { href: '/dress-code', label: 'Dress Code' },
   { href: '/faq', label: 'FAQ' },
   { href: '/registry', label: 'Registry' },
 ];

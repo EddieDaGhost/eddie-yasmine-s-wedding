@@ -1,4 +1,6 @@
+import React from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import {
@@ -30,8 +32,14 @@ const FAQ = () => {
     data?.find((c) => c.key === "faq_subtitle")?.value ||
     "Everything you need to know about our wedding day.";
 
-  // Default FAQ items used when no CMS content is set
-  const defaultFaqItems: { question: string; answer: string }[] = [
+  const inlineLink = (to: string, label: string) => (
+    <Link to={to} className="text-primary hover:underline font-medium transition-colors">
+      {label}
+    </Link>
+  );
+
+  // Default FAQ items — answers support React nodes for internal links
+  const defaultFaqItems: { question: string; answer: React.ReactNode }[] = [
     {
       question: "Can I bring a plus one or additional guests?",
       answer:
@@ -44,23 +52,35 @@ const FAQ = () => {
     },
     {
       question: "When should I RSVP by?",
-      answer:
-        "Please RSVP by May 15th, 2027 so we can finalize our guest count, seating arrangements, and catering. You can RSVP directly through our website.",
+      answer: (
+        <>
+          Please RSVP by May 15th, 2027 so we can finalize our guest count, seating arrangements, and catering. You can {inlineLink('/rsvp', 'RSVP directly through our website')}.
+        </>
+      ),
     },
     {
       question: "Where is the wedding being held?",
-      answer:
-        "Our ceremony and reception will both take place at Blue Dress Barn, located at 5815 W Napier Ave, Benton Harbor, Michigan 49022. Please visit our Travel page for directions and nearby hotel recommendations.",
+      answer: (
+        <>
+          Our ceremony and reception will both take place at Blue Dress Barn, located at 5815 W Napier Ave, Benton Harbor, Michigan 49022. Please visit our {inlineLink('/travel', 'Travel page')} for directions and nearby hotel recommendations.
+        </>
+      ),
     },
     {
       question: "What is the dress code?",
-      answer:
-        "We kindly ask guests to wear semi-formal attire. Think cocktail dresses, suits, or dressy separates. Please keep in mind that parts of the venue have outdoor and grassy areas, so plan your footwear accordingly.",
+      answer: (
+        <>
+          We kindly ask guests to wear semi-formal attire. Visit our {inlineLink('/dress-code', 'Dress Code page')} for the full color palette guide and a lookbook. Please keep in mind that parts of the venue have outdoor and grassy areas, so plan your footwear accordingly.
+        </>
+      ),
     },
     {
       question: "What time should I arrive?",
-      answer:
-        "We recommend arriving at least 30 minutes before the ceremony start time to get settled. Please check our Event Details page for the full schedule.",
+      answer: (
+        <>
+          We recommend arriving at least 30 minutes before the ceremony start time to get settled. Please check our {inlineLink('/event-details', 'Event Details page')} for the full schedule.
+        </>
+      ),
     },
     {
       question: "Will the wedding be indoors or outdoors?",
@@ -79,8 +99,11 @@ const FAQ = () => {
     },
     {
       question: "Will there be food and drinks?",
-      answer:
-        "Yes! A full dinner and drinks will be provided. If you have dietary restrictions or allergies, please let us know when you RSVP so we can accommodate you.",
+      answer: (
+        <>
+          Yes! A full dinner and drinks will be provided. If you have dietary restrictions or allergies, please let us know when you {inlineLink('/rsvp', 'RSVP')} so we can accommodate you.
+        </>
+      ),
     },
     {
       question: "What if I need to update my RSVP?",
@@ -91,18 +114,15 @@ const FAQ = () => {
 
   // FAQ items stored as JSON in the content table
   const faqJson = data?.find((c) => c.key === "faq_items")?.value;
-  let faqItems: { question: string; answer: string }[] = [];
-
+  let cmsItems: { question: string; answer: string }[] = [];
   try {
-    faqItems = faqJson ? JSON.parse(faqJson) : [];
+    cmsItems = faqJson ? JSON.parse(faqJson) : [];
   } catch {
-    faqItems = [];
+    cmsItems = [];
   }
 
-  // Use defaults if no CMS content is set
-  if (faqItems.length === 0) {
-    faqItems = defaultFaqItems;
-  }
+  const faqItems: { question: string; answer: React.ReactNode }[] =
+    cmsItems.length > 0 ? cmsItems : defaultFaqItems;
 
   return (
     <Layout>
