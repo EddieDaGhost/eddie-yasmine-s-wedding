@@ -52,6 +52,7 @@ const rsvpText = {
     mealPrefs: 'Meal Preferences',
     yourMeal: 'Your meal',
     guestMeal: (n: number) => `Guest ${n}'s meal`,
+    namedMeal: (name: string) => `${name}'s meal`,
     selectMeal: 'Select a meal option',
     beef: 'Beef',
     chicken: 'Chicken',
@@ -115,6 +116,7 @@ const rsvpText = {
     mealPrefs: 'Preferencias de comida',
     yourMeal: 'Tu comida',
     guestMeal: (n: number) => `Comida del invitado ${n}`,
+    namedMeal: (name: string) => `Comida de ${name}`,
     selectMeal: 'Selecciona una opción',
     beef: 'Carne de res',
     chicken: 'Pollo',
@@ -786,7 +788,9 @@ export default function InviteRSVP() {
                   {Array.from({ length: formData.guests }, (_, index) => (
                     <div key={index} className="space-y-1">
                       <Label htmlFor={`meal-${index}`} className="text-sm text-muted-foreground">
-                        {formData.guestNames[index]?.trim() || (index === 0 ? t.yourMeal : t.guestMeal(index + 1))}
+                        {formData.guestNames[index]?.trim()
+                          ? t.namedMeal(formData.guestNames[index].trim())
+                          : (index === 0 ? t.yourMeal : t.guestMeal(index + 1))}
                       </Label>
                       <Select
                         value={formData.mealPreferences[index] || ''}
