@@ -183,6 +183,7 @@ interface Entertainment {
   category: EntertainmentCategory;
   icon: React.ReactNode;
   tip?: string;
+  link?: string;
 }
 
 const entertainmentOptions: Entertainment[] = [
@@ -192,6 +193,7 @@ const entertainmentOptions: Entertainment[] = [
     category: 'beaches',
     icon: <Waves className="w-5 h-5" />,
     tip: 'Arrive early on weekends for the best spot',
+    link: 'https://maps.google.com/?q=Silver+Beach+St+Joseph+Michigan',
   },
   {
     name: 'Tiscornia Beach & North Pier',
@@ -199,6 +201,7 @@ const entertainmentOptions: Entertainment[] = [
     category: 'beaches',
     icon: <Camera className="w-5 h-5" />,
     tip: 'Golden hour sunsets are unforgettable here',
+    link: 'https://maps.google.com/?q=Tiscornia+Beach+St+Joseph+Michigan',
   },
   {
     name: 'Lake Michigan Shore Wine Trail',
@@ -206,24 +209,28 @@ const entertainmentOptions: Entertainment[] = [
     category: 'wine',
     icon: <Wine className="w-5 h-5" />,
     tip: 'Book tastings in advance for July weekend',
+    link: 'https://www.lakemichiganshorewinetrail.com',
   },
   {
     name: 'Round Barn Winery & Estate',
     description: 'Beautiful grounds with wine, beer, and spirits tastings. Live music on summer weekends.',
     category: 'wine',
     icon: <Music className="w-5 h-5" />,
+    link: 'https://www.roundbarnwinery.com',
   },
   {
     name: 'Watermark Brewing',
     description: 'Craft brewery in a converted factory right on the river with great outdoor seating.',
     category: 'food',
     icon: <GlassWater className="w-5 h-5" />,
+    link: 'https://www.watermarkbrewing.com',
   },
   {
     name: 'The Livery',
     description: 'Legendary microbrewery in a historic building — try the cask-conditioned ales.',
     category: 'food',
     icon: <GlassWater className="w-5 h-5" />,
+    link: 'https://www.liverybrew.com',
   },
   {
     name: 'Clementine\'s',
@@ -231,12 +238,14 @@ const entertainmentOptions: Entertainment[] = [
     category: 'food',
     icon: <UtensilsCrossed className="w-5 h-5" />,
     tip: 'Make reservations well in advance',
+    link: 'https://maps.google.com/?q=Clementine%27s+St+Joseph+Michigan',
   },
   {
     name: 'North Shore Inn Café',
     description: 'Cozy café perfect for a morning coffee and pastry before a day of exploring.',
     category: 'food',
     icon: <Coffee className="w-5 h-5" />,
+    link: 'https://maps.google.com/?q=North+Shore+Inn+Cafe+St+Joseph+Michigan',
   },
   {
     name: 'Warren Dunes State Park',
@@ -244,42 +253,49 @@ const entertainmentOptions: Entertainment[] = [
     category: 'outdoors',
     icon: <TreePine className="w-5 h-5" />,
     tip: '240-foot dunes — wear sturdy shoes!',
+    link: 'https://www2.dnr.state.mi.us/parksandtrails/Details.aspx?id=499&type=SPRK',
   },
   {
     name: 'Sarett Nature Center',
     description: 'Five miles of trails through marshes, forests, and meadows. Great for birdwatching.',
     category: 'outdoors',
     icon: <Compass className="w-5 h-5" />,
+    link: 'https://www.sarett.com',
   },
   {
     name: 'Harbor Shores Golf',
     description: 'Jack Nicklaus Signature course that has hosted PGA Senior events. Stunning lakeside holes.',
     category: 'outdoors',
     icon: <Sun className="w-5 h-5" />,
+    link: 'https://www.harborshoresgolf.com',
   },
   {
     name: 'Kayaking on the Paw Paw River',
     description: 'Rent kayaks or paddleboards for a peaceful float through scenic Southwest Michigan.',
     category: 'outdoors',
     icon: <Sailboat className="w-5 h-5" />,
+    link: 'https://maps.google.com/?q=Paw+Paw+River+kayak+Benton+Harbor+Michigan',
   },
   {
     name: 'Krasl Art Center',
     description: 'Contemporary art gallery and sculpture garden overlooking the bluff in St. Joseph.',
     category: 'arts',
     icon: <Palette className="w-5 h-5" />,
+    link: 'https://www.krasl.org',
   },
   {
     name: 'Water Street Glassworks',
     description: 'Watch live glassblowing demonstrations and browse beautiful handmade pieces.',
     category: 'arts',
     icon: <Sparkles className="w-5 h-5" />,
+    link: 'https://www.waterstreetglassworks.com',
   },
   {
     name: 'Box Factory for the Arts',
     description: 'Multi-use arts space with galleries, studios, and a community theater.',
     category: 'arts',
     icon: <Landmark className="w-5 h-5" />,
+    link: 'https://www.boxfactoryforthearts.org',
   },
   {
     name: 'Downtown St. Joseph',
@@ -287,12 +303,14 @@ const entertainmentOptions: Entertainment[] = [
     category: 'shopping',
     icon: <ShoppingBag className="w-5 h-5" />,
     tip: 'Don\'t miss the bluff walk overlooking the lake',
+    link: 'https://maps.google.com/?q=Downtown+St+Joseph+Michigan',
   },
   {
     name: 'Benton Harbor Arts District',
     description: 'An emerging creative hub with local artisan shops, galleries, and unique finds.',
     category: 'arts',
     icon: <Palette className="w-5 h-5" />,
+    link: 'https://maps.google.com/?q=Benton+Harbor+Arts+District+Michigan',
   },
 ];
 
@@ -772,7 +790,21 @@ const Travel = () => {
                         {item.icon}
                       </div>
                       <div>
-                        <h4 className="font-serif text-lg text-foreground leading-snug">{item.name}</h4>
+                        {item.link ? (
+                          <a
+                            href={item.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 group/link"
+                          >
+                            <h4 className="font-serif text-lg text-foreground leading-snug group-hover/link:text-primary transition-colors">
+                              {item.name}
+                            </h4>
+                            <ExternalLink className="w-3 h-3 text-primary/40 group-hover/link:text-primary transition-colors flex-shrink-0 mt-0.5" />
+                          </a>
+                        ) : (
+                          <h4 className="font-serif text-lg text-foreground leading-snug">{item.name}</h4>
+                        )}
                         <span className="text-[11px] font-medium text-primary/70 uppercase tracking-wider">
                           {categoryLabelMap[item.category]}
                         </span>

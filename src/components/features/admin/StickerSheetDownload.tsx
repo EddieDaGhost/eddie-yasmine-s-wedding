@@ -52,23 +52,27 @@ interface StickerConfig {
 const DEFAULTS: StickerConfig = {
   pageSize: 'letter',
   orientation: 'portrait',
-  cols: 4,
-  rows: 5,
-  stickerWidthIn: 2,
-  stickerHeightIn: 2,
+  cols: 5,
+  rows: 6,
+  stickerWidthIn: 1.25,
+  stickerHeightIn: 1.25,
   marginTopIn: 0.5,
-  marginLeftIn: 0.19,
-  gutterHIn: 0,
-  gutterVIn: 0,
+  marginLeftIn: 0.875,
+  gutterHIn: 0.125,
+  gutterVIn: 0.375,
   showLabel: true,
-  labelFontSizePt: 7,
-  qrPaddingIn: 0.1,
+  labelFontSizePt: 6,
+  qrPaddingIn: 0.05,
 };
 
-// Avery presets (cols x rows, page dims in inches)
+// Presets
 const PRESETS: { label: string; config: Partial<StickerConfig> }[] = [
   {
-    label: 'Avery 22807 — 2"×2", 4×5',
+    label: 'Dashleigh 8443 — 1.25"×1.25", 5×6 (30/sheet)',
+    config: { cols: 5, rows: 6, stickerWidthIn: 1.25, stickerHeightIn: 1.25, marginTopIn: 0.5, marginLeftIn: 0.875, gutterHIn: 0.125, gutterVIn: 0.375 },
+  },
+  {
+    label: 'Avery 22807 — 2"×2", 4×5 (20/sheet)',
     config: { cols: 4, rows: 5, stickerWidthIn: 2, stickerHeightIn: 2, marginTopIn: 0.5, marginLeftIn: 0.19, gutterHIn: 0, gutterVIn: 0 },
   },
   {

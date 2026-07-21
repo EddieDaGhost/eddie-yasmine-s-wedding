@@ -16,6 +16,7 @@ const WeddingParty = lazy(() => import("./pages/WeddingParty"));
 const EventDetails = lazy(() => import("./pages/EventDetails"));
 const Travel = lazy(() => import("./pages/Travel"));
 const FAQ = lazy(() => import("./pages/FAQ"));
+const DressCode = lazy(() => import("./pages/DressCode"));
 const Registry = lazy(() => import("./pages/Registry"));
 const RSVP = lazy(() => import("./pages/RSVP"));
 const InviteRSVP = lazy(() => import("./pages/InviteRSVP"));
@@ -71,6 +72,7 @@ const App = () => (
               <Route path="/event-details" element={<EventDetails />} />
               <Route path="/travel" element={<Travel />} />
               <Route path="/faq" element={<FAQ />} />
+              <Route path="/dress-code" element={<DressCode />} />
               <Route path="/registry" element={<Registry />} />
               <Route path="/rsvp" element={<RSVP />} />
               {/* Locked Pages */}
