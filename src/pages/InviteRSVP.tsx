@@ -56,9 +56,8 @@ const rsvpText = {
     selectMeal: 'Select a meal option',
     beef: 'Beef',
     chicken: 'Chicken',
-    fish: 'Fish',
-    vegetarian: 'Vegetarian',
-    vegan: 'Vegan',
+    dietaryQuestion: 'Are there any dietary restrictions?',
+    dietaryPlaceholder: 'e.g. nut allergy, gluten-free, kosher…',
     songRequest: 'Song Request',
     songPlaceholder: 'Artist - Song Title',
     message: 'Message for the Couple',
@@ -120,9 +119,8 @@ const rsvpText = {
     selectMeal: 'Selecciona una opción',
     beef: 'Carne de res',
     chicken: 'Pollo',
-    fish: 'Pescado',
-    vegetarian: 'Vegetariano',
-    vegan: 'Vegano',
+    dietaryQuestion: '¿Hay alguna restricción alimentaria?',
+    dietaryPlaceholder: 'p.ej. alergia a nueces, sin gluten, kosher…',
     songRequest: 'Canción solicitada',
     songPlaceholder: 'Artista - Título de la canción',
     message: 'Mensaje para los novios',
@@ -168,6 +166,7 @@ interface ExistingRSVP {
   attending: boolean;
   guests: number;
   meal_preference: string | null;
+  dietary_needs: string | null;
   song_requests: string | null;
   message: string | null;
 }
@@ -193,6 +192,7 @@ export default function InviteRSVP() {
     guests: 1,
     guestNames: [''] as string[],
     mealPreferences: [''] as string[],
+    dietaryRestrictions: '',
     songRequests: '',
     message: '',
   });
@@ -298,6 +298,7 @@ export default function InviteRSVP() {
             attending: rsvpData.attending ?? false,
             guests: rsvpData.guests || 1,
             meal_preference: rsvpData.meal_preference,
+            dietary_needs: rsvpData.dietary_needs,
             song_requests: rsvpData.song_requests,
             message: rsvpData.message,
           });
@@ -344,6 +345,7 @@ export default function InviteRSVP() {
             attending: false,
             guests: 1,
             meal_preference: null,
+            dietary_needs: null,
             song_requests: null,
             message: formData.message || null,
             invite_code: invite.code,
@@ -429,6 +431,7 @@ export default function InviteRSVP() {
           attending: formData.attending,
           guests: formData.guests,
           meal_preference: mealPreferenceStr,
+          dietary_needs: formData.dietaryRestrictions || null,
           song_requests: formData.songRequests || null,
           message: formData.message || null,
           invite_code: invite.code,
@@ -571,6 +574,12 @@ export default function InviteRSVP() {
                     ) : (
                       <p className="font-medium">{existingRsvp.meal_preference}</p>
                     )}
+                  </div>
+                )}
+                {existingRsvp.dietary_needs && (
+                  <div className="py-2 border-b border-border">
+                    <span className="text-muted-foreground block mb-1">{t.dietaryQuestion}</span>
+                    <p className="font-medium text-sm">{existingRsvp.dietary_needs}</p>
                   </div>
                 )}
                 {existingRsvp.song_requests && (
@@ -802,14 +811,24 @@ export default function InviteRSVP() {
                         <SelectContent>
                           <SelectItem value="beef">{t.beef}</SelectItem>
                           <SelectItem value="chicken">{t.chicken}</SelectItem>
-                          <SelectItem value="fish">{t.fish}</SelectItem>
-                          <SelectItem value="vegetarian">{t.vegetarian}</SelectItem>
-                          <SelectItem value="vegan">{t.vegan}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   ))}
                 </div>
+
+                {formData.mealPreferences.slice(0, formData.guests).every(m => m) && (
+                  <div className="space-y-2">
+                    <Label htmlFor="dietary">{t.dietaryQuestion}</Label>
+                    <Textarea
+                      id="dietary"
+                      placeholder={t.dietaryPlaceholder}
+                      value={formData.dietaryRestrictions}
+                      onChange={(e) => setFormData({ ...formData, dietaryRestrictions: e.target.value })}
+                      className="min-h-[70px]"
+                    />
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="song">{t.songRequest}</Label>
