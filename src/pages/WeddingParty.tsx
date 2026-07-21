@@ -57,18 +57,38 @@ const WeddingParty = () => {
     data?.find((c) => c.key === "weddingparty_subtitle")?.value ||
     "The wonderful people standing by our side on our special day.";
 
+  const DEFAULT_BRIDESMAIDS: PartyMemberCardProps[] = [
+    { name: "Anais Pacheco",    role: "Maid of Honor",    description: "" },
+    { name: "Vanessa Pacheco",  role: "Matron of Honor",  description: "" },
+    { name: "Maria Correa",     role: "Bridesmaid",       description: "" },
+    { name: "Gloria Correa",    role: "Bridesmaid",       description: "" },
+    { name: "Sirena Mota",      role: "Bridesmaid",       description: "" },
+    { name: "Margi Gomez",      role: "Bridesmaid",       description: "" },
+    { name: "Brittanie LaCour", role: "Bridesmaid",       description: "" },
+  ];
+
+  const DEFAULT_GROOMSMEN: PartyMemberCardProps[] = [
+    { name: "Antonio Correa",    role: "Best Man",    description: "" },
+    { name: "Diego Gomez",       role: "Best Man",    description: "" },
+    { name: "Nikolas Correa",    role: "Groomsman",   description: "" },
+    { name: "Darren Ward",       role: "Groomsman",   description: "" },
+    { name: "Alejandro Esparza", role: "Groomsman",   description: "" },
+    { name: "Missael Pale",      role: "Groomsman",   description: "" },
+    { name: "Adrian Guerrero",   role: "Groomsman",   description: "" },
+  ];
+
   // Bridesmaids
   const bridesmaidsJson = data?.find((c) => c.key === "weddingparty_bridesmaids")?.value;
-  let bridesmaids: PartyMemberCardProps[] = [];
+  let bridesmaids: PartyMemberCardProps[] = DEFAULT_BRIDESMAIDS;
   try {
-    bridesmaids = bridesmaidsJson ? JSON.parse(bridesmaidsJson) : [];
+    if (bridesmaidsJson) bridesmaids = JSON.parse(bridesmaidsJson);
   } catch {}
 
   // Groomsmen
   const groomsmenJson = data?.find((c) => c.key === "weddingparty_groomsmen")?.value;
-  let groomsmen: PartyMemberCardProps[] = [];
+  let groomsmen: PartyMemberCardProps[] = DEFAULT_GROOMSMEN;
   try {
-    groomsmen = groomsmenJson ? JSON.parse(groomsmenJson) : [];
+    if (groomsmenJson) groomsmen = JSON.parse(groomsmenJson);
   } catch {}
 
   // Thank You
