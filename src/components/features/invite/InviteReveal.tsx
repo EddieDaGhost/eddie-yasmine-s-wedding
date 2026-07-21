@@ -7,7 +7,25 @@ interface InviteRevealProps {
   onComplete: () => void;
   venueName?: string;
   venueAddress?: string;
+  language?: string;
 }
+
+const revealText = {
+  en: {
+    intro: 'With hearts full of love,',
+    body1: 'invite you to share in the celebration',
+    body2: 'of their wedding day',
+    date: 'July 2, 2027 · 4:30 PM ET | 3:30 PM CT',
+    cta: 'View Your Invitation',
+  },
+  es: {
+    intro: 'Con el corazón lleno de amor,',
+    body1: 'los invitan a compartir la celebración',
+    body2: 'de su boda',
+    date: '2 de julio de 2027 · 4:30 PM ET | 3:30 PM CT',
+    cta: 'Ver Tu Invitación',
+  },
+};
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -39,7 +57,8 @@ const sparkles = [
   { x: -10, y: 55, size: 3, delay: 0.28 },
 ];
 
-export const InviteReveal = ({ label, onComplete, venueName, venueAddress }: InviteRevealProps) => {
+export const InviteReveal = ({ label, onComplete, venueName, venueAddress, language = 'en' }: InviteRevealProps) => {
+  const t = revealText[language as keyof typeof revealText] ?? revealText.en;
   return (
     <motion.div
       className="fixed inset-0 z-50 flex items-center justify-center romantic-gradient overflow-hidden"
@@ -86,7 +105,7 @@ export const InviteReveal = ({ label, onComplete, venueName, venueAddress }: Inv
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.6, ease: EASE }}
         >
-          With hearts full of love,
+          {t.intro}
         </motion.p>
 
         {/* Couple names — italic / cursive style with primary color */}
@@ -130,10 +149,10 @@ export const InviteReveal = ({ label, onComplete, venueName, venueAddress }: Inv
           transition={{ delay: 1.4, duration: 0.6, ease: EASE }}
         >
           <p className="font-serif italic text-base md:text-lg text-muted-foreground/80">
-            invite you to share in the celebration
+            {t.body1}
           </p>
           <p className="font-serif italic text-base md:text-lg text-muted-foreground/80">
-            of their wedding day
+            {t.body2}
           </p>
         </motion.div>
 
@@ -243,7 +262,7 @@ export const InviteReveal = ({ label, onComplete, venueName, venueAddress }: Inv
         >
           <div className="flex items-center justify-center gap-2 text-muted-foreground">
             <Calendar className="w-4 h-4 text-primary" />
-            <span className="font-serif text-base md:text-lg">July 2, 2027 &middot; 4:30 PM ET | 3:30 PM CT</span>
+            <span className="font-serif text-base md:text-lg">{t.date}</span>
           </div>
           <div className="flex items-center justify-center gap-2 text-muted-foreground">
             <MapPin className="w-4 h-4 text-primary" />
@@ -268,7 +287,7 @@ export const InviteReveal = ({ label, onComplete, venueName, venueAddress }: Inv
               animate={{ scale: [1, 1.03, 1] }}
               transition={{ delay: 4.5, duration: 2, repeat: Infinity, ease: 'easeInOut' }}
             >
-              View Your Invitation
+              {t.cta}
             </motion.span>
           </Button>
         </motion.div>

@@ -9,7 +9,25 @@ interface InviteCardPreviewProps {
   venueName?: string;
   venueAddress?: string;
   customMessage?: string;
+  language?: string;
 }
+
+const cardText = {
+  en: {
+    header: 'TOGETHER WITH THEIR FAMILIES',
+    sub: 'request the pleasure of your company',
+    date: 'July 2, 2027',
+    time: '4:30 PM ET | 3:30 PM CT',
+    scan: 'SCAN TO RSVP',
+  },
+  es: {
+    header: 'JUNTO CON SUS FAMILIAS',
+    sub: 'solicitan el honor de su presencia',
+    date: '2 de julio de 2027',
+    time: '4:30 PM ET | 3:30 PM CT',
+    scan: 'ESCANEA PARA CONFIRMAR',
+  },
+};
 
 const CARD_W = 900;
 const CARD_H = 1260;
@@ -21,7 +39,9 @@ export const InviteCardPreview = ({
   venueName = 'Blue Dress Barn',
   venueAddress = 'Benton Harbor, Michigan',
   customMessage,
+  language = 'en',
 }: InviteCardPreviewProps) => {
+  const t = cardText[language as keyof typeof cardText] ?? cardText.en;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [ready, setReady] = useState(false);
 
@@ -68,7 +88,7 @@ export const InviteCardPreview = ({
       ctx.font = '14px "Montserrat", sans-serif';
       ctx.textAlign = 'center';
       ctx.letterSpacing = '4px';
-      ctx.fillText('TOGETHER WITH THEIR FAMILIES', cx, 170);
+      ctx.fillText(t.header, cx, 170);
 
       // Couple names
       ctx.fillStyle = '#2a2520';
@@ -84,7 +104,7 @@ export const InviteCardPreview = ({
       // "request the pleasure of your company"
       ctx.fillStyle = '#8a8580';
       ctx.font = 'italic 18px "Cormorant Garamond", serif';
-      ctx.fillText('request the pleasure of your company', cx, 480);
+      ctx.fillText(t.sub, cx, 480);
 
       // Divider
       ctx.strokeStyle = '#c9a96e60';
@@ -114,11 +134,11 @@ export const InviteCardPreview = ({
       // Date
       ctx.fillStyle = '#2a2520';
       ctx.font = '28px "Cormorant Garamond", serif';
-      ctx.fillText('July 2, 2027', cx, 670);
+      ctx.fillText(t.date, cx, 670);
 
       ctx.fillStyle = '#8a8580';
       ctx.font = '16px "Montserrat", sans-serif';
-      ctx.fillText('4:30 PM ET | 3:30 PM CT', cx, 700);
+      ctx.fillText(t.time, cx, 700);
 
       // Venue
       ctx.fillStyle = '#2a2520';
@@ -166,7 +186,7 @@ export const InviteCardPreview = ({
         // "Scan to RSVP" label
         ctx.fillStyle = '#8a8580';
         ctx.font = '13px "Montserrat", sans-serif';
-        ctx.fillText('SCAN TO RSVP', cx, qrY + QR_SIZE + 28);
+        ctx.fillText(t.scan, cx, qrY + QR_SIZE + 28);
 
         // Bottom ornament
         ctx.strokeStyle = '#c9a96e';
@@ -182,7 +202,7 @@ export const InviteCardPreview = ({
     };
 
     draw();
-  }, [label, url, venueName, venueAddress, customMessage]);
+  }, [label, url, venueName, venueAddress, customMessage, language, t]);
 
   const handleDownload = () => {
     if (!canvasRef.current) return;

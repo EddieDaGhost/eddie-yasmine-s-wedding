@@ -44,6 +44,13 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface InviteAnalytics {
   views: number;
@@ -62,6 +69,7 @@ interface Invite {
   venue_name: string | null;
   venue_address: string | null;
   custom_message: string | null;
+  language: string;
   created_at: string;
   rsvp?: {
     id: string;
@@ -78,6 +86,7 @@ interface NewInviteForm {
   venueName: string;
   venueAddress: string;
   customMessage: string;
+  language: string;
 }
 
 const DEFAULT_FORM: NewInviteForm = {
@@ -86,6 +95,7 @@ const DEFAULT_FORM: NewInviteForm = {
   venueName: '',
   venueAddress: '',
   customMessage: '',
+  language: 'en',
 };
 
 function generateSecureCode(): string {
@@ -189,6 +199,7 @@ export default function AdminInvites() {
           venue_name: form.venueName || null,
           venue_address: form.venueAddress || null,
           custom_message: form.customMessage || null,
+          language: form.language || 'en',
         })
         .select()
         .single();
@@ -427,6 +438,22 @@ export default function AdminInvites() {
                   <p className="text-xs text-muted-foreground">Total number of people who can RSVP with this link</p>
                 </div>
 
+                <div className="space-y-2">
+                  <Label htmlFor="language">Invitation Language</Label>
+                  <Select
+                    value={newInvite.language}
+                    onValueChange={(value) => setNewInvite({ ...newInvite, language: value })}
+                  >
+                    <SelectTrigger id="language">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="en">English</SelectItem>
+                      <SelectItem value="es">Español</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 {/* Advanced Options */}
                 <button
                   type="button"
@@ -538,7 +565,12 @@ export default function AdminInvites() {
                     <>
                       <CollapsibleTrigger asChild>
                         <tr className="hover:bg-muted/30 transition-colors cursor-pointer">
-                          <td className="px-6 py-4 font-medium">{invite.label || '—'}</td>
+                          <td className="px-6 py-4 font-medium">
+                            <span>{invite.label || '—'}</span>
+                            {invite.language === 'es' && (
+                              <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-700 dark:text-amber-300 font-medium">ES</span>
+                            )}
+                          </td>
                           <td className="px-6 py-4">
                             <code className="text-sm bg-muted px-2 py-1 rounded">{invite.code}</code>
                           </td>
@@ -725,6 +757,7 @@ export default function AdminInvites() {
                 venueName={cardInvite.venue_name || undefined}
                 venueAddress={cardInvite.venue_address || undefined}
                 customMessage={cardInvite.custom_message || undefined}
+                language={cardInvite.language || 'en'}
               />
             )}
           </div>
@@ -742,6 +775,7 @@ export default function AdminInvites() {
               <InviteMessageTemplates
                 label={messageInvite.label || 'Guest'}
                 url={getInviteUrl(messageInvite.code)}
+                language={messageInvite.language || 'en'}
               />
             )}
           </div>
