@@ -49,6 +49,8 @@ const rsvpText = {
     email: 'Email Address',
     phone: 'Phone Number',
     contactHint: 'Please provide either an email address or a phone number so we can confirm your RSVP.',
+    contactOptional: 'Optional — leave blank if you prefer.',
+    yourNameLabel: 'Your Name *',
     mealPrefs: 'Meal Preferences',
     yourMeal: 'Your meal',
     guestMeal: (n: number) => `Guest ${n}'s meal`,
@@ -112,6 +114,8 @@ const rsvpText = {
     email: 'Correo electrónico',
     phone: 'Número de teléfono',
     contactHint: 'Por favor proporciona un correo electrónico o número de teléfono para confirmar tu asistencia.',
+    contactOptional: 'Opcional — puedes dejarlo en blanco si lo prefieres.',
+    yourNameLabel: 'Tu nombre *',
     mealPrefs: 'Preferencias de comida',
     yourMeal: 'Tu comida',
     guestMeal: (n: number) => `Comida del invitado ${n}`,
@@ -317,13 +321,35 @@ export default function InviteRSVP() {
     validateInvite();
   }, [code]);
 
+  // Insert an RSVP row. If the deployed database predates the dietary_needs
+  // column, Postgres rejects the whole row — so retry once without that field
+  // instead of failing the guest's submission.
+  const insertRsvp = async (row: Record<string, unknown>) => {
+    const attempt = (payload: Record<string, unknown>) =>
+      supabase.from('rsvps').insert(payload as never).select().single();
+
+    let { data, error } = await attempt(row);
+
+    if (error && /dietary_needs/i.test(`${error.message} ${error.details ?? ''}`)) {
+      const { dietary_needs, ...withoutDietary } = row;
+      console.warn(
+        'rsvps.dietary_needs column missing — run supabase/migrations/20260730000000_add_dietary_needs_to_rsvps.sql. Retrying without it.'
+      );
+      ({ data, error } = await attempt(withoutDietary));
+    }
+
+    if (error) throw error;
+    return data;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!invite) return;
 
-    // Require at least email or phone
-    if (!formData.email.trim() && !formData.phone.trim()) {
+    // Require at least email or phone — only when attending. Guests who
+    // decline shouldn't have to hand over contact details.
+    if (formData.attending && !formData.email.trim() && !formData.phone.trim()) {
       toast({
         title: t.contactRequired,
         description: t.contactRequiredDesc,
@@ -336,24 +362,18 @@ export default function InviteRSVP() {
     if (!formData.attending) {
       setSubmitting(true);
       try {
-        const { data: rsvpData, error: rsvpError } = await supabase
-          .from('rsvps')
-          .insert({
-            name: formData.guestNames[0]?.trim() || null,
-            email: formData.email || null,
-            phone: formData.phone || null,
-            attending: false,
-            guests: 1,
-            meal_preference: null,
-            dietary_needs: null,
-            song_requests: null,
-            message: formData.message || null,
-            invite_code: invite.code,
-          })
-          .select()
-          .single();
-
-        if (rsvpError) throw rsvpError;
+        const rsvpData = await insertRsvp({
+          name: formData.guestNames[0]?.trim() || null,
+          email: formData.email || null,
+          phone: formData.phone || null,
+          attending: false,
+          guests: 1,
+          meal_preference: null,
+          dietary_needs: null,
+          song_requests: null,
+          message: formData.message || null,
+          invite_code: invite.code,
+        });
 
         await supabase
           .from('invites')
@@ -375,7 +395,7 @@ export default function InviteRSVP() {
         console.error('Error submitting RSVP:', err);
         toast({
           title: 'Error',
-          description: 'Failed to submit RSVP. Please try again.',
+          description: err instanceof Error && err.message ? err.message : 'Failed to submit RSVP. Please try again.',
           variant: 'destructive',
         });
       } finally {
@@ -422,24 +442,18 @@ export default function InviteRSVP() {
         .filter(Boolean);
       const mealPreferenceStr = mealParts.length > 0 ? mealParts.join(' | ') : null;
 
-      const { data: rsvpData, error: rsvpError } = await supabase
-        .from('rsvps')
-        .insert({
-          name: allNames,
-          email: formData.email || null,
-          phone: formData.phone || null,
-          attending: formData.attending,
-          guests: formData.guests,
-          meal_preference: mealPreferenceStr,
-          dietary_needs: formData.dietaryRestrictions || null,
-          song_requests: formData.songRequests || null,
-          message: formData.message || null,
-          invite_code: invite.code,
-        })
-        .select()
-        .single();
-
-      if (rsvpError) throw rsvpError;
+      const rsvpData = await insertRsvp({
+        name: allNames,
+        email: formData.email || null,
+        phone: formData.phone || null,
+        attending: formData.attending,
+        guests: formData.guests,
+        meal_preference: mealPreferenceStr,
+        dietary_needs: formData.dietaryRestrictions || null,
+        song_requests: formData.songRequests || null,
+        message: formData.message || null,
+        invite_code: invite.code,
+      });
 
       // Mark the invite as used
       const { error: updateError } = await supabase
@@ -465,7 +479,7 @@ export default function InviteRSVP() {
       console.error('Error submitting RSVP:', err);
       toast({
         title: 'Error',
-        description: 'Failed to submit RSVP. Please try again.',
+        description: err instanceof Error && err.message ? err.message : 'Failed to submit RSVP. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -763,6 +777,21 @@ export default function InviteRSVP() {
               </div>
             )}
 
+            {/* Declining guests still tell us who they are, but nothing else
+                is required of them. */}
+            {!formData.attending && (
+              <div className="space-y-2">
+                <Label htmlFor="decline-name">{t.yourNameLabel}</Label>
+                <Input
+                  id="decline-name"
+                  required
+                  placeholder={t.guestPlaceholder}
+                  value={formData.guestNames[0] || ''}
+                  onChange={(e) => updateGuestName(0, e.target.value)}
+                />
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="email">{t.email}</Label>
               <Input
@@ -785,9 +814,10 @@ export default function InviteRSVP() {
               />
             </div>
 
-            {/* Helper text for email/phone */}
+            {/* Helper text for email/phone — contact details are only required
+                of guests who are attending. */}
             <p className="text-xs text-muted-foreground/70 -mt-4">
-              {t.contactHint}
+              {formData.attending ? t.contactHint : t.contactOptional}
             </p>
 
             {formData.attending && (

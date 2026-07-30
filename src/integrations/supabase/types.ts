@@ -281,6 +281,7 @@ export type Database = {
         Row: {
           attending: boolean | null
           created_at: string
+          dietary_needs: string | null
           email: string | null
           guests: number | null
           id: string
@@ -294,6 +295,7 @@ export type Database = {
         Insert: {
           attending?: boolean | null
           created_at?: string
+          dietary_needs?: string | null
           email?: string | null
           guests?: number | null
           id?: string
@@ -307,6 +309,7 @@ export type Database = {
         Update: {
           attending?: boolean | null
           created_at?: string
+          dietary_needs?: string | null
           email?: string | null
           guests?: number | null
           id?: string
