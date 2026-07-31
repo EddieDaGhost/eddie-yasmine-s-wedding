@@ -50,6 +50,8 @@ const rsvpText = {
     phone: 'Phone Number',
     contactHint: 'Please provide either an email address or a phone number so we can confirm your RSVP.',
     contactOptional: 'Optional — leave blank if you prefer.',
+    rateLimited: "We've received several RSVPs from this email in the last hour. Please wait a little while and try again.",
+    genericError: 'Failed to submit RSVP. Please try again.',
     yourNameLabel: 'Your Name *',
     mealPrefs: 'Meal Preferences',
     yourMeal: 'Your meal',
@@ -115,6 +117,8 @@ const rsvpText = {
     phone: 'Número de teléfono',
     contactHint: 'Por favor proporciona un correo electrónico o número de teléfono para confirmar tu asistencia.',
     contactOptional: 'Opcional — puedes dejarlo en blanco si lo prefieres.',
+    rateLimited: 'Hemos recibido varias confirmaciones de este correo en la última hora. Por favor espera un momento e inténtalo de nuevo.',
+    genericError: 'No se pudo enviar la confirmación. Por favor inténtalo de nuevo.',
     yourNameLabel: 'Tu nombre *',
     mealPrefs: 'Preferencias de comida',
     yourMeal: 'Tu comida',
@@ -324,22 +328,63 @@ export default function InviteRSVP() {
   // Insert an RSVP row. If the deployed database predates the dietary_needs
   // column, Postgres rejects the whole row — so retry once without that field
   // instead of failing the guest's submission.
+  // Insert an RSVP row and return its id.
+  //
+  // The id is generated client-side on purpose: reading the row back with
+  // .select() requires SELECT permission on rsvps, which anonymous guests may
+  // not have. Inserting blind and keeping the id we chose means a guest's RSVP
+  // is never reported as failed just because we couldn't read it back.
   const insertRsvp = async (row: Record<string, unknown>) => {
+    const id = crypto.randomUUID();
+
     const attempt = (payload: Record<string, unknown>) =>
-      supabase.from('rsvps').insert(payload as never).select().single();
+      supabase.from('rsvps').insert({ id, ...payload } as never);
 
-    let { data, error } = await attempt(row);
+    let { error } = await attempt(row);
 
+    // Older databases may predate the dietary_needs column; retry without it
+    // rather than losing the whole submission.
     if (error && /dietary_needs/i.test(`${error.message} ${error.details ?? ''}`)) {
       const { dietary_needs, ...withoutDietary } = row;
       console.warn(
         'rsvps.dietary_needs column missing — run supabase/migrations/20260730000000_add_dietary_needs_to_rsvps.sql. Retrying without it.'
       );
-      ({ data, error } = await attempt(withoutDietary));
+      ({ error } = await attempt(withoutDietary));
     }
 
     if (error) throw error;
-    return data;
+    return id;
+  };
+
+  // Link the invite to the RSVP and record the event. Both require permissions
+  // a guest may not have, and neither matters to the guest — the RSVP is
+  // already saved — so failures here are logged, never surfaced.
+  const finalizeInvite = async (inviteId: string, rsvpId: string, meta: Record<string, unknown>) => {
+    try {
+      const { error } = await supabase.from('invites').update({ used_by: rsvpId }).eq('id', inviteId);
+      if (error) console.warn('Could not link invite to RSVP:', error.message);
+    } catch (err) {
+      console.warn('Could not link invite to RSVP:', err);
+    }
+
+    try {
+      await supabase.from('invite_analytics').insert({
+        invite_id: inviteId,
+        event_type: 'rsvp',
+        metadata: meta,
+      });
+    } catch (err) {
+      console.warn('Could not record RSVP analytics:', err);
+    }
+  };
+
+  // Turn a Supabase/Postgres error into something a guest can act on, while
+  // still exposing the raw message for anything unexpected so it can be
+  // diagnosed from a screenshot.
+  const describeError = (err: unknown) => {
+    const message = err instanceof Error ? err.message : String(err ?? '');
+    if (/rate limit/i.test(message)) return t.rateLimited;
+    return message || t.genericError;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -362,7 +407,7 @@ export default function InviteRSVP() {
     if (!formData.attending) {
       setSubmitting(true);
       try {
-        const rsvpData = await insertRsvp({
+        const rsvpId = await insertRsvp({
           name: formData.guestNames[0]?.trim() || null,
           email: formData.email || null,
           phone: formData.phone || null,
@@ -375,27 +420,18 @@ export default function InviteRSVP() {
           invite_code: invite.code,
         });
 
-        await supabase
-          .from('invites')
-          .update({ used_by: rsvpData.id })
-          .eq('id', invite.id);
-
-        await supabase.from('invite_analytics').insert({
-          invite_id: invite.id,
-          event_type: 'rsvp',
-          metadata: { attending: false, guests: 1 },
-        });
+        await finalizeInvite(invite.id, rsvpId, { attending: false, guests: 1 });
 
         setSubmitted(true);
         toast({
-          title: 'RSVP submitted!',
-          description: 'Thank you for letting us know.',
+          title: t.rsvpSubmitted,
+          description: t.rsvpMiss,
         });
       } catch (err) {
         console.error('Error submitting RSVP:', err);
         toast({
           title: 'Error',
-          description: err instanceof Error && err.message ? err.message : 'Failed to submit RSVP. Please try again.',
+          description: describeError(err),
           variant: 'destructive',
         });
       } finally {
@@ -442,7 +478,7 @@ export default function InviteRSVP() {
         .filter(Boolean);
       const mealPreferenceStr = mealParts.length > 0 ? mealParts.join(' | ') : null;
 
-      const rsvpData = await insertRsvp({
+      const rsvpId = await insertRsvp({
         name: allNames,
         email: formData.email || null,
         phone: formData.phone || null,
@@ -455,19 +491,9 @@ export default function InviteRSVP() {
         invite_code: invite.code,
       });
 
-      // Mark the invite as used
-      const { error: updateError } = await supabase
-        .from('invites')
-        .update({ used_by: rsvpData.id })
-        .eq('id', invite.id);
-
-      if (updateError) throw updateError;
-
-      // Track the RSVP submission event
-      await supabase.from('invite_analytics').insert({
-        invite_id: invite.id,
-        event_type: 'rsvp',
-        metadata: { attending: formData.attending, guests: formData.guests },
+      await finalizeInvite(invite.id, rsvpId, {
+        attending: formData.attending,
+        guests: formData.guests,
       });
 
       setSubmitted(true);
@@ -479,7 +505,7 @@ export default function InviteRSVP() {
       console.error('Error submitting RSVP:', err);
       toast({
         title: 'Error',
-        description: err instanceof Error && err.message ? err.message : 'Failed to submit RSVP. Please try again.',
+        description: describeError(err),
         variant: 'destructive',
       });
     } finally {
