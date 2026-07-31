@@ -18,6 +18,7 @@ interface RSVP {
   attending: boolean | null;
   guests: number | null;
   meal_preference: string | null;
+  dietary_needs: string | null;
   song_requests: string | null;
   message: string | null;
   invite_code: string | null;
@@ -198,7 +199,7 @@ const AdminRSVPs = () => {
 
   const handleExportCSV = () => {
     if (!rsvps) return;
-    const headers = ['Name', 'Email', 'Phone', 'Attending', 'Guests', 'Meal Preference', 'Song Requests', 'Message', 'Invite Code', 'Date'];
+    const headers = ['Name', 'Email', 'Phone', 'Attending', 'Guests', 'Meal Preference', 'Dietary Needs', 'Song Requests', 'Message', 'Invite Code', 'Date'];
     const rows = rsvps.map((r) => [
       r.name || '',
       r.email || '',
@@ -206,6 +207,7 @@ const AdminRSVPs = () => {
       r.attending === true ? 'Yes' : r.attending === false ? 'No' : 'Pending',
       r.guests ?? 1,
       r.meal_preference || '',
+      r.dietary_needs || '',
       r.song_requests || '',
       r.message || '',
       r.invite_code || '',
@@ -317,6 +319,7 @@ const AdminRSVPs = () => {
                 <SortHeader field="phone">Phone</SortHeader>
                 <SortHeader field="attending">Status</SortHeader>
                 <SortHeader field="guests">Guests</SortHeader>
+                <th className="text-left px-4 py-4 text-sm font-medium text-muted-foreground">Dietary</th>
                 <SortHeader field="song_requests">Song</SortHeader>
                 <SortHeader field="message">Notes</SortHeader>
                 <SortHeader field="created_at">Date</SortHeader>
@@ -347,6 +350,15 @@ const AdminRSVPs = () => {
                     </span>
                   </td>
                   <td className="px-4 py-4">{rsvp.guests || 1}</td>
+                  <td className="px-4 py-4 text-sm max-w-[150px] truncate">
+                    {rsvp.dietary_needs ? (
+                      <span className="text-amber-700 dark:text-amber-400 font-medium" title={rsvp.dietary_needs}>
+                        {rsvp.dietary_needs}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </td>
                   <td className="px-4 py-4 text-muted-foreground text-sm max-w-[150px] truncate">
                     {rsvp.song_requests || '-'}
                   </td>

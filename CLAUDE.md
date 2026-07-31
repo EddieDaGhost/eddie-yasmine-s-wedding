@@ -1,3 +1,7 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 # CLAUDE.md — Eddie & Yasmine's Wedding Website
 
 ## Project Overview
@@ -224,6 +228,11 @@ All types are defined in `src/integrations/supabase/types.ts`.
 | `photos` | Guest-uploaded photos | `file_url`, `caption`, `approved`, `guest_id`, `tags` |
 | `rsvps` | RSVP submissions | `name`, `email`, `attending`, `guests`, `meal_preference`, `message`, `invite_code` |
 | `song_requests` | Music requests | `title`, `artist`, `guest_id` |
+
+### Notable Column Details
+- `rsvps.meal_preference` — stores a JSON string (array of per-guest selections, e.g. `'["beef","chicken"]'`), not a plain string. Parse before displaying.
+- `rsvps.dietary_needs` — plain text; populated by the dietary restrictions question shown after all meal slots are filled.
+- `invites.language` — `'en'` | `'es'`; controls which language the invite RSVP page and card render in. Added via `supabase/migrations/20260721000000_add_language_to_invites.sql` — must be run in the Supabase SQL Editor if not already applied.
 
 ### Schema Changes
 When modifying the database schema:

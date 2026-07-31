@@ -202,8 +202,18 @@ const registrySections: SectionConfig[] = [
     ],
   },
   {
+    id: 'registry-how',
+    label: 'How to Give',
+    selector: '[data-section="registry-how"]',
+    contentKeys: ['registry_how_title', 'registry_how_message'],
+    fields: [
+      { key: 'registry_how_title', label: 'Title', type: 'text', path: 'registry_how_title', placeholder: 'How to Give' },
+      { key: 'registry_how_message', label: 'Message', type: 'textarea', path: 'registry_how_message' },
+    ],
+  },
+  {
     id: 'registry-items',
-    label: 'Registry Items',
+    label: 'Registry Items (optional)',
     selector: '[data-section="registry-items"]',
     contentKeys: ['registry_items'],
     repeatableKey: 'registry_items',

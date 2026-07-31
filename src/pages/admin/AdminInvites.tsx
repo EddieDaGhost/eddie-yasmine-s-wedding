@@ -134,6 +134,7 @@ export default function AdminInvites() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [excelProgress, setExcelProgress] = useState<{ total: number; done: number } | null>(null);
   const [isExcelImporting, setIsExcelImporting] = useState(false);
+  const [togglingLangId, setTogglingLangId] = useState<string | null>(null);
 
   const isValidInvite = () => newInvite.maxGuests >= 1 && newInvite.maxGuests <= 20 && newInvite.label.trim().length > 0;
 
@@ -291,6 +292,18 @@ export default function AdminInvites() {
     }
     queryClient.invalidateQueries({ queryKey: ['admin-invites'] });
     setIsExcelImporting(false);
+  };
+
+  const toggleLanguage = async (invite: Invite) => {
+    setTogglingLangId(invite.id);
+    const next = invite.language === 'es' ? 'en' : 'es';
+    const { error } = await supabase.from('invites').update({ language: next }).eq('id', invite.id);
+    if (error) {
+      toast({ title: 'Error updating language', description: error.message, variant: 'destructive' });
+    } else {
+      queryClient.invalidateQueries({ queryKey: ['admin-invites'] });
+    }
+    setTogglingLangId(null);
   };
 
   const copyInviteUrl = (code: string, id: string) => {
@@ -600,6 +613,20 @@ export default function AdminInvites() {
                                 <MousePointer className="w-3 h-3" />
                                 {invite.analytics?.views || 0}
                               </span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => { e.stopPropagation(); toggleLanguage(invite); }}
+                                title={invite.language === 'es' ? 'Switch to English' : 'Switch to Spanish'}
+                                disabled={togglingLangId === invite.id}
+                                className={invite.language === 'es' ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-muted-foreground'}
+                              >
+                                {togglingLangId === invite.id ? (
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                ) : (
+                                  <span className="text-xs font-semibold">{invite.language === 'es' ? 'ES' : 'EN'}</span>
+                                )}
+                              </Button>
                               <Button
                                 variant="ghost"
                                 size="sm"
