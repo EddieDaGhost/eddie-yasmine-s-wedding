@@ -8,9 +8,22 @@
 -- =====================================================
 
 -- 1. Columns the RSVP form writes ---------------------------------------
-ALTER TABLE public.rsvps   ADD COLUMN IF NOT EXISTS dietary_needs text;
-ALTER TABLE public.rsvps   ADD COLUMN IF NOT EXISTS phone         text;
-ALTER TABLE public.invites ADD COLUMN IF NOT EXISTS language      text NOT NULL DEFAULT 'en';
+--    Every field the invite RSVP form sends. A single missing column causes
+--    Postgres to reject the whole submission with PGRST204.
+ALTER TABLE public.rsvps   ADD COLUMN IF NOT EXISTS name            text;
+ALTER TABLE public.rsvps   ADD COLUMN IF NOT EXISTS email           text;
+ALTER TABLE public.rsvps   ADD COLUMN IF NOT EXISTS phone           text;
+ALTER TABLE public.rsvps   ADD COLUMN IF NOT EXISTS attending       boolean;
+ALTER TABLE public.rsvps   ADD COLUMN IF NOT EXISTS guests          integer DEFAULT 1;
+ALTER TABLE public.rsvps   ADD COLUMN IF NOT EXISTS meal_preference text;
+ALTER TABLE public.rsvps   ADD COLUMN IF NOT EXISTS dietary_needs   text;
+ALTER TABLE public.rsvps   ADD COLUMN IF NOT EXISTS song_requests   text;
+ALTER TABLE public.rsvps   ADD COLUMN IF NOT EXISTS message         text;
+ALTER TABLE public.rsvps   ADD COLUMN IF NOT EXISTS invite_code     text;
+ALTER TABLE public.invites ADD COLUMN IF NOT EXISTS language        text NOT NULL DEFAULT 'en';
+
+-- PostgREST caches the schema; nudge it so new columns are visible at once.
+NOTIFY pgrst, 'reload schema';
 
 -- 2. Guests must be able to submit an RSVP ------------------------------
 ALTER TABLE public.rsvps ENABLE ROW LEVEL SECURITY;
