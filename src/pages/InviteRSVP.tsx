@@ -325,34 +325,50 @@ export default function InviteRSVP() {
     validateInvite();
   }, [code]);
 
-  // Insert an RSVP row. If the deployed database predates the dietary_needs
-  // column, Postgres rejects the whole row — so retry once without that field
-  // instead of failing the guest's submission.
+  // Fields the RSVP cannot be meaningfully recorded without. Everything else
+  // may be dropped to save a submission on an out-of-date database.
+  const REQUIRED_RSVP_FIELDS = new Set(['name', 'attending', 'invite_code']);
+
   // Insert an RSVP row and return its id.
   //
   // The id is generated client-side on purpose: reading the row back with
   // .select() requires SELECT permission on rsvps, which anonymous guests may
   // not have. Inserting blind and keeping the id we chose means a guest's RSVP
   // is never reported as failed just because we couldn't read it back.
+  //
+  // If the database is missing an optional column, Postgres rejects the entire
+  // row. Rather than lose a real guest's RSVP over a schema drift we can't fix
+  // from here, drop the offending column and retry. Each round trip names one
+  // missing column, so this loops until the row is accepted or nothing
+  // optional is left to remove.
   const insertRsvp = async (row: Record<string, unknown>) => {
     const id = crypto.randomUUID();
+    const payload = { ...row };
+    const dropped: string[] = [];
 
-    const attempt = (payload: Record<string, unknown>) =>
-      supabase.from('rsvps').insert({ id, ...payload } as never);
+    for (let i = 0; i <= Object.keys(row).length; i++) {
+      const { error } = await supabase.from('rsvps').insert({ id, ...payload } as never);
+      if (!error) break;
 
-    let { error } = await attempt(row);
+      // PostgREST reports this as: Could not find the 'x' column of 'rsvps'
+      const missing = /could not find the '([^']+)' column/i.exec(error.message ?? '')?.[1];
 
-    // Older databases may predate the dietary_needs column; retry without it
-    // rather than losing the whole submission.
-    if (error && /dietary_needs/i.test(`${error.message} ${error.details ?? ''}`)) {
-      const { dietary_needs, ...withoutDietary } = row;
+      if (!missing || !(missing in payload) || REQUIRED_RSVP_FIELDS.has(missing)) {
+        throw error;
+      }
+
+      delete payload[missing];
+      dropped.push(missing);
       console.warn(
-        'rsvps.dietary_needs column missing — run supabase/migrations/20260730000000_add_dietary_needs_to_rsvps.sql. Retrying without it.'
+        `rsvps.${missing} column missing — retrying without it. ` +
+          'Run supabase/FIX_INVITE_RSVP.sql to bring the database up to date.'
       );
-      ({ error } = await attempt(withoutDietary));
     }
 
-    if (error) throw error;
+    if (dropped.length > 0) {
+      console.warn(`RSVP saved, but these fields could not be stored: ${dropped.join(', ')}`);
+    }
+
     return id;
   };
 
@@ -381,10 +397,26 @@ export default function InviteRSVP() {
   // Turn a Supabase/Postgres error into something a guest can act on, while
   // still exposing the raw message for anything unexpected so it can be
   // diagnosed from a screenshot.
+  // Supabase rejects with a plain object ({ message, details, hint, code }),
+  // not an Error, so stringifying it naively yields "[object Object]". Pull the
+  // useful fields out explicitly.
   const describeError = (err: unknown) => {
-    const message = err instanceof Error ? err.message : String(err ?? '');
+    let message = '';
+    let code = '';
+
+    if (err instanceof Error) {
+      message = err.message;
+    } else if (err && typeof err === 'object') {
+      const e = err as { message?: string; details?: string; hint?: string; code?: string };
+      code = e.code ?? '';
+      message = [e.message, e.details, e.hint].filter(Boolean).join(' — ');
+    } else if (err != null) {
+      message = String(err);
+    }
+
     if (/rate limit/i.test(message)) return t.rateLimited;
-    return message || t.genericError;
+    if (!message) return code ? `${t.genericError} (${code})` : t.genericError;
+    return code ? `${message} (${code})` : message;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -428,7 +460,7 @@ export default function InviteRSVP() {
           description: t.rsvpMiss,
         });
       } catch (err) {
-        console.error('Error submitting RSVP:', err);
+        console.error('Error submitting RSVP:', err, JSON.stringify(err));
         toast({
           title: 'Error',
           description: describeError(err),
@@ -502,7 +534,7 @@ export default function InviteRSVP() {
         description: formData.attending ? t.rsvpExcited : t.rsvpMiss,
       });
     } catch (err) {
-      console.error('Error submitting RSVP:', err);
+      console.error('Error submitting RSVP:', err, JSON.stringify(err));
       toast({
         title: 'Error',
         description: describeError(err),

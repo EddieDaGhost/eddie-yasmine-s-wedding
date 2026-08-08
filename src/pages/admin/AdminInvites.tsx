@@ -315,11 +315,12 @@ export default function AdminInvites() {
 
   const handleExportCSV = () => {
     if (!invites) return;
-    const headers = ['Label', 'Code', 'Invite URL', 'Max Guests', 'Status', 'Used By', 'Views', 'RSVPs', 'Created'];
+    const headers = ['Label', 'Code', 'Invite URL', 'Language', 'Max Guests', 'Status', 'Used By', 'Views', 'RSVPs', 'Created'];
     const rows = invites.map((inv) => [
       inv.label || '',
       inv.code,
       getInviteUrl(inv.code),
+      inv.language === 'es' ? 'Spanish' : 'English',
       inv.max_guests,
       inv.used_by ? 'Used' : 'Pending',
       inv.rsvp?.name || '',
