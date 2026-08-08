@@ -381,10 +381,26 @@ export default function InviteRSVP() {
   // Turn a Supabase/Postgres error into something a guest can act on, while
   // still exposing the raw message for anything unexpected so it can be
   // diagnosed from a screenshot.
+  // Supabase rejects with a plain object ({ message, details, hint, code }),
+  // not an Error, so stringifying it naively yields "[object Object]". Pull the
+  // useful fields out explicitly.
   const describeError = (err: unknown) => {
-    const message = err instanceof Error ? err.message : String(err ?? '');
+    let message = '';
+    let code = '';
+
+    if (err instanceof Error) {
+      message = err.message;
+    } else if (err && typeof err === 'object') {
+      const e = err as { message?: string; details?: string; hint?: string; code?: string };
+      code = e.code ?? '';
+      message = [e.message, e.details, e.hint].filter(Boolean).join(' — ');
+    } else if (err != null) {
+      message = String(err);
+    }
+
     if (/rate limit/i.test(message)) return t.rateLimited;
-    return message || t.genericError;
+    if (!message) return code ? `${t.genericError} (${code})` : t.genericError;
+    return code ? `${message} (${code})` : message;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -428,7 +444,7 @@ export default function InviteRSVP() {
           description: t.rsvpMiss,
         });
       } catch (err) {
-        console.error('Error submitting RSVP:', err);
+        console.error('Error submitting RSVP:', err, JSON.stringify(err));
         toast({
           title: 'Error',
           description: describeError(err),
@@ -502,7 +518,7 @@ export default function InviteRSVP() {
         description: formData.attending ? t.rsvpExcited : t.rsvpMiss,
       });
     } catch (err) {
-      console.error('Error submitting RSVP:', err);
+      console.error('Error submitting RSVP:', err, JSON.stringify(err));
       toast({
         title: 'Error',
         description: describeError(err),
