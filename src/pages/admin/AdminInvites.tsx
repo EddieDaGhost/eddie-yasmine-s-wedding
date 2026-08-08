@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import {
   Link2, Copy, Check, Trash2, Users, Plus, Loader2,
   BarChart3, MousePointer, UserCheck, QrCode, CreditCard,
-  MessageSquareText, Download, Upload
+  MessageSquareText, Download, Upload, Pencil
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -135,6 +135,8 @@ export default function AdminInvites() {
   const [excelProgress, setExcelProgress] = useState<{ total: number; done: number } | null>(null);
   const [isExcelImporting, setIsExcelImporting] = useState(false);
   const [togglingLangId, setTogglingLangId] = useState<string | null>(null);
+  const [editInvite, setEditInvite] = useState<Invite | null>(null);
+  const [editForm, setEditForm] = useState({ label: '', maxGuests: 2 });
 
   const isValidInvite = () => newInvite.maxGuests >= 1 && newInvite.maxGuests <= 20 && newInvite.label.trim().length > 0;
 
@@ -259,6 +261,34 @@ export default function AdminInvites() {
       description: `${created} invites created${failed > 0 ? `, ${failed} failed` : ''}.`,
       variant: failed > 0 ? 'destructive' : 'default',
     });
+  };
+
+  // Update the guest name and party size on an existing invite.
+  //
+  // Deliberately never touches `code` — the invite URL and QR code are derived
+  // from it, and those may already be printed and handed out. Editing here is
+  // safe for invitations already in guests' hands.
+  const updateInvite = useMutation({
+    mutationFn: async ({ id, label, maxGuests }: { id: string; label: string; maxGuests: number }) => {
+      const { error } = await supabase
+        .from('invites')
+        .update({ label: label.trim() || null, max_guests: maxGuests })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-invites'] });
+      toast({ title: 'Invite updated', description: 'The link and QR code are unchanged.' });
+      setEditInvite(null);
+    },
+    onError: (error) => {
+      toast({ title: 'Error updating invite', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const openEdit = (invite: Invite) => {
+    setEditForm({ label: invite.label || '', maxGuests: invite.max_guests });
+    setEditInvite(invite);
   };
 
   // Delete invite mutation
@@ -631,6 +661,14 @@ export default function AdminInvites() {
                               <Button
                                 variant="ghost"
                                 size="sm"
+                                onClick={(e) => { e.stopPropagation(); openEdit(invite); }}
+                                title="Edit name and guest count"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
                                 onClick={(e) => { e.stopPropagation(); copyInviteUrl(invite.code, invite.id); }}
                                 title="Copy link"
                               >
@@ -753,6 +791,74 @@ export default function AdminInvites() {
           </div>
         )}
       </div>
+
+      {/* Edit Invite Dialog — name and party size only, so printed links and
+          QR codes stay valid. */}
+      <Dialog open={!!editInvite} onOpenChange={(open) => !open && setEditInvite(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Invite</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="edit-label">Guest Name</Label>
+              <Input
+                id="edit-label"
+                value={editForm.label}
+                onChange={(e) => setEditForm({ ...editForm, label: e.target.value })}
+                placeholder="e.g. The Garcia Family"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-max-guests">Guests Allowed</Label>
+              <Input
+                id="edit-max-guests"
+                type="number"
+                min={1}
+                max={20}
+                value={editForm.maxGuests}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, maxGuests: Math.max(1, parseInt(e.target.value) || 1) })
+                }
+              />
+              {editInvite?.rsvp && editForm.maxGuests < editInvite.rsvp.guests && (
+                <p className="text-xs text-destructive">
+                  This guest already RSVP'd for {editInvite.rsvp.guests}. Lowering the limit
+                  won't change their existing response.
+                </p>
+              )}
+            </div>
+
+            <div className="rounded-lg bg-muted/50 p-3 space-y-1">
+              <p className="text-xs text-muted-foreground">
+                The invite link and QR code will not change:
+              </p>
+              <code className="text-xs break-all block">{editInvite && getInviteUrl(editInvite.code)}</code>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setEditInvite(null)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={() =>
+                  editInvite &&
+                  updateInvite.mutate({
+                    id: editInvite.id,
+                    label: editForm.label,
+                    maxGuests: editForm.maxGuests,
+                  })
+                }
+                disabled={updateInvite.isPending}
+              >
+                {updateInvite.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* QR Code Dialog */}
       <Dialog open={!!qrInvite} onOpenChange={(open) => !open && setQrInvite(null)}>
