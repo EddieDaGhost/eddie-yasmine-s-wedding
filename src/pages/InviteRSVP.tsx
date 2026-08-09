@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Layout } from '@/components/layout/Layout';
-import { InviteReveal } from '@/components/features/invite';
+import { InviteReveal, AddToCalendar } from '@/components/features/invite';
 import {
   Select,
   SelectContent,
@@ -266,14 +266,17 @@ export default function InviteRSVP() {
           event_type: 'view',
         });
 
-        // Check for existing RSVP — first by used_by, then by invite_code as fallback
+        // Check for existing RSVP — first by used_by, then by invite_code as
+        // fallback. Archived RSVPs are ignored: an admin reset should give the
+        // guest a fresh form, not the response that was just cleared.
         let rsvpData = null;
         if (inviteData.used_by) {
           const { data } = await supabase
             .from('rsvps')
             .select('*')
             .eq('id', inviteData.used_by)
-            .single();
+            .is('archived_at', null)
+            .maybeSingle();
           rsvpData = data;
         }
 
@@ -283,6 +286,7 @@ export default function InviteRSVP() {
             .from('rsvps')
             .select('*')
             .eq('invite_code', code)
+            .is('archived_at', null)
             .order('created_at', { ascending: false })
             .limit(1)
             .maybeSingle();
@@ -668,6 +672,19 @@ export default function InviteRSVP() {
                 )}
               </div>
 
+              {/* Returning guests often come back specifically to save the date. */}
+              {existingRsvp.attending && (
+                <div className="pt-2 pb-4 border-t border-border">
+                  <div className="pt-4">
+                    <AddToCalendar
+                      venueName={invite?.venue_name}
+                      venueAddress={invite?.venue_address}
+                      language={lang}
+                    />
+                  </div>
+                </div>
+              )}
+
               <p className="text-sm text-muted-foreground text-center">
                 {t.needChanges}
               </p>
@@ -702,6 +719,18 @@ export default function InviteRSVP() {
             <p className="text-muted-foreground mb-6">
               {formData.attending ? t.rsvpExcited : t.rsvpMiss}
             </p>
+
+            {/* Only guests who are coming need the date saved. */}
+            {formData.attending && (
+              <div className="mb-6 pb-6 border-b border-border">
+                <AddToCalendar
+                  venueName={invite?.venue_name}
+                  venueAddress={invite?.venue_address}
+                  language={lang}
+                />
+              </div>
+            )}
+
             <Link to="/">
               <Button>{t.exploreWebsite}</Button>
             </Link>
