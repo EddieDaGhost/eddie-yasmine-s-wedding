@@ -53,6 +53,7 @@ const rsvpText = {
     rateLimited: "We've received several RSVPs from this email in the last hour. Please wait a little while and try again.",
     genericError: 'Failed to submit RSVP. Please try again.',
     yourNameLabel: 'Your Name *',
+    adultsOnly: 'Please note: our celebration is adults only. We kindly ask that all guests be 21 or older.',
     mealPrefs: 'Meal Preferences',
     yourMeal: 'Your meal',
     guestMeal: (n: number) => `Guest ${n}'s meal`,
@@ -120,6 +121,7 @@ const rsvpText = {
     rateLimited: 'Hemos recibido varias confirmaciones de este correo en la última hora. Por favor espera un momento e inténtalo de nuevo.',
     genericError: 'No se pudo enviar la confirmación. Por favor inténtalo de nuevo.',
     yourNameLabel: 'Tu nombre *',
+    adultsOnly: 'Ten en cuenta: nuestra celebración es solo para adultos. Pedimos amablemente que todos los invitados sean mayores de 21 años.',
     mealPrefs: 'Preferencias de comida',
     yourMeal: 'Tu comida',
     guestMeal: (n: number) => `Comida del invitado ${n}`,
@@ -843,6 +845,19 @@ export default function InviteRSVP() {
                     ))}
                   </SelectContent>
                 </Select>
+
+                {/* Shown as soon as the party grows beyond the primary guest,
+                    so it is read before any additional names are entered. */}
+                {formData.guests > 1 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-start gap-2 rounded-lg border border-gold/40 bg-gold/10 p-3"
+                  >
+                    <AlertCircle className="w-4 h-4 text-gold shrink-0 mt-0.5" />
+                    <p className="text-sm text-foreground/80">{t.adultsOnly}</p>
+                  </motion.div>
+                )}
 
                 {/* Name inputs for each guest */}
                 <div className="space-y-3">
