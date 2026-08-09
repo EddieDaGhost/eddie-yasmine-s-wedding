@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Users, CheckCircle, XCircle, Clock, Loader2, Download, Trash2, ArrowUpDown } from 'lucide-react';
+import { Users, CheckCircle, XCircle, Clock, Loader2, Download, Trash2, ArrowUpDown, RotateCcw, Archive, Undo2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { AdminLayout } from '@/components/features/admin/AdminLayout';
@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 
 interface RSVP {
   id: string;
+  archived_at: string | null;
   name: string | null;
   email: string | null;
   phone: string | null;
@@ -27,7 +28,7 @@ interface RSVP {
 
 type SortField = 'name' | 'email' | 'phone' | 'attending' | 'guests' | 'song_requests' | 'message' | 'created_at';
 type SortDirection = 'asc' | 'desc';
-type StatusFilter = 'all' | 'attending' | 'declined' | 'pending';
+type StatusFilter = 'all' | 'attending' | 'declined' | 'pending' | 'archived';
 
 const AdminRSVPs = () => {
   const { isAuthenticated, logout } = useAdminAuth();
@@ -47,6 +48,57 @@ const AdminRSVPs = () => {
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data as RSVP[];
+    },
+  });
+
+  // Reset an RSVP: archive it and free its invite so the guest can respond
+  // again. The row is kept rather than deleted, so an accidental reset can be
+  // reviewed and undone from the Archived filter.
+  const resetRsvp = useMutation({
+    mutationFn: async (rsvp: RSVP) => {
+      const { error } = await supabase
+        .from('rsvps')
+        .update({ archived_at: new Date().toISOString() })
+        .eq('id', rsvp.id);
+      if (error) throw error;
+
+      // Release the invite so the link shows a fresh form again.
+      await supabase.from('invites').update({ used_by: null }).eq('used_by', rsvp.id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-rsvps'] });
+      toast({
+        title: 'RSVP reset',
+        description: 'The guest can RSVP again. The old response is kept under the Archived filter.',
+      });
+    },
+    onError: (error) => {
+      toast({ title: 'Error resetting RSVP', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  // Undo a reset, putting the response back into the active list.
+  const restoreRsvp = useMutation({
+    mutationFn: async (rsvp: RSVP) => {
+      const { error } = await supabase
+        .from('rsvps')
+        .update({ archived_at: null })
+        .eq('id', rsvp.id);
+      if (error) throw error;
+
+      if (rsvp.invite_code) {
+        await supabase
+          .from('invites')
+          .update({ used_by: rsvp.id })
+          .eq('code', rsvp.invite_code);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-rsvps'] });
+      toast({ title: 'RSVP restored', description: 'The response is active again.' });
+    },
+    onError: (error) => {
+      toast({ title: 'Error restoring RSVP', description: error.message, variant: 'destructive' });
     },
   });
 
@@ -75,7 +127,11 @@ const AdminRSVPs = () => {
   const filteredAndSortedRsvps = useMemo(() => {
     if (!rsvps) return [];
 
-    let filtered = rsvps;
+    // Archived responses are hidden from every active view and only appear
+    // under their own filter.
+    let filtered = statusFilter === 'archived'
+      ? rsvps.filter((r) => r.archived_at)
+      : rsvps.filter((r) => !r.archived_at);
 
     // Apply status filter
     if (statusFilter === 'attending') {
@@ -152,6 +208,19 @@ const AdminRSVPs = () => {
     }
   };
 
+  const handleReset = (rsvp: RSVP) => {
+    if (
+      !confirm(
+        `Reset the RSVP from "${rsvp.name || 'Unknown'}"?\n\n` +
+          'Their invite link will work again as if they had never responded. ' +
+          'The current response is kept and can be restored from the Archived filter.'
+      )
+    ) {
+      return;
+    }
+    resetRsvp.mutate(rsvp);
+  };
+
   const handleBulkDelete = async () => {
     if (selected.size === 0) return;
     if (!confirm(`Delete ${selected.size} selected RSVP(s)? This cannot be undone.`)) return;
@@ -189,17 +258,20 @@ const AdminRSVPs = () => {
     );
   }
 
+  // Counts reflect live responses only — a reset RSVP must not inflate them.
+  const active = rsvps?.filter((r) => !r.archived_at) || [];
   const stats = {
-    total: rsvps?.length || 0,
-    attending: rsvps?.filter((r) => r.attending === true).length || 0,
-    declined: rsvps?.filter((r) => r.attending === false).length || 0,
-    pending: rsvps?.filter((r) => r.attending === null).length || 0,
-    totalGuests: rsvps?.filter((r) => r.attending === true).reduce((acc, r) => acc + (r.guests || 1), 0) || 0,
+    total: active.length,
+    attending: active.filter((r) => r.attending === true).length,
+    declined: active.filter((r) => r.attending === false).length,
+    pending: active.filter((r) => r.attending === null).length,
+    totalGuests: active.filter((r) => r.attending === true).reduce((acc, r) => acc + (r.guests || 1), 0),
+    archived: rsvps?.filter((r) => r.archived_at).length || 0,
   };
 
   const handleExportCSV = () => {
     if (!rsvps) return;
-    const headers = ['Name', 'Email', 'Phone', 'Attending', 'Guests', 'Meal Preference', 'Dietary Needs', 'Song Requests', 'Message', 'Invite Code', 'Date'];
+    const headers = ['Name', 'Email', 'Phone', 'Attending', 'Guests', 'Meal Preference', 'Dietary Needs', 'Song Requests', 'Message', 'Invite Code', 'Date', 'Status'];
     const rows = rsvps.map((r) => [
       r.name || '',
       r.email || '',
@@ -212,6 +284,7 @@ const AdminRSVPs = () => {
       r.message || '',
       r.invite_code || '',
       new Date(r.created_at).toLocaleDateString(),
+      r.archived_at ? `Reset ${new Date(r.archived_at).toLocaleDateString()}` : 'Active',
     ]);
     exportToCSV(headers, rows, `rsvps-${format(new Date(), 'yyyy-MM-dd')}`);
   };
@@ -258,13 +331,14 @@ const AdminRSVPs = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
         {[
           { label: 'Total', value: stats.total, icon: Users, color: 'text-primary', filter: 'all' as StatusFilter },
           { label: 'Attending', value: stats.attending, icon: CheckCircle, color: 'text-sage', filter: 'attending' as StatusFilter },
           { label: 'Declined', value: stats.declined, icon: XCircle, color: 'text-destructive', filter: 'declined' as StatusFilter },
           { label: 'Pending', value: stats.pending, icon: Clock, color: 'text-gold', filter: 'pending' as StatusFilter },
           { label: 'Total Guests', value: stats.totalGuests, icon: Users, color: 'text-primary', filter: 'all' as StatusFilter },
+          { label: 'Archived', value: stats.archived, icon: Archive, color: 'text-muted-foreground', filter: 'archived' as StatusFilter },
         ].map((stat) => (
           <motion.div
             key={stat.label}
@@ -328,7 +402,7 @@ const AdminRSVPs = () => {
             </thead>
             <tbody className="divide-y divide-border">
               {filteredAndSortedRsvps.map((rsvp) => (
-                <tr key={rsvp.id} className={`hover:bg-muted/30 transition-colors ${selected.has(rsvp.id) ? 'bg-primary/5' : ''}`}>
+                <tr key={rsvp.id} className={`hover:bg-muted/30 transition-colors ${selected.has(rsvp.id) ? 'bg-primary/5' : ''} ${rsvp.archived_at ? 'opacity-60' : ''}`}>
                   <td className="px-4 py-4">
                     <input
                       type="checkbox"
@@ -337,7 +411,17 @@ const AdminRSVPs = () => {
                       className="rounded border-border"
                     />
                   </td>
-                  <td className="px-4 py-4 font-medium">{rsvp.name || '-'}</td>
+                  <td className="px-4 py-4 font-medium">
+                    {rsvp.name || '-'}
+                    {rsvp.archived_at && (
+                      <span
+                        className="ml-2 text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium"
+                        title={`Reset ${format(new Date(rsvp.archived_at), 'PPp')}`}
+                      >
+                        Reset
+                      </span>
+                    )}
+                  </td>
                   <td className="px-4 py-4 text-muted-foreground text-sm">{rsvp.email || '-'}</td>
                   <td className="px-4 py-4 text-muted-foreground text-sm">{rsvp.phone || '-'}</td>
                   <td className="px-4 py-4">
@@ -369,13 +453,34 @@ const AdminRSVPs = () => {
                     {formatDistanceToNow(new Date(rsvp.created_at), { addSuffix: true })}
                   </td>
                   <td className="px-4 py-4">
-                    <button
-                      onClick={() => handleDelete(rsvp.id, rsvp.name)}
-                      className="text-muted-foreground hover:text-destructive transition-colors p-1"
-                      title="Delete RSVP"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-1 justify-end">
+                      {rsvp.archived_at ? (
+                        <button
+                          onClick={() => restoreRsvp.mutate(rsvp)}
+                          disabled={restoreRsvp.isPending}
+                          className="text-muted-foreground hover:text-sage transition-colors p-1"
+                          title="Restore this RSVP"
+                        >
+                          <Undo2 className="w-4 h-4" />
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleReset(rsvp)}
+                          disabled={resetRsvp.isPending}
+                          className="text-muted-foreground hover:text-primary transition-colors p-1"
+                          title="Reset — lets this guest RSVP again, keeping a copy"
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleDelete(rsvp.id, rsvp.name)}
+                        className="text-muted-foreground hover:text-destructive transition-colors p-1"
+                        title="Delete RSVP permanently"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

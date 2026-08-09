@@ -4,33 +4,41 @@ import { supabase } from "@/integrations/supabase/client";
 // RSVP STATS
 // -----------------------------
 export async function getRsvpStats() {
+  // Reset (archived) RSVPs are excluded throughout — they are kept only as
+  // history and must not be counted as live responses.
+
   // Total RSVPs
   const { count: total } = await supabase
     .from("rsvps")
-    .select("*", { count: "exact", head: true });
+    .select("*", { count: "exact", head: true })
+    .is("archived_at", null);
 
   // Attending
   const { count: attending } = await supabase
     .from("rsvps")
     .select("*", { count: "exact", head: true })
+    .is("archived_at", null)
     .eq("attending", true);
 
   // Not attending
   const { count: notAttending } = await supabase
     .from("rsvps")
     .select("*", { count: "exact", head: true })
+    .is("archived_at", null)
     .eq("attending", false);
 
   // No response
   const { count: noResponse } = await supabase
     .from("rsvps")
     .select("*", { count: "exact", head: true })
+    .is("archived_at", null)
     .is("attending", null);
 
   // Meal choices breakdown
   const { data: mealRows } = await supabase
     .from("rsvps")
-    .select("meal_preference");
+    .select("meal_preference")
+    .is("archived_at", null);
 
   const mealChoices: Record<string, number> = {};
   mealRows?.forEach((row) => {
@@ -42,6 +50,7 @@ export async function getRsvpStats() {
   const { count: allergies } = await supabase
     .from("rsvps")
     .select("*", { count: "exact", head: true })
+    .is("archived_at", null)
     .not("allergies", "is", null)
     .neq("allergies", "");
 

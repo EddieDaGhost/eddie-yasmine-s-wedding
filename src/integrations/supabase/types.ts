@@ -279,6 +279,7 @@ export type Database = {
       }
       rsvps: {
         Row: {
+          archived_at: string | null
           attending: boolean | null
           created_at: string
           dietary_needs: string | null
@@ -293,6 +294,7 @@ export type Database = {
           song_requests: string | null
         }
         Insert: {
+          archived_at?: string | null
           attending?: boolean | null
           created_at?: string
           dietary_needs?: string | null
@@ -307,6 +309,7 @@ export type Database = {
           song_requests?: string | null
         }
         Update: {
+          archived_at?: string | null
           attending?: boolean | null
           created_at?: string
           dietary_needs?: string | null
