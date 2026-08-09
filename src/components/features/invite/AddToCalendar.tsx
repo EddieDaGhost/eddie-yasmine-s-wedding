@@ -1,3 +1,4 @@
+import { useEffect, useMemo } from 'react';
 import { CalendarPlus, Apple, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -41,9 +42,15 @@ export const AddToCalendar = ({ venueName, venueAddress, language = 'en' }: AddT
     `&details=${encodeURIComponent(t.description)}` +
     (location ? `&location=${encodeURIComponent(location)}` : '');
 
-  // Built as a data URI rather than a blob so iOS Safari opens it in Calendar
-  // instead of downloading a file the user then has to find.
-  const downloadIcs = () => {
+  // A plain link to a real .ics URL is what iOS needs: Safari hands it to
+  // Calendar and shows the Add Event sheet. A data: URI or a `download`
+  // attribute both defeat that, leaving the guest with a file they have to
+  // find in Downloads. The static file at /wedding.ics carries the venue for
+  // the wedding itself, so it covers every invite without a custom venue.
+  const hasCustomVenue = Boolean(venueName || venueAddress);
+
+  // Only invites overriding the venue need a generated file.
+  const buildIcs = () => {
     const lines = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
@@ -67,14 +74,28 @@ export const AddToCalendar = ({ venueName, venueAddress, language = 'en' }: AddT
       'END:VCALENDAR',
     ].filter(Boolean);
 
-    const ics = lines.join('\r\n');
-    const link = document.createElement('a');
-    link.href = `data:text/calendar;charset=utf-8,${encodeURIComponent(ics)}`;
-    link.download = 'eddie-and-yasmine-wedding.ics';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    return lines.join('\r\n');
   };
+
+  // A blob URL keeps the text/calendar type, which a data: URI loses on iOS.
+  // Built once and revoked on unmount so repeated renders don't leak.
+  const customVenueHref = useMemo(
+    () =>
+      hasCustomVenue
+        ? URL.createObjectURL(new Blob([buildIcs()], { type: 'text/calendar;charset=utf-8' }))
+        : null,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [hasCustomVenue, location, t.title, t.description]
+  );
+
+  useEffect(
+    () => () => {
+      if (customVenueHref) URL.revokeObjectURL(customVenueHref);
+    },
+    [customVenueHref]
+  );
+
+  const appleHref = customVenueHref ?? '/wedding.ics';
 
   return (
     <div className="space-y-3">
@@ -83,9 +104,12 @@ export const AddToCalendar = ({ venueName, venueAddress, language = 'en' }: AddT
         {t.heading}
       </p>
       <div className="flex flex-col sm:flex-row gap-2">
-        <Button variant="outline" onClick={downloadIcs} className="flex-1 gap-2">
-          <Apple className="w-4 h-4" />
-          {t.apple}
+        <Button variant="outline" asChild className="flex-1">
+          {/* No `download` attribute: it stops iOS handing the file to Calendar. */}
+          <a href={appleHref} rel="noopener" className="gap-2">
+            <Apple className="w-4 h-4" />
+            {t.apple}
+          </a>
         </Button>
         <Button variant="outline" asChild className="flex-1">
           <a href={googleUrl} target="_blank" rel="noopener noreferrer" className="gap-2">
