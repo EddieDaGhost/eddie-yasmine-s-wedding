@@ -59,7 +59,7 @@ export const AddToCalendar = ({ venueName, venueAddress, language = 'en' }: AddT
       `DESCRIPTION:${t.description}`,
       location ? `LOCATION:${location.replace(/,/g, '\\,')}` : '',
       'BEGIN:VALARM',
-      'TRIGGER:-P1D',
+      'TRIGGER:-P1W',
       'ACTION:DISPLAY',
       'DESCRIPTION:Reminder',
       'END:VALARM',
