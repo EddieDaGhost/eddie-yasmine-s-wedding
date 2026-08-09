@@ -1,0 +1,21 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Eddie and Yasmine//Wedding//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:eddie-yasmine-wedding-2027-07-02@eddie-and-yasmine.com
+DTSTAMP:20260809T000000Z
+DTSTART:20270702T203000Z
+DTEND:20270703T013000Z
+SUMMARY:Eddie & Yasmine — Wedding
+DESCRIPTION:We can't wait to celebrate with you!
+LOCATION:Blue Dress Barn\, Benton Harbor\, Michigan
+URL:https://www.eddie-and-yasmine.com
+BEGIN:VALARM
+TRIGGER:-P1W
+ACTION:DISPLAY
+DESCRIPTION:Eddie & Yasmine's wedding is one week away
+END:VALARM
+END:VEVENT
+END:VCALENDAR
