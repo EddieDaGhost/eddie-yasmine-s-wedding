@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { CalendarPlus, Apple, Calendar } from 'lucide-react';
+import { CalendarPlus, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface AddToCalendarProps {
@@ -8,23 +8,23 @@ interface AddToCalendarProps {
   language?: string;
 }
 
-// Ceremony: July 2, 2027, 4:30 PM Eastern (EDT = UTC-4) → 20:30 UTC.
-// Held for five hours through the reception.
+// July 2, 2027, 4:30 PM – 11:00 PM Eastern. July is EDT (UTC-4), so the
+// event runs 20:30 UTC to 03:00 UTC the following day.
 const EVENT_START_UTC = '20270702T203000Z';
-const EVENT_END_UTC = '20270703T013000Z';
+const EVENT_END_UTC = '20270703T030000Z';
 
 const calendarText = {
   en: {
     heading: 'Add to your calendar',
-    apple: 'iPhone / Apple',
-    google: 'Android / Google',
+    add: 'Add to Calendar',
+    google: 'Prefer Google Calendar?',
     title: 'Eddie & Yasmine — Wedding',
     description: "We can't wait to celebrate with you!",
   },
   es: {
     heading: 'Agregar a tu calendario',
-    apple: 'iPhone / Apple',
-    google: 'Android / Google',
+    add: 'Agregar al calendario',
+    google: '¿Prefieres Google Calendar?',
     title: 'Eddie & Yasmine — Boda',
     description: '¡No podemos esperar para celebrar contigo!',
   },
@@ -42,14 +42,15 @@ export const AddToCalendar = ({ venueName, venueAddress, language = 'en' }: AddT
     `&details=${encodeURIComponent(t.description)}` +
     (location ? `&location=${encodeURIComponent(location)}` : '');
 
-  // A plain link to a real .ics URL is what iOS needs: Safari hands it to
-  // Calendar and shows the Add Event sheet. A data: URI or a `download`
-  // attribute both defeat that, leaving the guest with a file they have to
-  // find in Downloads. The static file at /wedding.ics carries the venue for
-  // the wedding itself, so it covers every invite without a custom venue.
+  // One .ics link serves both platforms. iOS Safari hands it to Calendar and
+  // shows the Add Event sheet; Android offers the installed calendar apps.
+  // Both require a real URL served as text/calendar with no `download`
+  // attribute — a data: URI or a forced download breaks each of them.
+  //
+  // The static file at /wedding.ics covers every invite that doesn't override
+  // the venue.
   const hasCustomVenue = Boolean(venueName || venueAddress);
 
-  // Only invites overriding the venue need a generated file.
   const buildIcs = () => {
     const lines = [
       'BEGIN:VCALENDAR',
@@ -95,7 +96,7 @@ export const AddToCalendar = ({ venueName, venueAddress, language = 'en' }: AddT
     [customVenueHref]
   );
 
-  const appleHref = customVenueHref ?? '/wedding.ics';
+  const icsHref = customVenueHref ?? '/wedding.ics';
 
   return (
     <div className="space-y-3">
@@ -103,21 +104,24 @@ export const AddToCalendar = ({ venueName, venueAddress, language = 'en' }: AddT
         <CalendarPlus className="w-4 h-4" />
         {t.heading}
       </p>
-      <div className="flex flex-col sm:flex-row gap-2">
-        <Button variant="outline" asChild className="flex-1">
-          {/* No `download` attribute: it stops iOS handing the file to Calendar. */}
-          <a href={appleHref} rel="noopener" className="gap-2">
-            <Apple className="w-4 h-4" />
-            {t.apple}
-          </a>
-        </Button>
-        <Button variant="outline" asChild className="flex-1">
-          <a href={googleUrl} target="_blank" rel="noopener noreferrer" className="gap-2">
-            <Calendar className="w-4 h-4" />
-            {t.google}
-          </a>
-        </Button>
-      </div>
+
+      {/* No `download` attribute — it stops both iOS and Android from handing
+          the file to a calendar app. */}
+      <Button asChild className="w-full">
+        <a href={icsHref} rel="noopener" className="gap-2">
+          <Calendar className="w-4 h-4" />
+          {t.add}
+        </a>
+      </Button>
+
+      <a
+        href={googleUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block text-center text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors"
+      >
+        {t.google}
+      </a>
     </div>
   );
 };
