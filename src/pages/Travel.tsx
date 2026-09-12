@@ -14,6 +14,7 @@ import { FadeIn } from '@/components/animation/FadeIn';
 import { StaggerContainer, StaggerItem } from '@/components/animation/StaggerContainer';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { HOTEL_BLOCK } from '@/lib/hotelBlock';
 
 /* ------------------------------------------------------------------ */
 /*  Shared animation constants                                         */
@@ -539,9 +540,85 @@ const Travel = () => {
         <div className="container mx-auto px-4">
           <SectionHeader
             title="Where to Stay"
-            subtitle="We've handpicked hotels close to the venue for every budget."
+            subtitle="We've reserved a block of rooms at a special rate — plus a few other favorites nearby."
             size="sm"
           />
+
+          {/* Room block — set apart from the list below so it reads as the
+              official option rather than a fifth suggestion. */}
+          <FadeIn>
+            <div className="max-w-3xl mx-auto mb-10 rounded-2xl border-2 border-primary/40 bg-primary/5 p-6 md:p-8">
+              <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+                <div className="flex-1">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/20 text-primary text-xs font-medium rounded-full mb-3">
+                    <Hotel className="w-3 h-3" />
+                    Our Wedding Room Block
+                  </span>
+                  <h4 className="font-serif text-2xl text-foreground mb-1">
+                    {HOTEL_BLOCK.name}
+                  </h4>
+                  <p className="text-muted-foreground text-sm flex items-center gap-1">
+                    <MapPin className="w-3 h-3" />
+                    {HOTEL_BLOCK.distance}
+                  </p>
+                </div>
+
+                <Button variant="romantic" size="lg" className="flex-shrink-0" asChild>
+                  <a
+                    href={HOTEL_BLOCK.bookingUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Reserve Your Room
+                    <ExternalLink className="w-4 h-4 ml-2" />
+                  </a>
+                </Button>
+              </div>
+
+              {/* Nightly rates */}
+              <dl className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {HOTEL_BLOCK.rates.map((rate) => (
+                  <div
+                    key={rate.night}
+                    className="rounded-xl bg-background/60 border border-border/60 px-4 py-3"
+                  >
+                    <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                      {rate.night}
+                    </dt>
+                    <dd className="font-serif text-xl text-foreground mt-0.5">
+                      {rate.price}
+                    </dd>
+                    {rate.note && (
+                      <p className="text-[11px] text-muted-foreground mt-1 leading-snug">
+                        {rate.note}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </dl>
+
+              <div className="mt-5 space-y-2 text-sm text-muted-foreground">
+                <p className="flex items-start gap-2">
+                  <Calendar className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                  <span>
+                    <strong className="text-foreground font-medium">
+                      Book by {HOTEL_BLOCK.bookByLabel}
+                    </strong>{' '}
+                    to get the group rate — though we'd encourage booking as soon as
+                    you're able, since the block is limited and may fill before then.
+                  </span>
+                </p>
+                <p className="flex items-start gap-2">
+                  <Sun className="w-4 h-4 text-gold shrink-0 mt-0.5" />
+                  <span>
+                    Our wedding falls on 4th of July weekend, which is why Friday
+                    through Sunday cost more than Thursday. Rooms across the area go
+                    quickly that weekend.
+                  </span>
+                </p>
+              </div>
+            </div>
+          </FadeIn>
 
           <StaggerContainer className="grid gap-6 max-w-3xl mx-auto">
             {hotels.map((hotel) => (

@@ -10,6 +10,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { useAllContent } from "@/hooks/useContent";
+import { HOTEL_BLOCK } from '@/lib/hotelBlock';
 
 const FAQ = () => {
   const { data, isLoading } = useAllContent();
@@ -31,6 +32,12 @@ const FAQ = () => {
   const faqSubtitle =
     data?.find((c) => c.key === "faq_subtitle")?.value ||
     "Everything you need to know about our wedding day.";
+
+  // Pulled from the shared block data so the FAQ can't drift from the Travel page.
+  const thursdayRate =
+    HOTEL_BLOCK.rates.find((r) => r.night === 'Thursday')?.price ?? '';
+  const weekendRate =
+    HOTEL_BLOCK.rates.find((r) => r.night === 'Friday')?.price ?? '';
 
   const inlineLink = (to: string, label: string) => (
     <Link to={to} className="text-primary hover:underline font-medium transition-colors">
@@ -63,6 +70,29 @@ const FAQ = () => {
       answer: (
         <>
           Our ceremony and reception will both take place at Blue Dress Barn, located at 5815 W Napier Ave, Benton Harbor, Michigan 49022. Please visit our {inlineLink('/travel', 'Travel page')} for directions and nearby hotel recommendations.
+        </>
+      ),
+    },
+    {
+      question: "Is there a hotel room block?",
+      answer: (
+        <>
+          Yes — we've reserved a block at the {HOTEL_BLOCK.name}, about{' '}
+          {HOTEL_BLOCK.distance.replace(' from venue', '')} from the venue. Group
+          rates are {thursdayRate} on Thursday and {weekendRate} Friday through
+          Sunday.{' '}
+          <a
+            href={HOTEL_BLOCK.bookingUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline font-medium transition-colors"
+          >
+            Reserve your room here
+          </a>
+          {' '}by {HOTEL_BLOCK.bookByLabel} to get the group rate. We'd suggest booking
+          as early as you can — our wedding falls on 4th of July weekend, so rooms in
+          the area fill up fast. See our {inlineLink('/travel', 'Travel page')} for
+          other nearby hotels.
         </>
       ),
     },

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, Users, Check, AlertCircle, Loader2, Calendar, MapPin, Phone } from 'lucide-react';
+import { Heart, Users, Check, AlertCircle, Loader2, Calendar, MapPin, Phone, Hotel } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Layout } from '@/components/layout/Layout';
 import { InviteReveal, AddToCalendar } from '@/components/features/invite';
+import { HOTEL_BLOCK } from '@/lib/hotelBlock';
 import {
   Select,
   SelectContent,
@@ -54,6 +55,11 @@ const rsvpText = {
     genericError: 'Failed to submit RSVP. Please try again.',
     yourNameLabel: 'Your Name *',
     adultsOnly: 'Please note: our celebration is adults only. We kindly ask that all guests be 21 or older.',
+    hotelHeading: 'Need a place to stay?',
+    hotelBody: (hotel: string, by: string) =>
+      `We've reserved a room block at the ${hotel}. Book by ${by} for the group rate — earlier is better, as rooms are limited.`,
+    hotelCta: 'Reserve Your Room',
+    hotelBookBy: 'June 2, 2027',
     mealPrefs: 'Meal Preferences',
     yourMeal: 'Your meal',
     guestMeal: (n: number) => `Guest ${n}'s meal`,
@@ -122,6 +128,11 @@ const rsvpText = {
     genericError: 'No se pudo enviar la confirmación. Por favor inténtalo de nuevo.',
     yourNameLabel: 'Tu nombre *',
     adultsOnly: 'Ten en cuenta: nuestra celebración es solo para adultos. Pedimos amablemente que todos los invitados sean mayores de 21 años.',
+    hotelHeading: '¿Necesitas dónde quedarte?',
+    hotelBody: (hotel: string, by: string) =>
+      `Hemos reservado un bloque de habitaciones en el ${hotel}. Reserva antes del ${by} para obtener la tarifa de grupo — cuanto antes, mejor, ya que las habitaciones son limitadas.`,
+    hotelCta: 'Reservar tu habitación',
+    hotelBookBy: '2 de junio de 2027',
     mealPrefs: 'Preferencias de comida',
     yourMeal: 'Tu comida',
     guestMeal: (n: number) => `Comida del invitado ${n}`,
@@ -674,15 +685,35 @@ export default function InviteRSVP() {
                 )}
               </div>
 
-              {/* Returning guests often come back specifically to save the date. */}
+              {/* Returning guests often come back specifically to save the date
+                  or to find the hotel. */}
               {existingRsvp.attending && (
-                <div className="pt-2 pb-4 border-t border-border">
+                <div className="pt-2 pb-4 border-t border-border space-y-5">
                   <div className="pt-4">
                     <AddToCalendar
                       venueName={invite?.venue_name}
                       venueAddress={invite?.venue_address}
                       language={lang}
                     />
+                  </div>
+
+                  <div className="pt-5 border-t border-border">
+                    <p className="text-sm font-medium text-foreground mb-1 flex items-center gap-2">
+                      <Hotel className="w-4 h-4 text-primary" />
+                      {t.hotelHeading}
+                    </p>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      {t.hotelBody(HOTEL_BLOCK.name, t.hotelBookBy)}
+                    </p>
+                    <Button variant="outline" size="sm" className="w-full" asChild>
+                      <a
+                        href={HOTEL_BLOCK.bookingUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {t.hotelCta}
+                      </a>
+                    </Button>
                   </div>
                 </div>
               )}
@@ -722,15 +753,39 @@ export default function InviteRSVP() {
               {formData.attending ? t.rsvpExcited : t.rsvpMiss}
             </p>
 
-            {/* Only guests who are coming need the date saved. */}
+            {/* Only guests who are coming need the date saved or a hotel. */}
             {formData.attending && (
-              <div className="mb-6 pb-6 border-b border-border">
-                <AddToCalendar
-                  venueName={invite?.venue_name}
-                  venueAddress={invite?.venue_address}
-                  language={lang}
-                />
-              </div>
+              <>
+                <div className="mb-6 pb-6 border-b border-border">
+                  <AddToCalendar
+                    venueName={invite?.venue_name}
+                    venueAddress={invite?.venue_address}
+                    language={lang}
+                  />
+                </div>
+
+                {/* They have just committed to coming — lodging is the next
+                    thing on their mind. Kept compact; full rates live on
+                    /travel. */}
+                <div className="mb-6 pb-6 border-b border-border text-left">
+                  <p className="text-sm font-medium text-foreground mb-1 flex items-center gap-2">
+                    <Hotel className="w-4 h-4 text-primary" />
+                    {t.hotelHeading}
+                  </p>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    {t.hotelBody(HOTEL_BLOCK.name, t.hotelBookBy)}
+                  </p>
+                  <Button variant="outline" size="sm" className="w-full" asChild>
+                    <a
+                      href={HOTEL_BLOCK.bookingUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {t.hotelCta}
+                    </a>
+                  </Button>
+                </div>
+              </>
             )}
 
             <Link to="/">
