@@ -17,9 +17,9 @@ const quickLinks = [
     link: '/event-details',
     icon: Calendar,
   },
-  { 
-    title: 'Travel & Stay', 
-    desc: 'Hotels and transportation', 
+  {
+    title: 'Travel & Stay',
+    desc: 'Hotel room block, rates & travel',
     link: '/travel',
     icon: MapPin,
   },
