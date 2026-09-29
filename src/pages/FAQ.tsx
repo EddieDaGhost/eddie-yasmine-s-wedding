@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
@@ -15,6 +15,22 @@ import { VENUE, CONTACT, RSVP_DEADLINE } from '@/lib/weddingDetails';
 
 const FAQ = () => {
   const { data, isLoading } = useAllContent();
+
+  // Questions carrying an `id` can be linked to directly — /faq#shuttle opens
+  // and scrolls to the shuttle question rather than dropping the reader at the
+  // top of a long list.
+  const [openItem, setOpenItem] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    const hash = window.location.hash.replace('#', '');
+    if (!hash) return;
+    setOpenItem(hash);
+    // Wait for the accordion to expand before scrolling to it.
+    const t = window.setTimeout(() => {
+      document.getElementById(hash)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 250);
+    return () => window.clearTimeout(t);
+  }, [isLoading]);
 
   if (isLoading) {
     return (
@@ -47,7 +63,7 @@ const FAQ = () => {
   );
 
   // Default FAQ items — answers support React nodes for internal links
-  const defaultFaqItems: { question: string; answer: React.ReactNode }[] = [
+  const defaultFaqItems: { question: string; answer: React.ReactNode; id?: string }[] = [
     {
       question: "Can I bring a plus one or additional guests?",
       answer:
@@ -94,6 +110,18 @@ const FAQ = () => {
           as early as you can — our wedding falls on 4th of July weekend, so rooms in
           the area fill up fast. See our {inlineLink('/travel', 'Travel page')} for
           other nearby hotels.
+        </>
+      ),
+    },
+    {
+      id: 'shuttle',
+      question: "Is there a shuttle to the venue?",
+      answer: (
+        <>
+          Yes — we're providing a shuttle running between the {HOTEL_BLOCK.name} and{' '}
+          {VENUE.name}, both to the ceremony and back afterward. It's another good
+          reason to book inside the room block. Exact pickup times are still being
+          worked out and we'll share them here closer to the day.
         </>
       ),
     },
@@ -152,7 +180,7 @@ const FAQ = () => {
     cmsItems = [];
   }
 
-  const faqItems: { question: string; answer: React.ReactNode }[] =
+  const faqItems: { question: string; answer: React.ReactNode; id?: string }[] =
     cmsItems.length > 0 ? cmsItems : defaultFaqItems;
 
   return (
@@ -172,7 +200,13 @@ const FAQ = () => {
             animate={{ opacity: 1, y: 0 }}
             className="max-w-3xl mx-auto"
           >
-            <Accordion type="single" collapsible className="space-y-4">
+            <Accordion
+              type="single"
+              collapsible
+              className="space-y-4"
+              value={openItem}
+              onValueChange={setOpenItem}
+            >
               {faqItems.map((item, index) => (
                 <motion.div
                   key={item.question}
@@ -182,8 +216,9 @@ const FAQ = () => {
                   transition={{ delay: index * 0.05 }}
                 >
                   <AccordionItem
-                    value={`item-${index}`}
-                    className="glass-card rounded-xl px-6 border-none"
+                    id={item.id}
+                    value={item.id ?? `item-${index}`}
+                    className="glass-card rounded-xl px-6 border-none scroll-mt-24"
                   >
                     <AccordionTrigger className="text-left font-serif text-lg hover:no-underline hover:text-primary py-5">
                       {item.question}

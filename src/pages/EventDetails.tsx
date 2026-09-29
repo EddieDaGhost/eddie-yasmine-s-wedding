@@ -56,9 +56,9 @@ const EventDetails = () => {
   const defaultSchedule = [
     { time: CEREMONY.doorsLabel, event: 'Doors Open', description: 'Arrive, find your seat, and settle in.' },
     { time: CEREMONY.timeLabel, event: 'Ceremony', description: `${VENUE.name} — please be seated beforehand.` },
-    { time: '5:00 PM', event: 'Cocktail Hour', description: 'Drinks and hors d\'oeuvres while we take photos.' },
-    { time: '6:30 PM', event: 'Dinner & Reception', description: 'Dinner, toasts, and dancing.' },
-    { time: '11:00 PM', event: 'Last Dance', description: 'The celebration comes to a close.' },
+    { time: '5:00 – 6:00 PM', event: 'Cocktail Hour', description: "Drinks and hors d'oeuvres while we take photos." },
+    { time: '6:30 – 7:30 PM', event: 'Dinner', description: 'Dinner is served, followed by toasts.' },
+    { time: '11:00 PM', event: 'Music Ends', description: 'The last song of the night.' },
   ];
   let scheduleEvents: { time: string; event: string; description: string }[] = [];
   try {
