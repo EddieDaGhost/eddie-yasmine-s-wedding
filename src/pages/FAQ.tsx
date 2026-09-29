@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/accordion';
 import { useAllContent } from "@/hooks/useContent";
 import { HOTEL_BLOCK } from '@/lib/hotelBlock';
+import { VENUE, CONTACT, RSVP_DEADLINE } from '@/lib/weddingDetails';
 
 const FAQ = () => {
   const { data, isLoading } = useAllContent();
@@ -61,7 +62,7 @@ const FAQ = () => {
       question: "When should I RSVP by?",
       answer: (
         <>
-          Please RSVP by May 15th, 2027 so we can finalize our guest count, seating arrangements, and catering. You can {inlineLink('/rsvp', 'RSVP directly through our website')}.
+          Please RSVP by {RSVP_DEADLINE.labelLong} so we can finalize our guest count, seating arrangements, and catering. You can {inlineLink('/rsvp', 'RSVP directly through our website')}.
         </>
       ),
     },
@@ -69,7 +70,7 @@ const FAQ = () => {
       question: "Where is the wedding being held?",
       answer: (
         <>
-          Our ceremony and reception will both take place at Blue Dress Barn, located at 5815 W Napier Ave, Benton Harbor, Michigan 49022. Please visit our {inlineLink('/travel', 'Travel page')} for directions and nearby hotel recommendations.
+          Our ceremony and reception will both take place at {VENUE.name}, located at {VENUE.full}. Please visit our {inlineLink('/travel', 'Travel page')} for directions and nearby hotel recommendations.
         </>
       ),
     },
@@ -138,7 +139,7 @@ const FAQ = () => {
     {
       question: "What if I need to update my RSVP?",
       answer:
-        "If your plans change, please reach out to us as soon as possible at wedding@eddieyasmine.com so we can update our records.",
+        `If your plans change, please reach out to us as soon as possible at ${CONTACT.email} so we can update our records.`,
     },
   ];
 
@@ -214,10 +215,10 @@ const FAQ = () => {
               We're happy to help! Reach out to us directly and we'll get back to you as soon as possible.
             </p>
             <a
-              href="mailto:wedding@eddieyasmine.com"
+              href={`mailto:${CONTACT.email}`}
               className="text-primary hover:underline font-medium"
             >
-              wedding@eddieyasmine.com
+              {CONTACT.email}
             </a>
           </motion.div>
         </div>

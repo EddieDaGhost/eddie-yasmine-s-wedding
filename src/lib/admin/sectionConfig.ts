@@ -65,7 +65,7 @@ const homeSections: SectionConfig[] = [
       { key: 'home_announcement', label: 'Announcement', type: 'text', path: 'home_announcement', placeholder: "We're Getting Married" },
       { key: 'home_names', label: 'Names', type: 'text', path: 'home_names', placeholder: 'Eddie & Yasmine' },
       { key: 'home_date', label: 'Wedding Date', type: 'text', path: 'home_date', placeholder: 'July 2nd, 2027' },
-      { key: 'home_location', label: 'Location', type: 'text', path: 'home_location', placeholder: 'The Grand Estate, California' },
+      { key: 'home_location', label: 'Location', type: 'text', path: 'home_location', placeholder: 'Blue Dress Barn, Benton Harbor, Michigan' },
     ],
     imageFields: [
       {

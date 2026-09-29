@@ -59,7 +59,7 @@ const rsvpText = {
     hotelBody: (hotel: string, by: string) =>
       `We've reserved a room block at the ${hotel}. Book by ${by} for the group rate — earlier is better, as rooms are limited.`,
     hotelCta: 'Reserve Your Room',
-    hotelBookBy: 'June 2, 2027',
+    hotelBookBy: HOTEL_BLOCK.bookByLabel,
     mealPrefs: 'Meal Preferences',
     yourMeal: 'Your meal',
     guestMeal: (n: number) => `Guest ${n}'s meal`,
@@ -132,7 +132,7 @@ const rsvpText = {
     hotelBody: (hotel: string, by: string) =>
       `Hemos reservado un bloque de habitaciones en el ${hotel}. Reserva antes del ${by} para obtener la tarifa de grupo — cuanto antes, mejor, ya que las habitaciones son limitadas.`,
     hotelCta: 'Reservar tu habitación',
-    hotelBookBy: '2 de junio de 2027',
+    hotelBookBy: HOTEL_BLOCK.bookByLabelEs,
     mealPrefs: 'Preferencias de comida',
     yourMeal: 'Tu comida',
     guestMeal: (n: number) => `Comida del invitado ${n}`,
