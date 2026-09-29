@@ -1,11 +1,12 @@
 import { useState, useMemo, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plane, Hotel, Car, MapPin, ExternalLink, UtensilsCrossed,
   Wine, Waves, TreePine, Sun, Music, Palette, ShoppingBag,
   Clock, Calendar, Heart, Sparkles, ChevronRight, Star,
   Compass, Camera, Coffee, Sailboat, Landmark, GlassWater,
-  Navigation, Shirt, Umbrella, SunMedium, Phone,
+  Navigation, Shirt, Umbrella, SunMedium, Phone, Bus,
   ChevronDown
 } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
@@ -88,8 +89,6 @@ const hotels = [
   },
 ];
 
-type WeekendDay = 'thursday' | 'friday' | 'saturday' | 'sunday';
-
 interface TimelineEvent {
   time: string;
   title: string;
@@ -98,84 +97,42 @@ interface TimelineEvent {
   highlight?: boolean;
 }
 
-const weekendSchedule: Record<WeekendDay, { label: string; date: string; events: TimelineEvent[] }> = {
-  thursday: {
-    label: 'Thursday',
-    date: 'July 1',
-    events: [
-      {
-        time: 'Afternoon',
-        title: 'Early Arrivals & Check-In',
-        description: 'Settle in and explore the charming downtown areas of St. Joseph and Benton Harbor.',
-        icon: <Hotel className="w-4 h-4" />,
-      },
-      {
-        time: 'Evening',
-        title: 'Welcome Drinks & Rehearsal Dinner',
-        description: 'Rehearsal dinner for the wedding party and immediate family. Everyone else — join us for casual welcome drinks at a local spot!',
-        icon: <Wine className="w-4 h-4" />,
-        highlight: true,
-      },
-    ],
+// The day itself. Times are Eastern; see CEREMONY in @/lib/weddingDetails for
+// the canonical ceremony time used elsewhere on the site.
+const weddingDaySchedule: TimelineEvent[] = [
+  {
+    time: '4:00 PM',
+    title: 'Doors Open',
+    description: 'Arrive at Blue Dress Barn, find your seat, and settle in before the ceremony.',
+    icon: <Hotel className="w-4 h-4" />,
   },
-  friday: {
-    label: 'Friday',
-    date: 'July 2',
-    events: [
-      {
-        time: 'Morning',
-        title: 'Relax & Recharge',
-        description: 'Sleep in, grab brunch, or take a morning stroll along the bluff.',
-        icon: <Coffee className="w-4 h-4" />,
-      },
-      {
-        time: '4:30 PM',
-        title: 'Wedding Ceremony',
-        description: 'Blue Dress Barn, Benton Harbor. Doors open at 4:00 PM.',
-        icon: <Heart className="w-4 h-4" />,
-        highlight: true,
-      },
-      {
-        time: '5:00 PM',
-        title: 'Cocktail Hour & Reception',
-        description: 'Dinner, dancing, and celebration under the stars at Blue Dress Barn.',
-        icon: <Sparkles className="w-4 h-4" />,
-        highlight: true,
-      },
-    ],
+  {
+    time: '4:30 PM',
+    title: 'Ceremony',
+    description: 'Please be seated beforehand — we will be starting on time.',
+    icon: <Heart className="w-4 h-4" />,
+    highlight: true,
   },
-  saturday: {
-    label: 'Saturday',
-    date: 'July 3',
-    events: [
-      {
-        time: 'Morning',
-        title: 'Farewell Brunch',
-        description: 'Join us for a casual goodbye brunch before you head out. Location TBA.',
-        icon: <Coffee className="w-4 h-4" />,
-      },
-      {
-        time: 'Afternoon',
-        title: 'Beach & Explore',
-        description: 'Hit Silver Beach, wine-taste along the Lake Michigan Shore Wine Trail, or explore local galleries and shops.',
-        icon: <Sun className="w-4 h-4" />,
-      },
-    ],
+  {
+    time: '5:00 – 6:00 PM',
+    title: 'Cocktail Hour',
+    description: 'Drinks and hors d\'oeuvres while we slip away for photographs.',
+    icon: <Wine className="w-4 h-4" />,
   },
-  sunday: {
-    label: 'Sunday',
-    date: 'July 4',
-    events: [
-      {
-        time: 'All Day',
-        title: '4th of July Festivities',
-        description: 'Stick around for fireworks over Lake Michigan! St. Joseph puts on a spectacular show.',
-        icon: <Sparkles className="w-4 h-4" />,
-        highlight: true,
-      },
-    ],
+  {
+    time: '6:30 – 7:30 PM',
+    title: 'Dinner',
+    description: 'Dinner is served, followed by toasts.',
+    icon: <UtensilsCrossed className="w-4 h-4" />,
+    highlight: true,
   },
-};
+  {
+    time: '11:00 PM',
+    title: 'Music Ends',
+    description: 'The last song of the night — the shuttle will run back to the hotel.',
+    icon: <Music className="w-4 h-4" />,
+  },
+];
 
 type EntertainmentCategory = 'all' | 'beaches' | 'wine' | 'food' | 'outdoors' | 'arts' | 'shopping';
 
@@ -331,8 +288,6 @@ const categoryLabelMap = Object.fromEntries(
   categoryConfig.map((c) => [c.key, c.label])
 ) as Record<EntertainmentCategory, string>;
 
-const WEEKEND_DAYS = Object.keys(weekendSchedule) as WeekendDay[];
-
 const packingTips = [
   {
     icon: <SunMedium className="w-5 h-5" />,
@@ -371,7 +326,6 @@ const packingTips = [
 /* ------------------------------------------------------------------ */
 
 const Travel = () => {
-  const [activeDay, setActiveDay] = useState<WeekendDay>('friday');
   const [activeCategory, setActiveCategory] = useState<EntertainmentCategory>('all');
 
   const filteredEntertainment = useMemo(
@@ -669,12 +623,31 @@ const Travel = () => {
         <div className="container mx-auto px-4">
           <SectionHeader
             title="Getting Around"
-            subtitle="Tips for navigating Southwest Michigan during the weekend."
+            subtitle="How to get to the venue and back again."
             size="sm"
           />
 
           <FadeIn>
-            <div className="max-w-3xl mx-auto grid md:grid-cols-2 gap-6">
+            <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-6">
+              <div className="rounded-2xl p-8 bg-primary/5 border-2 border-primary/30">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                    <Bus className="w-5 h-5 text-primary" />
+                  </div>
+                  <h4 className="font-serif text-lg text-foreground">Shuttle</h4>
+                </div>
+                <p className="text-muted-foreground leading-relaxed text-sm mb-4">
+                  We're running a shuttle between the {HOTEL_BLOCK.name} and the venue,
+                  in both directions. Pickup times will be shared closer to the day.
+                </p>
+                <Link
+                  to="/faq#shuttle"
+                  className="text-sm text-primary hover:underline font-medium inline-flex items-center gap-1"
+                >
+                  Shuttle details
+                  <ChevronRight className="w-3 h-3" />
+                </Link>
+              </div>
               <div className="glass-card rounded-2xl p-8">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -704,61 +677,25 @@ const Travel = () => {
         </div>
       </section>
 
-      {/* Weekend at a Glance — Interactive Timeline */}
+      {/* Wedding Day Timeline */}
       <section className="py-16 md:py-24">
         <div className="container mx-auto px-4">
           <SectionHeader
-            title="Your Weekend at a Glance"
-            subtitle="Make the most of your trip — here's what the weekend looks like."
+            title="The Wedding Day"
+            subtitle="How July 2nd will unfold. All times Eastern."
             size="sm"
           />
 
           {/* Day Selector Tabs */}
-          <div className="flex justify-center mb-12">
-            <div className="inline-flex bg-background/80 backdrop-blur-sm rounded-full p-1.5 shadow-sm border border-border/50">
-              {WEEKEND_DAYS.map((day) => (
-                <button
-                  key={day}
-                  onClick={() => setActiveDay(day)}
-                  className={cn(
-                    'relative px-4 py-2.5 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap',
-                    activeDay === day
-                      ? 'text-white'
-                      : 'text-muted-foreground hover:text-foreground'
-                  )}
-                >
-                  {activeDay === day && (
-                    <motion.div
-                      layoutId="activeDay"
-                      className="absolute inset-0 bg-primary rounded-full"
-                      transition={{ type: 'spring', bounce: 0.2, duration: 0.5 }}
-                    />
-                  )}
-                  <span className="relative z-10 flex flex-col items-center leading-tight">
-                    <span>{weekendSchedule[day].label}</span>
-                    <span className="text-[10px] opacity-75">{weekendSchedule[day].date}</span>
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Timeline Content */}
           <div className="max-w-2xl mx-auto">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeDay}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.3, ease: EASE_OUT_EXPO }}
-                className="relative"
-              >
+            <FadeIn>
+              <div className="relative">
                 {/* Vertical line */}
                 <div className="absolute left-[19px] top-2 bottom-2 w-px bg-gradient-to-b from-primary/40 via-primary/20 to-transparent" />
 
                 <div className="space-y-8">
-                  {weekendSchedule[activeDay].events.map((event, index) => (
+                  {weddingDaySchedule.map((event, index) => (
                     <motion.div
                       key={event.title}
                       initial={{ opacity: 0, x: -10 }}
@@ -803,8 +740,8 @@ const Travel = () => {
                     </motion.div>
                   ))}
                 </div>
-              </motion.div>
-            </AnimatePresence>
+              </div>
+            </FadeIn>
           </div>
         </div>
       </section>
