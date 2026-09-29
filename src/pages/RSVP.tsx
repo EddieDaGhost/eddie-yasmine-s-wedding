@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Heart, Calendar } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
+import { RSVP_DEADLINE } from '@/lib/weddingDetails';
 import { Section, Container } from '@/components/shared/Section';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { FadeIn } from '@/components/animation';
@@ -153,7 +154,7 @@ const RSVP = () => {
             >
               <Calendar className="w-5 h-5 text-primary" />
               <span className="text-sm font-medium">
-                Please respond by June 1st, 2027
+                Please respond by {RSVP_DEADLINE.labelLong}
               </span>
             </motion.div>
 

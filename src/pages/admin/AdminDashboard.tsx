@@ -17,12 +17,12 @@ import { formatDistanceToNow, format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { exportToCSV } from '@/lib/csv';
 import { useToast } from '@/hooks/use-toast';
+// Shared so the dashboard countdown cannot disagree with the rest of the site.
+import { WEDDING_DATE } from '@/lib/wedding-utils';
 
 /* ------------------------------------------------------------------ */
 /*  Wedding countdown                                                  */
 /* ------------------------------------------------------------------ */
-
-const WEDDING_DATE = new Date('2027-07-02T16:00:00');
 
 function getDaysUntilWedding(): number {
   const now = new Date();

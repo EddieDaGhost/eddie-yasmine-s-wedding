@@ -37,7 +37,7 @@ export const InviteCardPreview = ({
   label,
   url,
   venueName = 'Blue Dress Barn',
-  venueAddress = 'Benton Harbor, Michigan',
+  venueAddress = '3893 Territorial Rd, Benton Harbor, MI',
   customMessage,
   language = 'en',
 }: InviteCardPreviewProps) => {

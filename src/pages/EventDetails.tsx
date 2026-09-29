@@ -4,6 +4,8 @@ import { Layout } from '@/components/layout/Layout';
 import { SectionHeader } from '@/components/shared/SectionHeader';
 import { Button } from '@/components/ui/button';
 import { useAllContent } from "@/hooks/useContent";
+import { VENUE, CEREMONY } from '@/lib/weddingDetails';
+import { sanitizeHtml } from '@/lib/sanitize';
 
 // Map icon names from CMS to actual Lucide icons
 const iconMap: Record<string, any> = {
@@ -34,32 +36,49 @@ const EventDetails = () => {
     data?.find((c) => c.key === "eventdetails_subtitle")?.value ||
     "Everything you need to know about our wedding day celebration.";
 
-  // Venue
+  // Venue — falls back to the shared constants so the page is correct even
+  // with an empty content table.
   const venueName =
-    data?.find((c) => c.key === "eventdetails_venue_name")?.value || "The Grand Estate";
+    data?.find((c) => c.key === "eventdetails_venue_name")?.value || VENUE.name;
   const venueAddress =
     data?.find((c) => c.key === "eventdetails_venue_address")?.value ||
-    "1234 Vineyard Lane<br />Napa Valley, California 94558";
+    `${VENUE.street}<br />${VENUE.cityStateZip}`;
   const venueMap =
-    data?.find((c) => c.key === "eventdetails_venue_map_embed")?.value ||
-    "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3127.9558155896756!2d-122.28686722424619!3d38.29764397178591!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzjCsDE3JzUxLjUiTiAxMjLCsDE3JzAzLjkiVw!5e0!3m2!1sen!2sus!4v1234567890!5m2!1sen!2sus";
+    data?.find((c) => c.key === "eventdetails_venue_map_embed")?.value || VENUE.mapEmbedUrl;
   const venueDirections =
     data?.find((c) => c.key === "eventdetails_venue_directions_link")?.value ||
-    "https://maps.google.com/?q=Napa+Valley+California";
+    VENUE.directionsUrl;
 
   // Schedule
   const scheduleJson = data?.find((c) => c.key === "eventdetails_schedule")?.value;
+  // Without a fallback an empty content table leaves the schedule heading over
+  // blank space — and no ceremony time anywhere on the page.
+  const defaultSchedule = [
+    { time: CEREMONY.doorsLabel, event: 'Doors Open', description: 'Arrive, find your seat, and settle in.' },
+    { time: CEREMONY.timeLabel, event: 'Ceremony', description: `${VENUE.name} — please be seated beforehand.` },
+    { time: '5:00 PM', event: 'Cocktail Hour', description: 'Drinks and hors d\'oeuvres while we take photos.' },
+    { time: '6:30 PM', event: 'Dinner & Reception', description: 'Dinner, toasts, and dancing.' },
+    { time: '11:00 PM', event: 'Last Dance', description: 'The celebration comes to a close.' },
+  ];
   let scheduleEvents: { time: string; event: string; description: string }[] = [];
   try {
     scheduleEvents = scheduleJson ? JSON.parse(scheduleJson) : [];
   } catch {}
+  if (scheduleEvents.length === 0) scheduleEvents = defaultSchedule;
 
   // Info Cards
   const infoJson = data?.find((c) => c.key === "eventdetails_info")?.value;
+  const defaultInfo = [
+    { icon: 'Shirt', title: 'Dress Code', description: 'Semi-formal. Parts of the venue are outdoors and grassy, so plan your footwear accordingly.' },
+    { icon: 'Utensils', title: 'Food & Drink', description: 'Dinner and drinks are provided. Tell us about dietary needs when you RSVP.' },
+    { icon: 'Music', title: 'Dancing', description: "There's a playlist in the works — request a song with your RSVP." },
+    { icon: 'Camera', title: 'Photos', description: 'Please keep phones away during the ceremony. Snap away at the reception.' },
+  ];
   let infoCards: { icon: string; title: string; description: string }[] = [];
   try {
     infoCards = infoJson ? JSON.parse(infoJson) : [];
   } catch {}
+  if (infoCards.length === 0) infoCards = defaultInfo;
 
   return (
     <Layout>
@@ -86,12 +105,12 @@ const EventDetails = () => {
                 </div>
                 <div>
                   <h3 className="font-serif text-2xl text-foreground mb-2">
-                    Blue Dress Barn
+                    {venueName}
                   </h3>
-                  <p className="text-muted-foreground">
-                    5815 W Napier Ave<br />
-                    Benton Harbor, Michigan 49022
-                  </p>
+                  <p
+                    className="text-muted-foreground"
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(venueAddress) }}
+                  />
                 </div>
               </div>
               
@@ -114,13 +133,13 @@ const EventDetails = () => {
               `}</style>
               <div className="embed-map-container mb-6">
                 <iframe
-                  title="Blue Dress Barn - Wedding Venue Location"
+                  title={`${venueName} - Wedding Venue Location`}
                   className="embed-map-frame"
                   frameBorder="0"
                   scrolling="no"
                   marginHeight={0}
                   marginWidth={0}
-                  src="https://maps.google.com/maps?width=600&height=400&hl=en&q=blue%20dress%20barn&t=&z=11&ie=UTF8&iwloc=B&output=embed"
+                  src={venueMap}
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
                 />
@@ -128,7 +147,7 @@ const EventDetails = () => {
 
               <Button variant="outline" className="w-full md:w-auto" asChild>
                 <a
-                  href="https://www.google.com/maps/dir/?api=1&destination=Blue+Dress+Barn,+5815+W+Napier+Ave,+Benton+Harbor,+MI+49022"
+                  href={venueDirections}
                   target="_blank"
                   rel="noopener noreferrer"
                 >

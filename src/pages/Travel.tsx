@@ -15,6 +15,7 @@ import { StaggerContainer, StaggerItem } from '@/components/animation/StaggerCon
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { HOTEL_BLOCK } from '@/lib/hotelBlock';
+import { VENUE, CEREMONY } from '@/lib/weddingDetails';
 
 /* ------------------------------------------------------------------ */
 /*  Shared animation constants                                         */
@@ -458,16 +459,16 @@ const Travel = () => {
                     <div className="space-y-2 mb-6">
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <MapPin className="w-4 h-4 text-primary flex-shrink-0" />
-                        <span>5023 Territorial Rd, Benton Harbor, MI 49022</span>
+                        <span>{VENUE.full}</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Clock className="w-4 h-4 text-primary flex-shrink-0" />
-                        <span>Ceremony at 4:30 PM &middot; Doors open 4:00 PM</span>
+                        <span>Ceremony at {CEREMONY.timeLabel} &middot; Doors open {CEREMONY.doorsLabel}</span>
                       </div>
                     </div>
                     <Button variant="romantic" asChild className="w-fit">
                       <a
-                        href="https://maps.google.com/?q=Blue+Dress+Barn+Benton+Harbor+MI"
+                        href={VENUE.directionsUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                       >

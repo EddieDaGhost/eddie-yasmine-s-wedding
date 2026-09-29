@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { CountdownTimer } from '@/components/shared/CountdownTimer';
 import heroImage from '@/assets/hero-wedding.jpg';
 import { useAllContent } from "@/hooks/useContent";
+import { VENUE, CEREMONY } from '@/lib/weddingDetails';
 
 const quickLinks = [
   { 
@@ -49,8 +50,9 @@ const Home = () => {
   // Pull CMS content
   const announcement = data?.find((c) => c.key === "home_announcement")?.value || "We're Getting Married";
   const names = data?.find((c) => c.key === "home_names")?.value || "Eddie & Yasmine";
-  const date = data?.find((c) => c.key === "home_date")?.value || "July 2nd, 2027";
-  const location = data?.find((c) => c.key === "home_location")?.value || "The Grand Estate, California";
+  const date = data?.find((c) => c.key === "home_date")?.value || CEREMONY.dateLabel;
+  const location = data?.find((c) => c.key === "home_location")?.value ||
+    `${VENUE.name}, ${VENUE.cityStateZip}`;
   const quickTitle = data?.find((c) => c.key === "home_quick_title")?.value || "Join Us for Our Celebration";
   const quickSubtitle = data?.find((c) => c.key === "home_quick_subtitle")?.value ||
     "We are delighted to invite you to share in our joy as we celebrate our love and commitment to each other.";

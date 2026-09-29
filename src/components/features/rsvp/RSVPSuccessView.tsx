@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAllContent } from '@/hooks/useContent';
 import { sanitizeHtml } from '@/lib/sanitize';
+import { VENUE } from '@/lib/weddingDetails';
 
 interface RSVPSuccessViewProps {
   guestName: string;
@@ -15,9 +16,9 @@ export const RSVPSuccessView = ({ guestName, onSubmitAnother }: RSVPSuccessViewP
   const { data } = useAllContent();
 
   const venueName =
-    data?.find((c) => c.key === 'eventdetails_venue_name')?.value || 'The Grand Estate';
+    data?.find((c) => c.key === 'eventdetails_venue_name')?.value || VENUE.name;
   const venueAddress =
-    data?.find((c) => c.key === 'eventdetails_venue_address')?.value || 'Napa Valley, California';
+    data?.find((c) => c.key === 'eventdetails_venue_address')?.value || VENUE.full;
 
   return (
     <motion.div

@@ -14,6 +14,7 @@ export const HOTEL_BLOCK = {
     'https://www.hilton.com/en/attend-my-event/behcwgi-911-346385e0-80dd-4689-a854-4ad5fd63824c/',
   /** Last day Hilton will honour the block. Rooms may sell out well before this. */
   bookByLabel: 'June 2, 2027',
+  bookByLabelEs: '2 de junio de 2027',
   rates: [
     { night: 'Thursday', price: '$129', note: 'Best value for an early arrival' },
     { night: 'Friday', price: '$224', note: 'Wedding night' },

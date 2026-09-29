@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Heart, Instagram, Mail } from 'lucide-react';
 import { useHiddenPages } from '@/hooks/usePageVisibility';
+import { CONTACT, CEREMONY } from '@/lib/weddingDetails';
 
 const footerLinks = [
   { href: '/our-story', label: 'Our Story' },
@@ -27,7 +28,7 @@ export const Footer = () => {
 
           {/* Date */}
           <p className="text-muted-foreground font-serif text-lg">
-            July 2nd, 2027
+            {CEREMONY.dateLabel}
           </p>
 
           {/* Decorative Line */}
@@ -49,7 +50,7 @@ export const Footer = () => {
           {/* Social Links */}
           <div className="flex items-center gap-4">
             <a
-              href="https://instagram.com"
+              href={CONTACT.instagramUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 text-muted-foreground hover:text-primary transition-colors"
@@ -58,7 +59,7 @@ export const Footer = () => {
               <Instagram className="w-5 h-5" />
             </a>
             <a
-              href="mailto:wedding@eddieyasmine.com"
+              href={`mailto:${CONTACT.email}`}
               className="p-2 text-muted-foreground hover:text-primary transition-colors"
               aria-label="Email"
             >
