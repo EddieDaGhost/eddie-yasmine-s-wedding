@@ -11,6 +11,7 @@ import { formatDistanceToNow } from 'date-fns';
 
 interface Message {
   id: string;
+  author_name: string | null;
   content: string | null;
   guest_id: string | null;
   approved: boolean | null;
@@ -125,6 +126,9 @@ const AdminGuestbook = () => {
                     {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
                   </span>
                 </div>
+                <p className="text-sm font-medium text-foreground mb-1">
+                  {message.author_name || 'A guest'}
+                </p>
                 <p className="text-foreground">{message.content}</p>
               </div>
 

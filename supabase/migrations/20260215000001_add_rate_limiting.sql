@@ -34,26 +34,40 @@ EXECUTE FUNCTION check_rsvp_rate_limit();
 -- 2. GUESTBOOK MESSAGE RATE LIMITING
 -- Max 3 messages per name per hour
 -- =====================================================
-CREATE OR REPLACE FUNCTION check_guestbook_rate_limit()
-RETURNS TRIGGER AS $$
+-- Guarded and disabled: this trigger targeted `guestbook_messages`, a table
+-- that has never existed here, and keyed on NEW.name, a column the real
+-- `messages` table does not have — so it would have rejected every insert even
+-- once retargeted. Running unguarded, it aborted this whole script.
+-- The working replacement lives in 20260930000000_guest_submissions_and_rls.sql.
+DO $$
 BEGIN
-  IF (
-    SELECT COUNT(*)
-    FROM public.guestbook_messages
-    WHERE name = NEW.name
-    AND created_at > NOW() - INTERVAL '1 hour'
-  ) >= 3 THEN
-    RAISE EXCEPTION 'Rate limit exceeded. Please wait before posting another message.';
+  IF EXISTS (SELECT 1 FROM information_schema.tables
+             WHERE table_name = 'guestbook_messages' AND table_schema = 'public') THEN
+    EXECUTE '
+      CREATE OR REPLACE FUNCTION check_guestbook_rate_limit()
+      RETURNS TRIGGER AS $func$
+      BEGIN
+        IF (
+          SELECT COUNT(*)
+          FROM public.guestbook_messages
+          WHERE name = NEW.name
+          AND created_at > NOW() - INTERVAL ''1 hour''
+        ) >= 3 THEN
+          RAISE EXCEPTION ''Rate limit exceeded. Please wait before posting another message.'';
+        END IF;
+        RETURN NEW;
+      END;
+      $func$ LANGUAGE plpgsql;
+    ';
+    EXECUTE 'DROP TRIGGER IF EXISTS guestbook_rate_limit_trigger ON public.guestbook_messages';
+    EXECUTE '
+      CREATE TRIGGER guestbook_rate_limit_trigger
+      BEFORE INSERT ON public.guestbook_messages
+      FOR EACH ROW
+      EXECUTE FUNCTION check_guestbook_rate_limit();
+    ';
   END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-DROP TRIGGER IF EXISTS guestbook_rate_limit_trigger ON public.guestbook_messages;
-CREATE TRIGGER guestbook_rate_limit_trigger
-BEFORE INSERT ON public.guestbook_messages
-FOR EACH ROW
-EXECUTE FUNCTION check_guestbook_rate_limit();
+END $$;
 
 -- =====================================================
 -- 3. PHOTO UPLOAD RATE LIMITING

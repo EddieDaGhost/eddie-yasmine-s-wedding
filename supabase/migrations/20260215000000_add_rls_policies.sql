@@ -39,41 +39,38 @@ CREATE POLICY "admin_can_delete_rsvps"
 -- =====================================================
 -- 2. GUESTBOOK_MESSAGES TABLE
 -- =====================================================
-ALTER TABLE public.guestbook_messages ENABLE ROW LEVEL SECURITY;
+-- Guarded: no table named `guestbook_messages` has ever existed in this
+-- project — the real table is `messages`, handled in section 10 below. This
+-- block previously ran unguarded, so it aborted the whole script (and with it
+-- every policy in this file) on any database where the table was absent.
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables
+             WHERE table_name = 'guestbook_messages' AND table_schema = 'public') THEN
+    EXECUTE 'ALTER TABLE public.guestbook_messages ENABLE ROW LEVEL SECURITY';
 
-DROP POLICY IF EXISTS "public_can_view_approved_messages" ON public.guestbook_messages;
-CREATE POLICY "public_can_view_approved_messages"
-  ON public.guestbook_messages
-  FOR SELECT
-  TO anon
-  USING (approved = true);
+    EXECUTE 'DROP POLICY IF EXISTS "public_can_view_approved_messages" ON public.guestbook_messages';
+    EXECUTE 'CREATE POLICY "public_can_view_approved_messages"
+      ON public.guestbook_messages FOR SELECT TO anon USING (approved = true)';
 
-DROP POLICY IF EXISTS "authenticated_can_view_all_messages" ON public.guestbook_messages;
-CREATE POLICY "authenticated_can_view_all_messages"
-  ON public.guestbook_messages
-  FOR SELECT
-  TO authenticated
-  USING (true);
+    EXECUTE 'DROP POLICY IF EXISTS "authenticated_can_view_all_messages" ON public.guestbook_messages';
+    EXECUTE 'CREATE POLICY "authenticated_can_view_all_messages"
+      ON public.guestbook_messages FOR SELECT TO authenticated USING (true)';
 
-DROP POLICY IF EXISTS "public_can_submit_messages" ON public.guestbook_messages;
-CREATE POLICY "public_can_submit_messages"
-  ON public.guestbook_messages
-  FOR INSERT
-  TO anon
-  WITH CHECK (true);
+    EXECUTE 'DROP POLICY IF EXISTS "public_can_submit_messages" ON public.guestbook_messages';
+    EXECUTE 'CREATE POLICY "public_can_submit_messages"
+      ON public.guestbook_messages FOR INSERT TO anon WITH CHECK (true)';
 
-DROP POLICY IF EXISTS "admin_can_update_messages" ON public.guestbook_messages;
-CREATE POLICY "admin_can_update_messages"
-  ON public.guestbook_messages
-  FOR UPDATE
-  USING (auth.role() = 'authenticated')
-  WITH CHECK (auth.role() = 'authenticated');
+    EXECUTE 'DROP POLICY IF EXISTS "admin_can_update_messages" ON public.guestbook_messages';
+    EXECUTE 'CREATE POLICY "admin_can_update_messages"
+      ON public.guestbook_messages FOR UPDATE
+      USING (auth.role() = ''authenticated'') WITH CHECK (auth.role() = ''authenticated'')';
 
-DROP POLICY IF EXISTS "admin_can_delete_messages" ON public.guestbook_messages;
-CREATE POLICY "admin_can_delete_messages"
-  ON public.guestbook_messages
-  FOR DELETE
-  USING (auth.role() = 'authenticated');
+    EXECUTE 'DROP POLICY IF EXISTS "admin_can_delete_messages" ON public.guestbook_messages';
+    EXECUTE 'CREATE POLICY "admin_can_delete_messages"
+      ON public.guestbook_messages FOR DELETE USING (auth.role() = ''authenticated'')';
+  END IF;
+END $$;
 
 -- =====================================================
 -- 3. PHOTOS TABLE

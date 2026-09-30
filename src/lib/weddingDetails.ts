@@ -50,6 +50,4 @@ export const RSVP_DEADLINE = {
 
 export const CONTACT = {
   email: 'eddieandyasmine@outlook.com',
-  /** TODO: replace with the couple's handle once supplied. */
-  instagramUrl: 'https://instagram.com',
 } as const;
