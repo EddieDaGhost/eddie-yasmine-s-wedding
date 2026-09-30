@@ -174,6 +174,7 @@ export type Database = {
       messages: {
         Row: {
           approved: boolean | null
+          author_name: string | null
           content: string | null
           created_at: string
           guest_id: string | null
@@ -181,6 +182,7 @@ export type Database = {
         }
         Insert: {
           approved?: boolean | null
+          author_name?: string | null
           content?: string | null
           created_at?: string
           guest_id?: string | null
@@ -188,6 +190,7 @@ export type Database = {
         }
         Update: {
           approved?: boolean | null
+          author_name?: string | null
           content?: string | null
           created_at?: string
           guest_id?: string | null
@@ -245,9 +248,10 @@ export type Database = {
           caption: string | null
           created_at: string
           file_url: string | null
-          guest_id: string
+          guest_id: string | null
           id: string
           tags: string[] | null
+          uploader_name: string | null
         }
         Insert: {
           approved?: boolean | null
@@ -257,6 +261,7 @@ export type Database = {
           guest_id?: string
           id?: string
           tags?: string[] | null
+          uploader_name?: string | null
         }
         Update: {
           approved?: boolean | null
@@ -266,6 +271,7 @@ export type Database = {
           guest_id?: string
           id?: string
           tags?: string[] | null
+          uploader_name?: string | null
         }
         Relationships: [
           {

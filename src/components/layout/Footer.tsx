@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Heart, Instagram, Mail } from 'lucide-react';
+import { Heart, Mail } from 'lucide-react';
 import { useHiddenPages } from '@/hooks/usePageVisibility';
 import { CONTACT, CEREMONY } from '@/lib/weddingDetails';
 
@@ -49,15 +49,6 @@ export const Footer = () => {
 
           {/* Social Links */}
           <div className="flex items-center gap-4">
-            <a
-              href={CONTACT.instagramUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 text-muted-foreground hover:text-primary transition-colors"
-              aria-label="Instagram"
-            >
-              <Instagram className="w-5 h-5" />
-            </a>
             <a
               href={`mailto:${CONTACT.email}`}
               className="p-2 text-muted-foreground hover:text-primary transition-colors"

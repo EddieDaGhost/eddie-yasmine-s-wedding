@@ -7,17 +7,25 @@ import { SectionHeader } from '@/components/shared/SectionHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
-import { Upload, Image, X, Check, Loader2 } from 'lucide-react';
+import { Upload, Image, X, Check, Loader2, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import imageCompression from 'browser-image-compression';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { sanitizeText } from '@/lib/sanitize';
 
 interface UploadedPhoto {
   id: string;
   file: File;
   preview: string;
   caption: string;
-  status: 'pending' | 'compressing' | 'uploaded';
+  status: 'pending' | 'compressing' | 'uploading' | 'uploaded' | 'error';
+  error?: string;
 }
+
+const BUCKET = 'guest_photos';
+const NAME_MAX = 100;
+const CAPTION_MAX = 2000;
 
 const COMPRESSION_OPTIONS = {
   maxSizeMB: 1,
@@ -29,8 +37,10 @@ const PhotoUpload = () => {
   const { toast } = useToast();
   const { isUnlocked, isAdminPreview } = useIsUnlocked();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
   const [photos, setPhotos] = useState<UploadedPhoto[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploaderName, setUploaderName] = useState('');
 
   if (!isUnlocked) {
     return (
@@ -97,22 +107,90 @@ const PhotoUpload = () => {
     setPhotos(photos.map((p) => (p.id === id ? { ...p, caption } : p)));
   };
 
+  // Upload each photo to storage, then record it in the photos table. Each
+  // file carries its own status so one failure doesn't get reported as a
+  // success for the whole batch — the previous version marked every photo
+  // uploaded regardless.
   const handleUpload = async () => {
     setIsUploading(true);
 
-    // Simulate upload
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    const queue = photos.filter((p) => p.status === 'pending' || p.status === 'error');
+    let succeeded = 0;
+    let failed = 0;
 
-    setPhotos(photos.map((p) => ({ ...p, status: 'uploaded' as const })));
+    for (const photo of queue) {
+      setPhotos((prev) =>
+        prev.map((p) => (p.id === photo.id ? { ...p, status: 'uploading' as const, error: undefined } : p))
+      );
+
+      try {
+        const ext = photo.file.name.split('.').pop() || 'jpg';
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from(BUCKET)
+          .upload(fileName, photo.file);
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(fileName);
+
+        // Gallery uses file_url directly as an <img src>, so store the full URL.
+        const { error: insertError } = await supabase.from('photos').insert({
+          file_url: urlData.publicUrl,
+          caption: photo.caption.trim() ? sanitizeText(photo.caption.trim()).slice(0, CAPTION_MAX) : null,
+          uploader_name: uploaderName.trim()
+            ? sanitizeText(uploaderName.trim()).slice(0, NAME_MAX)
+            : null,
+          approved: true,
+        });
+        if (insertError) throw insertError;
+
+        succeeded++;
+        setPhotos((prev) =>
+          prev.map((p) => (p.id === photo.id ? { ...p, status: 'uploaded' as const } : p))
+        );
+      } catch (err) {
+        failed++;
+        const message =
+          err && typeof err === 'object' && 'message' in err
+            ? String((err as { message?: string }).message)
+            : 'Upload failed';
+        console.error('Photo upload failed:', err);
+        setPhotos((prev) =>
+          prev.map((p) =>
+            p.id === photo.id ? { ...p, status: 'error' as const, error: message } : p
+          )
+        );
+      }
+    }
+
     setIsUploading(false);
 
-    toast({
-      title: "Photos Uploaded!",
-      description: "Your photos will appear in the gallery after approval.",
-    });
+    if (succeeded > 0) {
+      queryClient.invalidateQueries({ queryKey: ['gallery-photos'] });
+    }
+
+    if (failed === 0) {
+      toast({
+        title: `${succeeded} photo${succeeded === 1 ? '' : 's'} uploaded!`,
+        description: 'Thank you for sharing — they are in the gallery now.',
+      });
+    } else if (succeeded === 0) {
+      toast({
+        title: 'Upload failed',
+        description: 'None of your photos could be uploaded. Please try again.',
+        variant: 'destructive',
+      });
+    } else {
+      toast({
+        title: 'Some photos failed',
+        description: `${succeeded} uploaded, ${failed} failed. Tap Upload again to retry the rest.`,
+        variant: 'destructive',
+      });
+    }
   };
 
-  const pendingCount = photos.filter((p) => p.status === 'pending').length;
+  const pendingCount = photos.filter((p) => p.status === 'pending' || p.status === 'error').length;
   const compressingCount = photos.filter((p) => p.status === 'compressing').length;
 
   return (
@@ -137,6 +215,19 @@ const PhotoUpload = () => {
               animate={{ opacity: 1, y: 0 }}
               className="glass-card rounded-2xl p-8 text-center mb-8"
             >
+              <div className="mb-6 text-left">
+                <label htmlFor="uploader" className="text-sm text-muted-foreground mb-2 block">
+                  Your name <span className="text-muted-foreground/60">(optional)</span>
+                </label>
+                <Input
+                  id="uploader"
+                  placeholder="So we know who to thank"
+                  value={uploaderName}
+                  onChange={(e) => setUploaderName(e.target.value)}
+                  maxLength={NAME_MAX}
+                />
+              </div>
+
               <input
                 ref={fileInputRef}
                 type="file"
@@ -186,9 +277,19 @@ const PhotoUpload = () => {
                             <Loader2 className="w-6 h-6 text-primary animate-spin" />
                           </div>
                         )}
+                        {photo.status === 'uploading' && (
+                          <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
+                            <Loader2 className="w-6 h-6 text-primary animate-spin" />
+                          </div>
+                        )}
                         {photo.status === 'uploaded' && (
                           <div className="absolute inset-0 bg-sage/20 flex items-center justify-center">
                             <Check className="w-8 h-8 text-sage" />
+                          </div>
+                        )}
+                        {photo.status === 'error' && (
+                          <div className="absolute inset-0 bg-destructive/20 flex items-center justify-center">
+                            <AlertCircle className="w-8 h-8 text-destructive" />
                           </div>
                         )}
                       </div>
@@ -203,7 +304,14 @@ const PhotoUpload = () => {
                         value={photo.caption}
                         onChange={(e) => updateCaption(photo.id, e.target.value)}
                         className="mt-2 text-sm"
+                        maxLength={CAPTION_MAX}
+                        disabled={photo.status === 'uploaded'}
                       />
+                      {photo.status === 'error' && (
+                        <p className="mt-1 text-xs text-destructive" title={photo.error}>
+                          Failed to upload — tap Upload to retry.
+                        </p>
+                      )}
                     </motion.div>
                   ))}
                 </div>
