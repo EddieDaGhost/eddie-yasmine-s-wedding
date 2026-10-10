@@ -135,11 +135,11 @@ const WeddingParty = () => {
         "The groom’s high school soccer teammate who became another brother over the years. Now living in North Carolina, he and the groom have shared cherished moments like watching the Bears beat the Packers in overtime, and hundreds of hours of Marvel Rivals. Nature-loving, hike-ready, and always down for the next adventure. A great man and an even better brother.",
     },
     {
-      name: "Alex Esparza",
-      image: "/images/wedding-party/alex.jpg",
+      name: "Nikolas Correa",
+      image: "/images/wedding-party/nikolas.jpg",
       role: "Groomsman",
       description:
-        "Eddie’s high school soccer and volleyball teammate and one of Eddie’s closest friends turned brother. Road trips, White Sox games, and plenty of memorable stories later, he’s still one of the crew and is now in his family era.",
+        "The groom’s little brother with a shared father for better or worse, only time will tell. They had some catching up to do since Nikolas was young during Eddie’s college years, but he’s truly one of one. Video-game enthusiast, and someone the groom will always love, protect, and care for… even though he’s a Detroit Lions fan for no good reason other than pure spite.",
     },
     {
       name: "Missael Pale",
@@ -149,11 +149,11 @@ const WeddingParty = () => {
         "The groom’s high school friend and teammate turned college roommate and fraternity brother at UIUC. One of the closest friends from those years, with a strong bond built on shared trips, years of fraternity events and time together. Big into biking and nature, and always ready for the next outdoor escape.",
     },
     {
-      name: "Nikolas Correa",
-      image: "/images/wedding-party/nikolas.jpg",
+      name: "Alex Esparza",
+      image: "/images/wedding-party/alex.jpg",
       role: "Groomsman",
       description:
-        "The groom’s little brother with a shared father for better or worse, only time will tell. They had some catching up to do since Nikolas was young during Eddie’s college years, but he’s truly one of one. Video-game enthusiast, and someone the groom will always love, protect, and care for… even though he’s a Detroit Lions fan for no good reason other than pure spite.",
+        "Eddie’s high school soccer and volleyball teammate and one of Eddie’s closest friends turned brother. Road trips, White Sox games, and plenty of memorable stories later, he’s still one of the crew and is now in his family era.",
     },
     {
       name: "Darren Ward",
