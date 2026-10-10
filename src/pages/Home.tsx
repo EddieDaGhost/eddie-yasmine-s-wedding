@@ -60,23 +60,25 @@ const Home = () => {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Background Image */}
-        <div className="absolute inset-0">
+      <section className="relative lg:min-h-screen lg:grid lg:grid-cols-2 overflow-hidden">
+        {/* Photo: stacked on top on phones, left half on larger screens so the couple is never covered by text */}
+        <div className="relative h-[62vh] sm:h-[70vh] lg:h-auto lg:min-h-screen overflow-hidden">
           <motion.img
             initial={{ scale: 1.1 }}
             animate={{ scale: 1 }}
             transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
             src={heroImage}
-            alt="Eddie and Yasmine Wedding"
-            className="w-full h-full object-cover"
+            alt="Eddie and Yasmine sharing a kiss beneath a Paris bridge"
+            className="absolute inset-0 w-full h-full object-cover object-[40%_92%]"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/40 to-background" />
+          {/* Soft fade into the page background along the edge that meets the text */}
+          <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-b from-transparent to-background lg:hidden" />
+          <div className="hidden lg:block absolute inset-y-0 right-0 w-24 bg-gradient-to-r from-transparent to-background" />
         </div>
 
         {/* Content */}
-        <div className="relative z-10 container mx-auto px-4 text-center py-20">
-          <div className="max-w-4xl mx-auto">
+        <div className="relative z-10 flex items-center px-4 sm:px-8 text-center pt-4 pb-20 lg:py-20">
+          <div className="w-full max-w-4xl mx-auto">
             {/* Announcement */}
             <FadeIn delay={0.1}>
               <p className="text-primary font-medium tracking-[0.3em] uppercase text-sm mb-6">
@@ -138,7 +140,7 @@ const Home = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.2 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+          className="hidden lg:block absolute bottom-8 left-3/4 -translate-x-1/2"
         >
           <motion.div
             animate={{ y: [0, 10, 0] }}
