@@ -6,7 +6,7 @@ import {
   Wine, Waves, TreePine, Sun, Music, Palette, ShoppingBag,
   Clock, Calendar, Heart, Sparkles, ChevronRight, Star,
   Compass, Camera, Coffee, Sailboat, Landmark, GlassWater,
-  Navigation, Shirt, Umbrella, SunMedium, Phone, Bus,
+  Navigation, Phone, Bus,
   ChevronDown
 } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
@@ -287,39 +287,6 @@ const categoryConfig: { key: EntertainmentCategory; label: string; icon: React.R
 const categoryLabelMap = Object.fromEntries(
   categoryConfig.map((c) => [c.key, c.label])
 ) as Record<EntertainmentCategory, string>;
-
-const packingTips = [
-  {
-    icon: <SunMedium className="w-5 h-5" />,
-    title: 'Sun Protection',
-    items: 'Sunscreen, sunglasses, and a hat — Michigan summer sun is no joke near the lake.',
-  },
-  {
-    icon: <Shirt className="w-5 h-5" />,
-    title: 'Layers for Evening',
-    items: 'Warm days, cooler lakeside evenings. Bring a light jacket or wrap for the reception.',
-  },
-  {
-    icon: <Umbrella className="w-5 h-5" />,
-    title: 'Just in Case',
-    items: 'A small umbrella or rain jacket — Michigan weather can surprise you.',
-  },
-  {
-    icon: <Waves className="w-5 h-5" />,
-    title: 'Beach Ready',
-    items: 'Swimsuit, towel, and sandals if you plan to hit Silver Beach or the dunes.',
-  },
-  {
-    icon: <Camera className="w-5 h-5" />,
-    title: 'Capture It All',
-    items: 'Camera or charged phone — the sunsets and venue are incredibly photogenic.',
-  },
-  {
-    icon: <Phone className="w-5 h-5" />,
-    title: 'Stay Connected',
-    items: 'Cell service can be spotty in rural areas. Download offline maps just in case.',
-  },
-];
 
 /* ------------------------------------------------------------------ */
 /*  Component                                                          */
@@ -839,33 +806,6 @@ const Travel = () => {
               </motion.div>
             </AnimatePresence>
           </div>
-        </div>
-      </section>
-
-      {/* Packing Tips */}
-      <section className="py-16 md:py-24">
-        <div className="container mx-auto px-4">
-          <SectionHeader
-            title="Packing Tips"
-            subtitle="A Michigan summer wedding weekend — here's what to toss in your bag."
-            size="sm"
-          />
-
-          <StaggerContainer className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-4xl mx-auto">
-            {packingTips.map((tip) => (
-              <StaggerItem key={tip.title}>
-                <div className="glass-card rounded-2xl p-6 h-full hover:shadow-lg transition-all duration-300 group">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-xl bg-champagne/50 flex items-center justify-center text-primary flex-shrink-0 group-hover:bg-champagne transition-colors">
-                      {tip.icon}
-                    </div>
-                    <h4 className="font-serif text-lg text-foreground">{tip.title}</h4>
-                  </div>
-                  <p className="text-muted-foreground text-sm leading-relaxed">{tip.items}</p>
-                </div>
-              </StaggerItem>
-            ))}
-          </StaggerContainer>
         </div>
       </section>
 

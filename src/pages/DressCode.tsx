@@ -6,6 +6,8 @@ import { useAllContent } from '@/hooks/useContent';
 import { Download, Palette, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+const LOOKBOOK_URL = '/images/dress-code-lookbook.jpg';
+
 const DressCode = () => {
   const { data } = useAllContent();
 
@@ -25,11 +27,22 @@ const DressCode = () => {
 
   if (colors.length === 0) {
     colors = [
-      { name: 'Sage', hex: '#8FAF8A', note: 'Encouraged' },
-      { name: 'Dusty Rose', hex: '#C9A09A', note: 'Encouraged' },
-      { name: 'Champagne', hex: '#E8D5B0', note: 'Encouraged' },
-      { name: 'Ivory / Cream', hex: '#F5F0E8', note: 'Avoid — reserved for the bride' },
-      { name: 'White', hex: '#FFFFFF', note: 'Avoid — reserved for the bride' },
+      { name: 'Dusty Lavender', hex: '#B0A4BA' },
+      { name: 'Periwinkle', hex: '#8292C3' },
+      { name: 'Soft Lilac', hex: '#DFCFDA' },
+      { name: 'Butter Yellow', hex: '#F5DCAB' },
+      { name: 'Champagne', hex: '#E8D1B7' },
+      { name: 'Taupe', hex: '#BFA891' },
+      { name: 'Powder Blue', hex: '#B3C1D3' },
+      { name: 'Deep Blue', hex: '#273E56' },
+      { name: 'Terracotta', hex: '#C06230' },
+      { name: 'Cinnamon', hex: '#A04A28' },
+      { name: 'Dusty Rust', hex: '#AB5B52' },
+      { name: 'Olive Green', hex: '#676E4D' },
+      { name: 'Eucalyptus Green', hex: '#8F977F' },
+      { name: 'Navy', hex: '#16253B' },
+      { name: 'Black', hex: '#0B0B0B' },
+      { name: 'Sand', hex: '#E4C9AA' },
     ];
   }
 
@@ -67,18 +80,21 @@ const DressCode = () => {
               Color Palette
             </h3>
             <p className="text-center text-muted-foreground mb-12 max-w-lg mx-auto">
-              Our wedding palette is soft and romantic. We'd love for guests to complement the aesthetic — but most importantly, wear what makes you feel wonderful.
+              Think soft neutrals, muted tones, earthy hues, and romantic summer colors — but most importantly, wear what makes you feel wonderful.
+            </p>
+            <p className="text-center text-sm text-muted-foreground mb-12 max-w-lg mx-auto -mt-8">
+              If possible, please avoid shades of white, reds, pinks, and mauves so our wedding party can stand out in photos.
             </p>
           </FadeIn>
 
-          <StaggerContainer className="flex flex-wrap justify-center gap-6 max-w-3xl mx-auto">
+          <StaggerContainer className="flex flex-wrap justify-center gap-6 max-w-4xl mx-auto">
             {colors.map((color) => {
               const isAvoid = color.note?.toLowerCase().includes('avoid');
               return (
-                <StaggerItem key={color.name}>
+                <StaggerItem key={color.name} className="w-24 md:w-28">
                   <div className="flex flex-col items-center gap-3 group">
                     <div
-                      className="w-24 h-24 rounded-full shadow-md border-4 border-white/50 transition-transform duration-300 group-hover:scale-105"
+                      className="w-20 h-20 md:w-24 md:h-24 rounded-full shadow-md border-4 border-white/50 transition-transform duration-300 group-hover:scale-105"
                       style={{ backgroundColor: color.hex }}
                     />
                     <div className="text-center">
@@ -97,12 +113,50 @@ const DressCode = () => {
         </div>
       </section>
 
-      {/* PDF Section */}
+      {/* Lookbook */}
+      <section className="py-16 md:py-24">
+        <div className="container mx-auto px-4">
+          <FadeIn>
+            <div className="max-w-2xl mx-auto">
+              <h3 className="font-display text-2xl md:text-3xl text-center text-foreground mb-3">
+                Lookbook
+              </h3>
+              <p className="text-center text-muted-foreground mb-8">
+                Some color and outfit ideas to inspire you. Tap the image to view it full size.
+              </p>
+              <a href={LOOKBOOK_URL} target="_blank" rel="noopener noreferrer" className="block">
+                <img
+                  src={LOOKBOOK_URL}
+                  alt="Style inspiration for our celebration: suggested colors and outfit ideas for her and for him"
+                  loading="lazy"
+                  className="w-full rounded-2xl shadow-elegant"
+                />
+              </a>
+              <div className="flex justify-center gap-3 pt-6">
+                <Button variant="romantic" asChild>
+                  <a href={LOOKBOOK_URL} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    View Full Size
+                  </a>
+                </Button>
+                <Button variant="outline" asChild>
+                  <a href={LOOKBOOK_URL} download="Eddie-Yasmine-Lookbook.jpg">
+                    <Download className="w-4 h-4 mr-2" />
+                    Download
+                  </a>
+                </Button>
+              </div>
+            </div>
+          </FadeIn>
+        </div>
+      </section>
+
+      {/* PDF Section (only when a PDF link is set in the admin) */}
+      {pdfUrl && (
       <section className="py-16 md:py-24">
         <div className="container mx-auto px-4">
           <FadeIn>
             <div className="max-w-3xl mx-auto">
-              {pdfUrl ? (
                 <div className="space-y-6">
                   <h3 className="font-display text-2xl text-center text-foreground mb-6">
                     Dress Code Guide
@@ -129,19 +183,11 @@ const DressCode = () => {
                     </Button>
                   </div>
                 </div>
-              ) : (
-                <div className="glass-card rounded-2xl p-12 text-center">
-                  <Palette className="w-12 h-12 text-primary/30 mx-auto mb-4" />
-                  <p className="font-display text-xl text-foreground mb-2">Lookbook Coming Soon</p>
-                  <p className="text-muted-foreground text-sm">
-                    We're putting together a visual guide to help you plan your look. Check back soon!
-                  </p>
-                </div>
-              )}
             </div>
           </FadeIn>
         </div>
       </section>
+      )}
     </Layout>
   );
 };
