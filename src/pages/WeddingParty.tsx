@@ -87,14 +87,14 @@ const WeddingParty = () => {
       image: "/images/wedding-party/gloria.jpg",
       role: "Bridesmaid",
       description:
-        "Groom’s little sister and the bride’s fellow sassy little sister. Hilarious, thoughtful, and the queen of giving gifts she absolutely needs to watch you open. A sister the bride is lucky to have gained.",
+        "Groom’s little sister and the bride’s kindred spirit in younger-sibling sass. Hilarious, thoughtful, and the queen of giving gifts she absolutely needs to watch you open. A sister the bride is lucky to have gained.",
     },
     {
       name: "Maria Correa",
       image: "/images/wedding-party/maria.jpg",
       role: "Bridesmaid",
       description:
-        "Groom’s eldest little sister and one of the kindest people you’ll ever meet. Responsible, caring, and always looking out for everyone, while still being one of the silliest people in the room.",
+        "The groom’s eldest little sister, known for her kind heart, adventurous spirit, and infectious sense of fun. Whether she’s exploring the outdoors, discovering somewhere new, or making memories with the people she loves, she brings warmth and laughter wherever she goes. Thoughtful, caring, and wonderfully silly, she reminds everyone that life is best enjoyed with a little adventure.",
     },
     {
       name: "Brittanie LaCour",

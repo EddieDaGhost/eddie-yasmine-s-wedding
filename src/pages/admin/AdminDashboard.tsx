@@ -203,7 +203,7 @@ const AdminDashboard = () => {
       toast({ title: 'No RSVPs to export', variant: 'destructive' });
       return;
     }
-    const headers = ['Name', 'Email', 'Attending', 'Guests', 'Meal Preference', 'Song Requests', 'Message', 'Invite Code', 'Date'];
+    const headers = ['Name', 'Email', 'Attending', 'Guests', 'Late-Night Bite', 'Song Requests', 'Message', 'Invite Code', 'Date'];
     const rows = data.map((r) => [
       r.name || '',
       r.email || '',
@@ -428,7 +428,7 @@ const AdminDashboard = () => {
           )}
         </motion.div>
 
-        {/* Meal Preferences */}
+        {/* Late-Night Bites */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -437,7 +437,7 @@ const AdminDashboard = () => {
         >
           <div className="flex items-center gap-2 mb-5">
             <UtensilsCrossed className="w-4 h-4 text-primary" />
-            <h3 className="font-serif text-lg text-foreground">Meal Preferences</h3>
+            <h3 className="font-serif text-lg text-foreground">Late-Night Bites</h3>
           </div>
           {statsLoading ? (
             <div className="space-y-4">
@@ -446,7 +446,7 @@ const AdminDashboard = () => {
               ))}
             </div>
           ) : mealEntries.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4">No meal preferences recorded yet.</p>
+            <p className="text-sm text-muted-foreground py-4">No late-night bite choices recorded yet.</p>
           ) : (
             <div className="space-y-3">
               {mealEntries.map(([label, count]) => (

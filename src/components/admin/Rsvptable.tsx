@@ -15,7 +15,7 @@ export default function RsvpTable() {
             <th className="p-3">Email</th>
             <th className="p-3">Attending</th>
             <th className="p-3">Guests</th>
-            <th className="p-3">Meal</th>
+            <th className="p-3">Late-Night Bite</th>
             <th className="p-3">Song</th>
             <th className="p-3">Message</th>
             <th className="p-3">Submitted</th>

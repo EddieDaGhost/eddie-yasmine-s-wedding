@@ -53,11 +53,9 @@ export interface RSVPFormState {
 }
 
 export const mealOptions = [
-  { value: '', label: 'Select your meal preference' },
-  { value: 'beef', label: 'Beef Tenderloin' },
-  { value: 'chicken', label: 'Herb-Roasted Chicken' },
-  { value: 'fish', label: 'Pan-Seared Salmon' },
-  { value: 'vegetarian', label: 'Vegetarian Risotto' },
+  { value: '', label: 'Choose your late-night bite' },
+  { value: 'Soft Pretzels', label: 'Soft pretzels with assorted dipping sauces' },
+  { value: 'Asian Noodles', label: 'Asian takeout noodles' },
   { value: 'vegan', label: 'Vegan Garden Plate' },
 ] as const;
 
