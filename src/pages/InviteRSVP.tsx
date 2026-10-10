@@ -73,8 +73,15 @@ const rsvpText = {
     selectMeal: 'Select a late-night bite',
     pretzels: 'Soft pretzels with assorted dipping sauces',
     noodles: 'Asian takeout noodles',
-    dietaryQuestion: 'Are there any dietary restrictions?',
-    dietaryPlaceholder: 'e.g. nut allergy, gluten-free, kosher…',
+    dietaryQuestion: 'Does anyone in your party have dietary restrictions?',
+    dietaryYes: 'Yes',
+    dietaryNo: 'No',
+    dietaryListLabel: 'Please list them (and who they’re for)',
+    dietaryPlaceholder: 'e.g. Yasmine: nut allergy, Eddie: gluten-free',
+    dietaryMissing: 'Dietary restrictions',
+    dietaryMissingDesc: 'Please let us know if anyone in your party has dietary restrictions.',
+    dietaryListMissing: 'Please list the dietary restrictions',
+    dietaryListMissingDesc: 'You selected "Yes" — please tell us what they are.',
     songRequest: 'Song Request',
     songPlaceholder: 'Artist - Song Title',
     message: 'Message for the Couple',
@@ -146,8 +153,15 @@ const rsvpText = {
     selectMeal: 'Selecciona un antojito',
     pretzels: 'Pretzels suaves con salsas para dipear',
     noodles: 'Fideos asiáticos para llevar',
-    dietaryQuestion: '¿Hay alguna restricción alimentaria?',
-    dietaryPlaceholder: 'p.ej. alergia a nueces, sin gluten, kosher…',
+    dietaryQuestion: '¿Alguien de su grupo tiene restricciones alimentarias?',
+    dietaryYes: 'Sí',
+    dietaryNo: 'No',
+    dietaryListLabel: 'Por favor, indíquelas (y para quién son)',
+    dietaryPlaceholder: 'p.ej. Yasmine: alergia a nueces, Eddie: sin gluten',
+    dietaryMissing: 'Restricciones alimentarias',
+    dietaryMissingDesc: 'Por favor, indíquenos si alguien de su grupo tiene restricciones alimentarias.',
+    dietaryListMissing: 'Por favor, indique las restricciones alimentarias',
+    dietaryListMissingDesc: 'Seleccionó "Sí" — por favor, díganos cuáles son.',
     songRequest: 'Canción solicitada',
     songPlaceholder: 'Artista - Título de la canción',
     message: 'Mensaje para los novios',
@@ -219,6 +233,7 @@ export default function InviteRSVP() {
     guests: 1,
     guestNames: [''] as string[],
     mealPreferences: [''] as string[],
+    hasDietaryRestrictions: null as boolean | null,
     dietaryRestrictions: '',
     songRequests: '',
     message: '',
@@ -520,6 +535,18 @@ export default function InviteRSVP() {
         return;
       }
 
+      // Dietary restrictions: a Yes/No answer is required, and "Yes" needs details
+      if (formData.hasDietaryRestrictions === null) {
+        toast({ title: t.dietaryMissing, description: t.dietaryMissingDesc, variant: 'destructive' });
+        setSubmitting(false);
+        return;
+      }
+      if (formData.hasDietaryRestrictions && !formData.dietaryRestrictions.trim()) {
+        toast({ title: t.dietaryListMissing, description: t.dietaryListMissingDesc, variant: 'destructive' });
+        setSubmitting(false);
+        return;
+      }
+
       // Create the RSVP with all guest names (stored as comma-separated in name field)
       const allNames = formData.guestNames.slice(0, formData.guests).map(n => n.trim()).join(', ');
 
@@ -541,7 +568,7 @@ export default function InviteRSVP() {
         attending: formData.attending,
         guests: formData.guests,
         meal_preference: mealPreferenceStr,
-        dietary_needs: formData.dietaryRestrictions || null,
+        dietary_needs: formData.hasDietaryRestrictions ? formData.dietaryRestrictions.trim() : null,
         song_requests: formData.songRequests || null,
         message: formData.message || null,
         invite_code: invite.code,
@@ -1011,18 +1038,42 @@ export default function InviteRSVP() {
                   ))}
                 </div>
 
-                {formData.mealPreferences.slice(0, formData.guests).every(m => m) && (
-                  <div className="space-y-2">
-                    <Label htmlFor="dietary">{t.dietaryQuestion}</Label>
-                    <Textarea
-                      id="dietary"
-                      placeholder={t.dietaryPlaceholder}
-                      value={formData.dietaryRestrictions}
-                      onChange={(e) => setFormData({ ...formData, dietaryRestrictions: e.target.value })}
-                      className="min-h-[70px]"
-                    />
+                <div className="space-y-2">
+                  <Label>{t.dietaryQuestion} *</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button
+                      type="button"
+                      variant={formData.hasDietaryRestrictions === true ? 'default' : 'outline'}
+                      className="h-11 text-sm font-medium"
+                      onClick={() => setFormData({ ...formData, hasDietaryRestrictions: true })}
+                    >
+                      {t.dietaryYes}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={formData.hasDietaryRestrictions === false ? 'default' : 'outline'}
+                      className="h-11 text-sm font-medium"
+                      onClick={() => setFormData({ ...formData, hasDietaryRestrictions: false })}
+                    >
+                      {t.dietaryNo}
+                    </Button>
                   </div>
-                )}
+                  {formData.hasDietaryRestrictions && (
+                    <div className="space-y-2 pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <Label htmlFor="dietary" className="text-sm text-muted-foreground">
+                        {t.dietaryListLabel}
+                      </Label>
+                      <Textarea
+                        id="dietary"
+                        placeholder={t.dietaryPlaceholder}
+                        value={formData.dietaryRestrictions}
+                        onChange={(e) => setFormData({ ...formData, dietaryRestrictions: e.target.value })}
+                        className="min-h-[70px]"
+                        autoFocus
+                      />
+                    </div>
+                  )}
+                </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="song">{t.songRequest}</Label>
