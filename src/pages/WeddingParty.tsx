@@ -101,21 +101,21 @@ const WeddingParty = () => {
       image: "/images/wedding-party/brittanie.jpg",
       role: "Bridesmaid",
       description:
-        "Bride’s high school best friend and longtime partner in crime. Sleepovers, sports, prom, heartbreaks, and a Jason Derulo dance are just a few of their greatest hits. No one showed up to the 10 year reunion because we planned it but thankfully, we always have each other.",
+        "The bride’s high school best friend and forever partner in crime. From sleepovers, sports, prom, heartbreaks, and surviving high school’s questionable popularity politics, they’ve collected a lifetime of memories. Even after going on different paths, they always show up for life’s biggest moments, celebrate each other’s wins, and pick up right where they left off. This friendship is simply forever.",
     },
     {
       name: "Margi Gomez",
       image: "/images/wedding-party/margi.jpg",
       role: "Bridesmaid",
       description:
-        "Bride’s high school friend who was once intimidating enough to make her want to avoid all eye contact. Years later, she became one of the bride’s closest friends and someone who can make her laugh until she cries. Proof that first impressions aren’t always right.",
+        "The bride’s high school friend turned one of her closest confidantes. What started with a little intimidation turned into a friendship filled with uncontrollable laughter, endless silliness, and nights out that always come with a story to tell. Whether they’re laughing until they cry or enjoying one Miller High Life at a time, Margi is the kind of friend who makes life more fun just by being in it. A friendship the bride hopes to cherish for a lifetime.",
     },
     {
       name: "Sirena Mota",
       image: "/images/wedding-party/sirena.jpg",
       role: "Bridesmaid",
       description:
-        "Bride’s college roommate turned lifelong friend. Their friendship began with an awkward library encounter involving her and the bride, and grew into one of the most important friendships in the bride’s life. The friend who was there when the bride needed someone most, and has never stopped showing up.",
+        "The bride’s college roommate turned lifelong friend and one of her greatest blessings from college. From an awkward library encounter to becoming an irreplaceable part of both the bride and groom’s lives, Sirena has been there through it all. Always supportive, endlessly fun, and the unofficial Polaroid queen who makes sure everyone takes home a little piece of the memories they make together. She knows the best nights involve a bucket of beer, 90s and 2000s throwbacks, and plenty of reasons to laugh. A friendship the bride will forever be grateful for.",
     },
   ];
 
