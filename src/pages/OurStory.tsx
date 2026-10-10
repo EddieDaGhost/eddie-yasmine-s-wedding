@@ -8,40 +8,40 @@ import { useAllContent } from "@/hooks/useContent";
 
 const timelineEvents = [
   {
-    date: 'September 2019',
-    title: 'The First Meeting',
+    date: 'January 2014',
+    title: 'The First Spark',
     description:
-      "We met at a mutual friend's birthday party. Eddie spilled coffee on Yasmine's dress, and somehow that clumsy moment became the beginning of our forever.",
+      "We caught each other’s eye across the room at Eddie’s fraternity house on the night of his fraternity initiation. Little did we know that one night would be the beginning of our story!",
   },
   {
-    date: 'December 2019',
-    title: 'The First Date',
+    date: 'Spring 2014',
+    title: 'College Sweethearts in the Making',
     description:
-      'After weeks of texting, Eddie finally asked Yasmine out for dinner. We talked for hours and closed down the restaurant.',
+      "Between studying at the library, grabbing food, partying, and hanging out in each other’s dorms with friends, we quickly became part of each other’s everyday lives. What started with a little flirting soon turned into something more.",
   },
   {
-    date: 'February 2020',
-    title: 'Making It Official',
+    date: 'July 2014',
+    title: 'Officially Us',
     description:
-      'Under a starlit sky, we decided to officially become a couple. Little did we know this was just the beginning.',
+      "After a date at Applebee’s, Eddie walked Yasmine back home and asked her to be his girlfriend. And just like that, we officially began our journey together! 🤗",
   },
   {
-    date: 'March 2021',
-    title: 'Moving In Together',
+    date: 'August 2018',
+    title: 'Our First Place',
     description:
-      'We took the leap and moved into our first apartment together. Learning to share a space taught us the true meaning of partnership.',
+      "After sharing an apartment during college, we moved into our first official apartment together in the city after graduation. We were ready to take on the next chapter of adulthood, one adventure at a time!",
   },
   {
-    date: 'August 2024',
-    title: 'The Proposal',
+    date: 'September 2024',
+    title: 'A Proposal in Paris',
     description:
-      'During a sunset picnic overlooking the ocean, Eddie got down on one knee. Through happy tears, Yasmine said yes!',
+      "We celebrated our 10-year anniversary with a trip to Europe, and Eddie had one more surprise up his sleeve. On our last night in Paris, before heading to Brussels, he proposed by the Eiffel Tower and even arranged for a photographer to capture the moment. It was the perfect start to our forever!",
   },
   {
-    date: 'July 2027',
-    title: 'The Wedding',
+    date: 'July 2, 2027',
+    title: 'The Correas!',
     description:
-      'And now, we invite you to be part of the next chapter of our love story as we say "I do".',
+      "After more than 13 years of memories, adventures, and growing up together, we’re finally getting married! We can’t wait to celebrate this next chapter with our favorite people in beautiful Michigan. The countdown to forever is on!",
   },
 ];
 
