@@ -649,7 +649,7 @@ const Travel = () => {
         <div className="container mx-auto px-4">
           <SectionHeader
             title="The Wedding Day"
-            subtitle="How July 2nd will unfold. All times Eastern."
+            subtitle="How July 2nd will unfold. Please note that all times are listed in Eastern Time (ET)."
             size="sm"
           />
 

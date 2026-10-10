@@ -172,6 +172,9 @@ const EventDetails = () => {
               <Clock className="w-6 h-6 text-primary" />
               <h3 className="font-display text-3xl text-foreground">Schedule of Events</h3>
             </div>
+            <p className="text-sm text-muted-foreground italic">
+              Please note that all times are listed in Eastern Time (ET).
+            </p>
           </motion.div>
 
           <div className="max-w-2xl mx-auto">
