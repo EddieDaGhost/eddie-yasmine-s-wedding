@@ -9,16 +9,26 @@ interface PartyMemberCardProps {
   name: string;
   role: string;
   description: string;
+  image?: string;
 }
 
-const PartyMemberCard = ({ name, role, description }: PartyMemberCardProps) => (
+const PartyMemberCard = ({ name, role, description, image }: PartyMemberCardProps) => (
   <WeddingCard variant="glass" hoverable className="text-center h-full group">
-    {/* Avatar Placeholder */}
-    <div className="w-20 h-20 md:w-24 md:h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-      <span className="font-display text-2xl md:text-3xl text-primary">
-        {name.split(' ').map(n => n[0]).join('')}
-      </span>
-    </div>
+    {/* Photo, or initials when no photo is set */}
+    {image ? (
+      <img
+        src={image}
+        alt={name}
+        loading="lazy"
+        className="w-28 h-28 md:w-32 md:h-32 mx-auto mb-4 rounded-full object-cover ring-4 ring-primary/10 group-hover:scale-105 transition-transform duration-300"
+      />
+    ) : (
+      <div className="w-28 h-28 md:w-32 md:h-32 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+        <span className="font-display text-2xl md:text-3xl text-primary">
+          {name.split(' ').map(n => n[0]).join('')}
+        </span>
+      </div>
+    )}
 
     {/* Role Badge */}
     <span className="inline-block px-3 py-1 bg-blush text-blush-foreground text-xs font-medium rounded-full mb-3">
@@ -105,42 +115,49 @@ const WeddingParty = () => {
   const DEFAULT_GROOMSMEN: PartyMemberCardProps[] = [
     {
       name: "Tony Correa",
+      image: "/images/wedding-party/tony.jpg",
       role: "Best Man",
       description:
         "The groom’s first cousin who has always been more like a brother. He grew up with Eddie, went to the same college, and even joined the same fraternity. One of the best men and a true brother for life, despite the fact that his father raised him to be a Packers fan.",
     },
     {
       name: "Diego Gomez",
+      image: "/images/wedding-party/diego.jpg",
       role: "Best Man",
       description:
         "The groom’s high school soccer teammate who became another brother over the years. Now living in North Carolina, he and the groom have shared cherished moments like watching the Bears beat the Packers in overtime, and hundreds of hours of Marvel Rivals. Nature-loving, hike-ready, and always down for the next adventure. A great man and an even better brother.",
     },
     {
       name: "Alex Esparza",
+      image: "/images/wedding-party/alex.jpg",
       role: "Groomsman",
       description:
         "Eddie’s high school soccer and volleyball teammate and one of Eddie’s closest friends turned brother. Road trips, White Sox games, and plenty of memorable stories later, he’s still one of the crew and is now in his family era.",
     },
     {
       name: "Missael Pale",
+      image: "/images/wedding-party/missael.jpg",
       role: "Groomsman",
       description:
         "The groom’s high school friend and teammate turned college roommate and fraternity brother at UIUC. One of the closest friends from those years, with a strong bond built on shared trips, years of fraternity events and time together. Big into biking and nature, and always ready for the next outdoor escape.",
     },
     {
       name: "Nikolas Correa",
+      image: "/images/wedding-party/nikolas.jpg",
       role: "Groomsman",
       description:
         "The groom’s little brother with a shared father for better or worse, only time will tell. They had some catching up to do since Nikolas was young during Eddie’s college years, but he’s truly one of one. Video-game enthusiast, and someone the groom will always love, protect, and care for… even though he’s a Detroit Lions fan for no good reason other than pure spite.",
     },
     {
       name: "Darren Ward",
+      image: "/images/wedding-party/darren.jpg",
       role: "Groomsman",
       description:
         "The groom’s fraternity brother and college roommate who’s been there through the growth of the relationship with the bride. Was alongside the groom for some of the most insane fraternity situations and prevented many more. Moved to Colorado, loves drinking, working out, anime deep-dives, and never hesitates to call someone a dumbass. There’s no better friend and brother to grill with.",
     },
     {
       name: "Adrian Guerrero",
+      image: "/images/wedding-party/adrian.jpg",
       role: "Groomsman",
       description:
         "The groom’s cousin who was his best friend long before either of them realized they were related. Pre-K classmates, sleepover buddies, and the one family member for late-night video game marathons. They once promised to be each other’s best men - until years of minimal communication bumped him down the list. The groom’s favorite paradox: extremely wise one minute, immature and borderline insane the next. No matter the time or distance, he’ll always be a brother.",
