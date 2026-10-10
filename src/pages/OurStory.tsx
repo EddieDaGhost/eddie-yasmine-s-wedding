@@ -23,19 +23,19 @@ const timelineEvents = [
     date: 'July 2014',
     title: 'Officially Us',
     description:
-      "After a date at Applebee’s, Eddie walked Yasmine back home and asked her to be his girlfriend. And just like that, we officially began our journey together! 🤗",
+      "After a date at Applebee’s, Eddie drove Yasmine back home and asked her to be his girlfriend. And just like that, we officially began our journey together! 🤗",
   },
   {
     date: 'August 2018',
     title: 'Our First Place',
     description:
-      "After sharing an apartment during college, we moved into our first official apartment together in the city after graduation. We were ready to take on the next chapter of adulthood, one adventure at a time!",
+      "After sharing an apartment throughout college, we moved into our first official apartment together in Pilsen after graduation. We were ready to take on the next chapter of adulthood, one adventure at a time!",
   },
   {
     date: 'September 2024',
     title: 'A Proposal in Paris',
     description:
-      "We celebrated our 10-year anniversary with a trip to Europe, and Eddie had one more surprise up his sleeve. On our last night in Paris, before heading to Brussels, he proposed by the Eiffel Tower and even arranged for a photographer to capture the moment. It was the perfect start to our forever!",
+      "We celebrated our 10-year anniversary with a trip to Europe, and Eddie had one more surprise up his sleeve. On our last night in Paris, before heading to Brussels, he proposed by the Seine River overlooking the Eiffel Tower and even arranged for a photographer to capture the moment. It was the perfect start to our forever!",
   },
   {
     date: 'July 2, 2027',

@@ -39,7 +39,7 @@ export default function AdminHome() {
           <StatCard label="Not Attending" value={rsvps.notAttending} />
           <StatCard label="No Response" value={rsvps.noResponse} />
           <StatCard
-            label="Meal Choices"
+            label="Late-Night Bites"
             value={Object.values(rsvps.mealChoices).reduce((a, b) => a + b, 0)}
           />
           <StatCard label="Allergies" value={rsvps.allergies} />

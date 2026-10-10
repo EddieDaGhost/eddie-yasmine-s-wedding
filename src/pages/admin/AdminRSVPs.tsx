@@ -271,7 +271,7 @@ const AdminRSVPs = () => {
 
   const handleExportCSV = () => {
     if (!rsvps) return;
-    const headers = ['Name', 'Email', 'Phone', 'Attending', 'Guests', 'Meal Preference', 'Dietary Needs', 'Song Requests', 'Message', 'Invite Code', 'Date', 'Status'];
+    const headers = ['Name', 'Email', 'Phone', 'Attending', 'Guests', 'Late-Night Bite', 'Dietary Needs', 'Song Requests', 'Message', 'Invite Code', 'Date', 'Status'];
     const rows = rsvps.map((r) => [
       r.name || '',
       r.email || '',

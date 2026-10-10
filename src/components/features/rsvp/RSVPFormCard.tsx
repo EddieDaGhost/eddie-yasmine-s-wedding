@@ -41,18 +41,18 @@ export const RSVPFormCard = ({ onSubmit, onSuccess }: RSVPFormCardProps) => {
       if (Array.isArray(parsed)) {
         // If array of strings
         if (parsed.every((p) => typeof p === 'string')) {
-          return [{ value: '', label: 'Select your meal preference' }, ...parsed.map((s) => ({ value: s.toLowerCase().replace(/\s+/g, '_'), label: s }))];
+          return [{ value: '', label: 'Choose your late-night bite' }, ...parsed.map((s) => ({ value: s.toLowerCase().replace(/\s+/g, '_'), label: s }))];
         }
         // If array of objects with value/label
         if (parsed.every((p) => p && (p.value || p.label))) {
-          return [{ value: '', label: 'Select your meal preference' }, ...parsed.map((p) => ({ value: p.value || p.label, label: p.label || p.value }))];
+          return [{ value: '', label: 'Choose your late-night bite' }, ...parsed.map((p) => ({ value: p.value || p.label, label: p.label || p.value }))];
         }
       }
 
       // Fallback: treat raw as newline-separated list
       const lines = raw.split(/\r?\n/).map((l: string) => l.trim()).filter(Boolean);
       if (lines.length > 0) {
-        return [{ value: '', label: 'Select your meal preference' }, ...lines.map((s: string) => ({ value: s.toLowerCase().replace(/\s+/g, '_'), label: s }))];
+        return [{ value: '', label: 'Choose your late-night bite' }, ...lines.map((s: string) => ({ value: s.toLowerCase().replace(/\s+/g, '_'), label: s }))];
       }
     } catch (e) {
       // ignore parse errors
@@ -296,9 +296,9 @@ export const RSVPFormCard = ({ onSubmit, onSuccess }: RSVPFormCardProps) => {
               </div>
             </RSVPFormField>
 
-            {/* Meal Choice */}
+            {/* Late-night bite (stored in meal_preference) */}
             <RSVPFormField
-              label="Meal Preference"
+              label="Choose your preferred late-night bite!"
               error={touched.mealChoice ? errors.mealChoice : undefined}
             >
               <div className="relative">

@@ -30,6 +30,12 @@ interface Invite {
   language: string;
 }
 
+// Short English labels saved with each RSVP (shown in the admin, regardless of invite language)
+const LATE_NIGHT_BITE_LABELS: Record<string, string> = {
+  pretzels: 'Soft Pretzels',
+  noodles: 'Asian Noodles',
+};
+
 const rsvpText = {
   en: {
     intro: 'With hearts full of love,',
@@ -60,13 +66,13 @@ const rsvpText = {
       `We've reserved a room block at the ${hotel}. Book by ${by} for the group rate — earlier is better, as rooms are limited.`,
     hotelCta: 'Reserve Your Room',
     hotelBookBy: HOTEL_BLOCK.bookByLabel,
-    mealPrefs: 'Meal Preferences',
-    yourMeal: 'Your meal',
-    guestMeal: (n: number) => `Guest ${n}'s meal`,
-    namedMeal: (name: string) => `${name}'s meal`,
-    selectMeal: 'Select a meal option',
-    beef: 'Beef',
-    chicken: 'Chicken',
+    mealPrefs: 'Choose your preferred late-night bite!',
+    yourMeal: 'Your late-night bite',
+    guestMeal: (n: number) => `Guest ${n}'s late-night bite`,
+    namedMeal: (name: string) => `${name}'s late-night bite`,
+    selectMeal: 'Select a late-night bite',
+    pretzels: 'Soft pretzels with assorted dipping sauces',
+    noodles: 'Asian takeout noodles',
     dietaryQuestion: 'Are there any dietary restrictions?',
     dietaryPlaceholder: 'e.g. nut allergy, gluten-free, kosher…',
     songRequest: 'Song Request',
@@ -95,7 +101,7 @@ const rsvpText = {
     attendingYes: 'Yes',
     attendingNo: 'No',
     numGuests: 'Number of Guests',
-    mealLabel: 'Meal Preferences',
+    mealLabel: 'Late-Night Bite',
     songLabel: 'Song Requests',
     msgLabel: 'Message',
     needChanges: 'Need to make changes? Please contact us directly.',
@@ -133,13 +139,13 @@ const rsvpText = {
       `Hemos reservado un bloque de habitaciones en el ${hotel}. Reserva antes del ${by} para obtener la tarifa de grupo — cuanto antes, mejor, ya que las habitaciones son limitadas.`,
     hotelCta: 'Reservar tu habitación',
     hotelBookBy: HOTEL_BLOCK.bookByLabelEs,
-    mealPrefs: 'Preferencias de comida',
-    yourMeal: 'Tu comida',
-    guestMeal: (n: number) => `Comida del invitado ${n}`,
-    namedMeal: (name: string) => `Comida de ${name}`,
-    selectMeal: 'Selecciona una opción',
-    beef: 'Carne de res',
-    chicken: 'Pollo',
+    mealPrefs: '¡Elige tu antojito de medianoche favorito!',
+    yourMeal: 'Tu antojito de medianoche',
+    guestMeal: (n: number) => `Antojito del invitado ${n}`,
+    namedMeal: (name: string) => `Antojito de ${name}`,
+    selectMeal: 'Selecciona un antojito',
+    pretzels: 'Pretzels suaves con salsas para dipear',
+    noodles: 'Fideos asiáticos para llevar',
     dietaryQuestion: '¿Hay alguna restricción alimentaria?',
     dietaryPlaceholder: 'p.ej. alergia a nueces, sin gluten, kosher…',
     songRequest: 'Canción solicitada',
@@ -168,7 +174,7 @@ const rsvpText = {
     attendingYes: 'Sí',
     attendingNo: 'No',
     numGuests: 'Número de invitados',
-    mealLabel: 'Preferencias de comida',
+    mealLabel: 'Antojito de medianoche',
     songLabel: 'Canciones solicitadas',
     msgLabel: 'Mensaje',
     needChanges: '¿Necesitas hacer cambios? Por favor contáctanos directamente.',
@@ -517,12 +523,13 @@ export default function InviteRSVP() {
       // Create the RSVP with all guest names (stored as comma-separated in name field)
       const allNames = formData.guestNames.slice(0, formData.guests).map(n => n.trim()).join(', ');
 
-      // Build per-guest meal preferences string (e.g. "Eddie: Beef | Yasmine: Chicken")
+      // Build per-guest late-night bite string (e.g. "Eddie: Soft Pretzels | Yasmine: Asian Noodles").
+      // Stored in the existing meal_preference column.
       const mealParts = formData.guestNames.slice(0, formData.guests)
         .map((name, i) => {
           const meal = formData.mealPreferences[i];
           if (!meal) return null;
-          return `${name.trim()}: ${meal.charAt(0).toUpperCase() + meal.slice(1)}`;
+          return `${name.trim()}: ${LATE_NIGHT_BITE_LABELS[meal] ?? meal}`;
         })
         .filter(Boolean);
       const mealPreferenceStr = mealParts.length > 0 ? mealParts.join(' | ') : null;
@@ -996,8 +1003,8 @@ export default function InviteRSVP() {
                           <SelectValue placeholder={t.selectMeal} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="beef">{t.beef}</SelectItem>
-                          <SelectItem value="chicken">{t.chicken}</SelectItem>
+                          <SelectItem value="pretzels">{t.pretzels}</SelectItem>
+                          <SelectItem value="noodles">{t.noodles}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
