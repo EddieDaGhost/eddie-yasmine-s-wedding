@@ -70,42 +70,49 @@ const WeddingParty = () => {
   const DEFAULT_BRIDESMAIDS: PartyMemberCardProps[] = [
     {
       name: "Anais Pacheco",
+      image: "/images/wedding-party/anais.jpg",
       role: "Maid of Honor",
       description:
         "Bride’s second eldest sister and built-in best friend. The one person who can usually get through to the bride when no one else can. Housewives partner-in-crime, cat sitter extraordinaire, and forever one of the bride and groom’s biggest supporters.",
     },
     {
       name: "Vanessa Pacheco",
+      image: "/images/wedding-party/vanessa.jpg",
       role: "Matron of Honor",
       description:
         "Bride’s big sister and go-to for honest advice. Superwoman who somehow does everything and makes it look easy. She survived having the bride as a bratty little sister and still loves her anyway.",
     },
     {
       name: "Gloria Correa",
+      image: "/images/wedding-party/gloria.jpg",
       role: "Bridesmaid",
       description:
         "Groom’s little sister and the bride’s fellow sassy little sister. Hilarious, thoughtful, and the queen of giving gifts she absolutely needs to watch you open. A sister the bride is lucky to have gained.",
     },
     {
       name: "Maria Correa",
+      image: "/images/wedding-party/maria.jpg",
       role: "Bridesmaid",
       description:
         "Groom’s eldest little sister and one of the kindest people you’ll ever meet. Responsible, caring, and always looking out for everyone, while still being one of the silliest people in the room.",
     },
     {
       name: "Brittanie LaCour",
+      image: "/images/wedding-party/brittanie.jpg",
       role: "Bridesmaid",
       description:
         "Bride’s high school best friend and longtime partner in crime. Sleepovers, sports, prom, heartbreaks, and a Jason Derulo dance are just a few of their greatest hits. No one showed up to the 10 year reunion because we planned it but thankfully, we always have each other.",
     },
     {
       name: "Margi Gomez",
+      image: "/images/wedding-party/margi.jpg",
       role: "Bridesmaid",
       description:
         "Bride’s high school friend who was once intimidating enough to make her want to avoid all eye contact. Years later, she became one of the bride’s closest friends and someone who can make her laugh until she cries. Proof that first impressions aren’t always right.",
     },
     {
       name: "Sirena Mota",
+      image: "/images/wedding-party/sirena.jpg",
       role: "Bridesmaid",
       description:
         "Bride’s college roommate turned lifelong friend. Their friendship began with an awkward library encounter involving her and the bride, and grew into one of the most important friendships in the bride’s life. The friend who was there when the bride needed someone most, and has never stopped showing up.",
