@@ -87,7 +87,7 @@ const WeddingParty = () => {
       image: "/images/wedding-party/gloria.jpg",
       role: "Bridesmaid",
       description:
-        "Groom’s little sister and the bride’s fellow sassy little sister. Hilarious, thoughtful, and the queen of giving gifts she absolutely needs to watch you open. A sister the bride is lucky to have gained.",
+        "Groom’s little sister and the bride’s kindred spirit in younger-sibling sass. Hilarious, thoughtful, and the queen of giving gifts she absolutely needs to watch you open. A sister the bride is lucky to have gained.",
     },
     {
       name: "Maria Correa",
