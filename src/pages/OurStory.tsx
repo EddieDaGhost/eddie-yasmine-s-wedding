@@ -32,6 +32,18 @@ const timelineEvents = [
       "After sharing an apartment throughout college, we moved into our first official apartment together in Pilsen after graduation. We were ready to take on the next chapter of adulthood, one adventure at a time!",
   },
   {
+    date: 'May 2021',
+    title: 'Home Sweet Home',
+    description:
+      "We bought our first home together and started building a space of our own! Just a month later, we adopted our two boys, adding even more love (and a little chaos) to our family.",
+  },
+  {
+    date: 'April 2023',
+    title: 'The Flock Grows',
+    description:
+      "As if four cats weren’t enough, we added a chicken coop and a few feathered friends to the mix! Between family gatherings, sporting events, road trips, and everyday life, our little family and our adventures just kept growing.",
+  },
+  {
     date: 'September 2024',
     title: 'A Proposal in Paris',
     description:
