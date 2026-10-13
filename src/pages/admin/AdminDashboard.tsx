@@ -244,7 +244,7 @@ const AdminDashboard = () => {
         id: `msg-${m.id}`,
         type: 'message',
         label: 'New message',
-        detail: m.content?.substring(0, 60) || 'No content',
+        detail: m.content || 'No content',
         time: m.created_at,
       }));
 
@@ -252,7 +252,7 @@ const AdminDashboard = () => {
         id: `photo-${p.id}`,
         type: 'photo',
         label: 'Photo uploaded',
-        detail: p.caption?.substring(0, 60) || 'No caption',
+        detail: p.caption || 'No caption',
         time: p.created_at,
       }));
 
@@ -489,7 +489,7 @@ const AdminDashboard = () => {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-foreground truncate">{item.label}</p>
-                      <p className="text-xs text-muted-foreground truncate">{item.detail}</p>
+                      <p className="text-xs text-muted-foreground whitespace-pre-wrap break-words">{item.detail}</p>
                     </div>
                     <span className="text-xs text-muted-foreground whitespace-nowrap flex-shrink-0">
                       {formatDistanceToNow(new Date(item.time), { addSuffix: true })}
