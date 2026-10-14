@@ -132,8 +132,10 @@ export type Database = {
           code: string
           created_at: string
           custom_message: string | null
+          delivery_status: string
           id: string
           label: string | null
+          language: string
           max_guests: number
           used_by: string | null
           venue_address: string | null
@@ -143,8 +145,10 @@ export type Database = {
           code: string
           created_at?: string
           custom_message?: string | null
+          delivery_status?: string
           id?: string
           label?: string | null
+          language?: string
           max_guests?: number
           used_by?: string | null
           venue_address?: string | null
@@ -154,8 +158,10 @@ export type Database = {
           code?: string
           created_at?: string
           custom_message?: string | null
+          delivery_status?: string
           id?: string
           label?: string | null
+          language?: string
           max_guests?: number
           used_by?: string | null
           venue_address?: string | null

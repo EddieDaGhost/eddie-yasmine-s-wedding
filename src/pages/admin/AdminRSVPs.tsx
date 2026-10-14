@@ -291,7 +291,7 @@ const AdminRSVPs = () => {
 
   const SortHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
     <th
-      className="text-left px-4 py-4 text-sm font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors select-none"
+      className="text-left px-3 py-4 text-sm font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors select-none"
       onClick={() => handleSort(field)}
     >
       <span className="inline-flex items-center gap-1">
@@ -380,7 +380,7 @@ const AdminRSVPs = () => {
           <table className="w-full">
             <thead className="bg-muted/50 border-b border-border">
               <tr>
-                <th className="px-4 py-4 w-10">
+                <th className="px-3 py-4 w-10">
                   <input
                     type="checkbox"
                     checked={filteredAndSortedRsvps.length > 0 && selected.size === filteredAndSortedRsvps.length}
@@ -393,17 +393,18 @@ const AdminRSVPs = () => {
                 <SortHeader field="phone">Phone</SortHeader>
                 <SortHeader field="attending">Status</SortHeader>
                 <SortHeader field="guests">Guests</SortHeader>
-                <th className="text-left px-4 py-4 text-sm font-medium text-muted-foreground">Dietary</th>
+                <th className="text-left px-3 py-4 text-sm font-medium text-muted-foreground">Late-Night Bite</th>
+                <th className="text-left px-3 py-4 text-sm font-medium text-muted-foreground">Dietary</th>
                 <SortHeader field="song_requests">Song</SortHeader>
                 <SortHeader field="message">Notes</SortHeader>
                 <SortHeader field="created_at">Date</SortHeader>
-                <th className="px-4 py-4 w-10"></th>
+                <th className="px-3 py-4 w-10"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {filteredAndSortedRsvps.map((rsvp) => (
-                <tr key={rsvp.id} className={`hover:bg-muted/30 transition-colors ${selected.has(rsvp.id) ? 'bg-primary/5' : ''} ${rsvp.archived_at ? 'opacity-60' : ''}`}>
-                  <td className="px-4 py-4">
+                <tr key={rsvp.id} className={`align-top hover:bg-muted/30 transition-colors ${selected.has(rsvp.id) ? 'bg-primary/5' : ''} ${rsvp.archived_at ? 'opacity-60' : ''}`}>
+                  <td className="px-3 py-4">
                     <input
                       type="checkbox"
                       checked={selected.has(rsvp.id)}
@@ -411,7 +412,7 @@ const AdminRSVPs = () => {
                       className="rounded border-border"
                     />
                   </td>
-                  <td className="px-4 py-4 font-medium">
+                  <td className="px-3 py-4 font-medium">
                     {rsvp.name || '-'}
                     {rsvp.archived_at && (
                       <span
@@ -422,9 +423,9 @@ const AdminRSVPs = () => {
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-4 text-muted-foreground text-sm">{rsvp.email || '-'}</td>
-                  <td className="px-4 py-4 text-muted-foreground text-sm">{rsvp.phone || '-'}</td>
-                  <td className="px-4 py-4">
+                  <td className="px-3 py-4 text-muted-foreground text-sm">{rsvp.email || '-'}</td>
+                  <td className="px-3 py-4 text-muted-foreground text-sm">{rsvp.phone || '-'}</td>
+                  <td className="px-3 py-4">
                     <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
                       rsvp.attending === true ? 'bg-sage/20 text-sage-foreground' :
                       rsvp.attending === false ? 'bg-destructive/20 text-destructive' :
@@ -433,26 +434,37 @@ const AdminRSVPs = () => {
                       {rsvp.attending === true ? 'Attending' : rsvp.attending === false ? 'Declined' : 'Pending'}
                     </span>
                   </td>
-                  <td className="px-4 py-4">{rsvp.guests || 1}</td>
-                  <td className="px-4 py-4 text-sm max-w-[150px] truncate">
+                  <td className="px-3 py-4">{rsvp.guests || 1}</td>
+                  <td className="px-3 py-4 text-sm min-w-[130px] max-w-[220px] whitespace-pre-wrap break-words">
+                    {rsvp.meal_preference ? (
+                      <div className="space-y-0.5">
+                        {rsvp.meal_preference.split('|').map((entry, i) => (
+                          <div key={i}>{entry.trim()}</div>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-4 text-sm min-w-[130px] max-w-[220px] whitespace-pre-wrap break-words">
                     {rsvp.dietary_needs ? (
-                      <span className="text-amber-700 dark:text-amber-400 font-medium" title={rsvp.dietary_needs}>
+                      <span className="text-amber-700 dark:text-amber-400 font-medium">
                         {rsvp.dietary_needs}
                       </span>
                     ) : (
                       <span className="text-muted-foreground">-</span>
                     )}
                   </td>
-                  <td className="px-4 py-4 text-muted-foreground text-sm max-w-[150px] truncate">
+                  <td className="px-3 py-4 text-muted-foreground text-sm min-w-[130px] max-w-[220px] whitespace-pre-wrap break-words">
                     {rsvp.song_requests || '-'}
                   </td>
-                  <td className="px-4 py-4 text-muted-foreground text-sm max-w-[150px] truncate">
+                  <td className="px-3 py-4 text-muted-foreground text-sm min-w-[180px] max-w-[300px] whitespace-pre-wrap break-words">
                     {rsvp.message || '-'}
                   </td>
-                  <td className="px-4 py-4 text-muted-foreground text-sm whitespace-nowrap">
+                  <td className="px-3 py-4 text-muted-foreground text-sm whitespace-nowrap">
                     {formatDistanceToNow(new Date(rsvp.created_at), { addSuffix: true })}
                   </td>
-                  <td className="px-4 py-4">
+                  <td className="px-3 py-4">
                     <div className="flex items-center gap-1 justify-end">
                       {rsvp.archived_at ? (
                         <button

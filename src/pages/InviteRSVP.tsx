@@ -294,11 +294,15 @@ export default function InviteRSVP() {
         // Remember this invite code so /rsvp can redirect back here
         localStorage.setItem('wedding_invite_code', code);
 
-        // Track the view event
-        await supabase.from('invite_analytics').insert({
-          invite_id: inviteData.id,
-          event_type: 'view',
-        });
+        // Track the view event — but not when a signed-in admin is previewing
+        // the link, so testing invites doesn't inflate guests' open counts.
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          await supabase.from('invite_analytics').insert({
+            invite_id: inviteData.id,
+            event_type: 'view',
+          });
+        }
 
         // Check for existing RSVP — first by used_by, then by invite_code as
         // fallback. Archived RSVPs are ignored: an admin reset should give the

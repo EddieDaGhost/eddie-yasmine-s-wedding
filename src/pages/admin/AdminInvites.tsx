@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Link2, Copy, Check, Trash2, Users, Plus, Loader2,
   BarChart3, MousePointer, UserCheck, QrCode, CreditCard,
-  MessageSquareText, Download, Upload, Pencil
+  MessageSquareText, Download, Upload, Pencil, ArrowUpDown, RotateCcw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -70,6 +70,7 @@ interface Invite {
   venue_address: string | null;
   custom_message: string | null;
   language: string;
+  delivery_status?: string;
   created_at: string;
   rsvp?: {
     id: string;
@@ -97,6 +98,20 @@ const DEFAULT_FORM: NewInviteForm = {
   customMessage: '',
   language: 'en',
 };
+
+// How the physical invitation reached the guest. Stored in invites.delivery_status
+// (see supabase/migrations/20261013000000_invite_delivery_status_and_view_reset.sql).
+type DeliveryStatus = 'not_provided' | 'dropped_off' | 'mailed';
+const DELIVERY_OPTIONS: { value: DeliveryStatus; label: string; className: string }[] = [
+  { value: 'not_provided', label: 'Not provided', className: 'bg-muted text-muted-foreground' },
+  { value: 'dropped_off', label: 'Dropped off', className: 'bg-sage/20 text-sage-foreground' },
+  { value: 'mailed', label: 'Mailed', className: 'bg-blush text-blush-foreground' },
+];
+const getDeliveryStatus = (invite: Invite): DeliveryStatus =>
+  (invite.delivery_status as DeliveryStatus) || 'not_provided';
+
+type InviteSort = 'newest' | 'oldest' | 'name-asc' | 'name-desc';
+const SORT_STORAGE_KEY = 'admin-invites-sort';
 
 function generateSecureCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
@@ -137,6 +152,23 @@ export default function AdminInvites() {
   const [togglingLangId, setTogglingLangId] = useState<string | null>(null);
   const [editInvite, setEditInvite] = useState<Invite | null>(null);
   const [editForm, setEditForm] = useState({ label: '', maxGuests: 2 });
+  const [sortBy, setSortBy] = useState<InviteSort>(() => {
+    try {
+      return (localStorage.getItem(SORT_STORAGE_KEY) as InviteSort) || 'newest';
+    } catch {
+      return 'newest';
+    }
+  });
+  const [deliveryFilter, setDeliveryFilter] = useState<'all' | DeliveryStatus>('all');
+
+  // Remember the chosen sort between visits
+  useEffect(() => {
+    try {
+      localStorage.setItem(SORT_STORAGE_KEY, sortBy);
+    } catch {
+      // Storage can be unavailable (private browsing); sorting still works for this visit
+    }
+  }, [sortBy]);
 
   const isValidInvite = () => newInvite.maxGuests >= 1 && newInvite.maxGuests <= 20 && newInvite.label.trim().length > 0;
 
@@ -306,6 +338,62 @@ export default function AdminInvites() {
     },
   });
 
+  // Change how an invite was delivered. Updates the list instantly, then saves.
+  const updateDelivery = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: DeliveryStatus }) => {
+      const { error } = await supabase.from('invites').update({ delivery_status: status }).eq('id', id);
+      if (error) throw error;
+    },
+    onMutate: async ({ id, status }) => {
+      await queryClient.cancelQueries({ queryKey: ['admin-invites'] });
+      const previous = queryClient.getQueryData<Invite[]>(['admin-invites']);
+      queryClient.setQueryData<Invite[]>(['admin-invites'], (old) =>
+        old?.map((inv) => (inv.id === id ? { ...inv, delivery_status: status } : inv))
+      );
+      return { previous };
+    },
+    onError: (error, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(['admin-invites'], context.previous);
+      const needsSetup = /delivery_status/i.test(error.message);
+      toast({
+        title: 'Could not save delivery status',
+        description: needsSetup
+          ? 'The database needs a one-time update first (see the invite delivery migration).'
+          : error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Clear every recorded invite "open" so the view counts start from zero.
+  // RSVP and check-in events are kept.
+  const resetViews = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase
+        .from('invite_analytics')
+        .delete()
+        .eq('event_type', 'view')
+        .select('id');
+      if (error) throw error;
+      return data?.length ?? 0;
+    },
+    onSuccess: (deleted) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-invites'] });
+      if (deleted === 0 && totalViews > 0) {
+        toast({
+          title: 'Open counts were not reset',
+          description: 'The database needs a one-time update to allow this (see the invite delivery migration).',
+          variant: 'destructive',
+        });
+      } else {
+        toast({ title: 'Open counts reset', description: 'Every invite now starts from 0 opens.' });
+      }
+    },
+    onError: (error) => {
+      toast({ title: 'Error resetting open counts', description: error.message, variant: 'destructive' });
+    },
+  });
+
   const handleExcelImport = async (guests: { label: string; maxGuests: number }[]) => {
     setIsExcelImporting(true);
     setExcelProgress({ total: guests.length, done: 0 });
@@ -345,14 +433,15 @@ export default function AdminInvites() {
 
   const handleExportCSV = () => {
     if (!invites) return;
-    const headers = ['Label', 'Code', 'Invite URL', 'Language', 'Max Guests', 'Status', 'Used By', 'Views', 'RSVPs', 'Created'];
-    const rows = invites.map((inv) => [
+    const headers = ['Label', 'Code', 'Invite URL', 'Language', 'Max Guests', 'Status', 'Delivery', 'Used By', 'Views', 'RSVPs', 'Created'];
+    const rows = sortedInvites.map((inv) => [
       inv.label || '',
       inv.code,
       getInviteUrl(inv.code),
       inv.language === 'es' ? 'Spanish' : 'English',
       inv.max_guests,
       inv.used_by ? 'Used' : 'Pending',
+      DELIVERY_OPTIONS.find((o) => o.value === getDeliveryStatus(inv))?.label ?? '',
       inv.rsvp?.name || '',
       inv.analytics?.views ?? 0,
       inv.analytics?.rsvps ?? 0,
@@ -363,6 +452,37 @@ export default function AdminInvites() {
   };
 
   const usedCount = invites?.filter(i => i.used_by).length || 0;
+  const totalViews = invites?.reduce((sum, i) => sum + (i.analytics?.views || 0), 0) || 0;
+  const deliveryCounts = useMemo(() => {
+    const counts: Record<DeliveryStatus, number> = { not_provided: 0, dropped_off: 0, mailed: 0 };
+    invites?.forEach((inv) => { counts[getDeliveryStatus(inv)]++; });
+    return counts;
+  }, [invites]);
+
+  const sortedInvites = useMemo(() => {
+    const list = (invites ?? []).filter(
+      (inv) => deliveryFilter === 'all' || getDeliveryStatus(inv) === deliveryFilter
+    );
+    const byName = (a: Invite, b: Invite) => {
+      // Invites without a name always go to the bottom
+      if (!a.label && !b.label) return 0;
+      if (!a.label) return 1;
+      if (!b.label) return -1;
+      return a.label.localeCompare(b.label, undefined, { sensitivity: 'base', numeric: true });
+    };
+    const byDate = (a: Invite, b: Invite) =>
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    return [...list].sort((a, b) => {
+      switch (sortBy) {
+        case 'name-asc': return byName(a, b);
+        case 'name-desc': return a.label && b.label ? -byName(a, b) : byName(a, b);
+        case 'oldest': return byDate(a, b);
+        default: return byDate(b, a);
+      }
+    });
+  }, [invites, sortBy, deliveryFilter]);
+
+  const toggleNameSort = () => setSortBy((s) => (s === 'name-asc' ? 'name-desc' : 'name-asc'));
   const totalMaxGuests = invites?.reduce((sum, i) => sum + i.max_guests, 0) || 0;
 
   return (
@@ -374,6 +494,32 @@ export default function AdminInvites() {
           <p className="text-muted-foreground">Generate, manage, and share personalized invite links</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="sm" disabled={!totalViews || resetViews.isPending}>
+                {resetViews.isPending ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                )}
+                Reset Open Counts
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Reset all invite open counts?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This sets the number of times each invitation was opened back to 0 for all{' '}
+                  {invites?.length ?? 0} invites ({totalViews} opens recorded). RSVPs, invite links,
+                  and QR codes are not affected. This can't be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={() => resetViews.mutate()}>Reset to 0</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
           <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={!invites?.length}>
             <Download className="w-4 h-4 mr-2" />
             Export CSV
@@ -583,6 +729,43 @@ export default function AdminInvites() {
         ))}
       </div>
 
+      {/* Sort & delivery filter */}
+      {!!invites?.length && (
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
+          <div className="flex items-center gap-2">
+            <Label htmlFor="invite-sort" className="text-sm text-muted-foreground whitespace-nowrap">Sort by</Label>
+            <Select value={sortBy} onValueChange={(v) => setSortBy(v as InviteSort)}>
+              <SelectTrigger id="invite-sort" className="h-9 w-[170px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="name-asc">Name (A–Z)</SelectItem>
+                <SelectItem value="name-desc">Name (Z–A)</SelectItem>
+                <SelectItem value="newest">Newest first</SelectItem>
+                <SelectItem value="oldest">Oldest first</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm text-muted-foreground">Delivery:</span>
+            {([{ value: 'all', label: 'All', count: invites.length }, ...DELIVERY_OPTIONS.map((o) => ({ ...o, count: deliveryCounts[o.value] }))] as { value: 'all' | DeliveryStatus; label: string; count: number }[]).map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setDeliveryFilter(opt.value)}
+                className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                  deliveryFilter === opt.value
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'border-border text-muted-foreground hover:bg-muted/50'
+                }`}
+              >
+                {opt.label} ({opt.count})
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Invites List */}
       <div className="glass-card rounded-xl overflow-hidden">
         {isLoading ? (
@@ -594,32 +777,43 @@ export default function AdminInvites() {
             <table className="w-full">
               <thead className="bg-muted/50 border-b border-border">
                 <tr>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Label</th>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Code</th>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Max Guests</th>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Status</th>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Used By</th>
-                  <th className="text-left px-6 py-4 text-sm font-medium text-muted-foreground">Created</th>
-                  <th className="text-right px-6 py-4 text-sm font-medium text-muted-foreground">Actions</th>
+                  <th className="text-left px-3 py-4 text-sm font-medium text-muted-foreground">
+                    <button
+                      type="button"
+                      onClick={toggleNameSort}
+                      className="flex items-center gap-1 hover:text-foreground transition-colors"
+                      title="Sort by name"
+                    >
+                      Label
+                      <ArrowUpDown className={`w-3 h-3 ${sortBy.startsWith('name') ? 'text-primary' : ''}`} />
+                    </button>
+                  </th>
+                  <th className="text-left px-3 py-4 text-sm font-medium text-muted-foreground">Code</th>
+                  <th className="text-left px-3 py-4 text-sm font-medium text-muted-foreground">Max Guests</th>
+                  <th className="text-left px-3 py-4 text-sm font-medium text-muted-foreground">Status</th>
+                  <th className="text-left px-3 py-4 text-sm font-medium text-muted-foreground">Delivery</th>
+                  <th className="text-left px-3 py-4 text-sm font-medium text-muted-foreground">Used By</th>
+                  <th className="text-left px-3 py-4 text-sm font-medium text-muted-foreground">Created</th>
+                  <th className="text-right px-3 py-4 text-sm font-medium text-muted-foreground">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {invites.map((invite) => (
+                {sortedInvites.map((invite) => (
                   <Collapsible key={invite.id} asChild>
                     <>
                       <CollapsibleTrigger asChild>
                         <tr className="hover:bg-muted/30 transition-colors cursor-pointer">
-                          <td className="px-6 py-4 font-medium">
+                          <td className="px-3 py-4 font-medium">
                             <span>{invite.label || '—'}</span>
                             {invite.language === 'es' && (
                               <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-700 dark:text-amber-300 font-medium">ES</span>
                             )}
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-3 py-4">
                             <code className="text-sm bg-muted px-2 py-1 rounded">{invite.code}</code>
                           </td>
-                          <td className="px-6 py-4">{invite.max_guests}</td>
-                          <td className="px-6 py-4">
+                          <td className="px-3 py-4">{invite.max_guests}</td>
+                          <td className="px-3 py-4">
                             <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
                               invite.used_by
                                 ? 'bg-sage/20 text-sage-foreground'
@@ -628,17 +822,37 @@ export default function AdminInvites() {
                               {invite.used_by ? 'Used' : 'Pending'}
                             </span>
                           </td>
-                          <td className="px-6 py-4 text-muted-foreground">
+                          <td className="px-3 py-4" onClick={(e) => e.stopPropagation()}>
+                            <Select
+                              value={getDeliveryStatus(invite)}
+                              onValueChange={(v) => updateDelivery.mutate({ id: invite.id, status: v as DeliveryStatus })}
+                            >
+                              <SelectTrigger
+                                className={`h-8 w-[130px] text-xs font-medium border-0 rounded-full ${
+                                  DELIVERY_OPTIONS.find((o) => o.value === getDeliveryStatus(invite))?.className
+                                }`}
+                                aria-label={`Delivery status for ${invite.label || 'invite'}`}
+                              >
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {DELIVERY_OPTIONS.map((o) => (
+                                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </td>
+                          <td className="px-3 py-4 text-muted-foreground">
                             {invite.rsvp ? (
                               <span>
                                 {invite.rsvp.name} ({invite.rsvp.guests} guest{invite.rsvp.guests !== 1 ? 's' : ''})
                               </span>
                             ) : '—'}
                           </td>
-                          <td className="px-6 py-4 text-muted-foreground text-sm">
+                          <td className="px-3 py-4 text-muted-foreground text-sm">
                             {formatDistanceToNow(new Date(invite.created_at), { addSuffix: true })}
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-3 py-4">
                             <div className="flex items-center justify-end gap-1">
                               <span className="text-xs text-muted-foreground mr-1 flex items-center gap-1">
                                 <MousePointer className="w-3 h-3" />
@@ -737,7 +951,7 @@ export default function AdminInvites() {
                       </CollapsibleTrigger>
                       <CollapsibleContent asChild>
                         <tr className="bg-muted/20">
-                          <td colSpan={7} className="px-6 py-4">
+                          <td colSpan={8} className="px-3 py-4">
                             <div className="flex items-center gap-8">
                               <div className="flex items-center gap-2">
                                 <BarChart3 className="w-4 h-4 text-muted-foreground" />
@@ -779,6 +993,14 @@ export default function AdminInvites() {
                 ))}
               </tbody>
             </table>
+            {sortedInvites.length === 0 && (
+              <div className="p-8 text-center text-muted-foreground text-sm">
+                No invites match this delivery filter.{' '}
+                <button type="button" className="text-primary hover:underline" onClick={() => setDeliveryFilter('all')}>
+                  Show all
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           <div className="p-8 text-center text-muted-foreground">
